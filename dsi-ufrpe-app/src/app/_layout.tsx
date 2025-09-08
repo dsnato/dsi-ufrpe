@@ -1,5 +1,17 @@
-import { Stack } from "expo-router";
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import HomeDashboard from './screens/home';
+import LoginScreen from './screens/Login';
 
-export default function RootLayout() {
-  return <Stack />;
+const Stack = createNativeStackNavigator();
+
+export default function AppLayout() {
+  return (
+    
+      <Stack.Navigator initialRouteName="Home">
+        <Stack.Screen name="Home" component={HomeDashboard} />
+        <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+      </Stack.Navigator>
+    
+  );
 }
