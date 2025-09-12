@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import ButtonPoint from '@/src/components/button';
 
 const HomeDashboard: React.FC = () => {
     const navigation = useNavigation();
@@ -13,9 +14,8 @@ const HomeDashboard: React.FC = () => {
         <View style={styles.container}>
             <Text style={styles.title}>Bem-vindo ao Dashboard</Text>
             <Text style={styles.subtitle}>Acesse sua conta para continuar.</Text>
-            <TouchableOpacity style={styles.button} onPress={handleLoginClick}>
-                <Text style={styles.buttonText}>Ir para Login</Text>
-            </TouchableOpacity>
+
+            <ButtonPoint label="Ir para Login" style={styles.button} onPress={handleLoginClick} />
         </View>
     );
 };
@@ -29,6 +29,7 @@ const styles = StyleSheet.create({
     },
     title: {
         fontSize: 24,
+        color: '#333',
         fontWeight: 'bold',
         marginBottom: 12,
     },
@@ -41,7 +42,7 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         paddingHorizontal: 32,
         borderRadius: 5,
-        backgroundColor: '#2d98da',
+        backgroundColor: '#1cad54ff',
         marginTop: 20,
     },
     buttonText: {

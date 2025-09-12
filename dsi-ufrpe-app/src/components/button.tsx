@@ -6,7 +6,7 @@ type Props = TouchableOpacityProps & {
     label: string;
 }
 
-export default function Button({ label, ...rest }: Props) {
+export default function ButtonPoint({ label, ...rest }: Props) {
     return (
         <TouchableOpacity style={styles.button}{...rest}>
             <Text style={styles.buttonText}>{label}</Text>
@@ -18,9 +18,9 @@ const styles = StyleSheet.create({
   button: {
     padding: 12,
     borderRadius: 12,
-    backgroundColor: '#1976d2',
+    backgroundColor: '#1cad54ff',
     alignItems: 'center',
-    width: '100%',
+    width: '100%',  
   },
   buttonText: {
     color: '#fff',
