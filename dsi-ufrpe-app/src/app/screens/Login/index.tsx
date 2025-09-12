@@ -1,6 +1,10 @@
 import Button from '@/src/components/button';
+import Input from '@/src/components/input';
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import PasswordInput from '@/src/components/password';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import ButtonPoint from '@/src/components/button';
 
 const LoginScreen: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -11,38 +15,30 @@ const LoginScreen: React.FC = () => {
     Alert.alert('Login', `Email: ${email}\nPassword: ${password}`);
   };
 
+  const navigation = useNavigation()
+
+  const registerTransition = () => {
+      navigation.navigate('Register' as never);
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.form}>
         <Text style={styles.title}>Login</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Senha"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        /> 
-        
+
+        {/*Adicionar View possívelmente*/}
+        <Input label="Email" placeholder="Email" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" /> 
+        <PasswordInput placeholder="Senha" value={password} onChangeText={setPassword} />
+
         <Text style={{marginTop: 2, textAlign: 'left', color: '#666'}}>
           Esqueceu a senha?  
            <TouchableOpacity><Text style={{color: '#007075', fontWeight: 'bold',textDecorationLine: 'underline', paddingLeft: 3}}>Recuperar</Text></TouchableOpacity>
         </Text>
-      </View> {/* Formulario de login */}
-
-      
-        
+      </View>
         
         <View style={styles.registerContainer}>
-          <Button label="Entrar" onPress={handleLogin}/>
-          <Text style={{color: '#666'}}>Ainda não possui um cadastro? <TouchableOpacity><Text style={{color: '#007075', paddingTop: 5, fontWeight: 'bold', textDecorationLine: 'underline'}}>Cadastre-se</Text></TouchableOpacity></Text>
+          <ButtonPoint label="Entrar" onPress={handleLogin} />
+          <Text style={{ color: '#666' }}>Ainda não possui um cadastro? <TouchableOpacity><Text style={{ color: '#007075', paddingTop: 5, fontWeight: 'bold', textDecorationLine: 'underline' }} onPress={registerTransition}>Cadastre-se</Text></TouchableOpacity></Text>
         </View>
     </View>
   );
@@ -68,6 +64,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     marginBottom: 24,
+    color: '#333',
     fontWeight: 'bold',
     textAlign: 'center',
   },
@@ -81,8 +78,9 @@ const styles = StyleSheet.create({
   button: {
     padding: 12,
     borderRadius: 4,
-    backgroundColor: '#1976d2',
+    backgroundColor: '#1cad54ff',
     alignItems: 'center',
+    width: '100%',  
   },
   buttonText: {
     color: '#fff',
