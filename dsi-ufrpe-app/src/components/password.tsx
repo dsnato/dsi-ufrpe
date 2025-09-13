@@ -1,6 +1,7 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, TextInputProps } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import React, { useState } from "react";
+import { StyleSheet, Text, TextInput, TextInputProps, TouchableOpacity, View } from "react-native";
+
 
 type Props = TextInputProps & {
   label?: string;
@@ -26,7 +27,7 @@ const PasswordInput = ({ value, onChangeText, placeholder, label = "Senha", ...r
           <Ionicons
             name={secure ? "eye-off" : "eye"}
             size={22}
-            color="#0a7d7d"
+            color="#737a7a" // Ajeitar a cor acionada
           />
         </TouchableOpacity>
       </View>
@@ -37,11 +38,12 @@ const PasswordInput = ({ value, onChangeText, placeholder, label = "Senha", ...r
 const styles = StyleSheet.create({
   container: {
     marginVertical: 12,
+    width: '100%', // Ajusta a largura do container
   },
   label: {
     fontSize: 16,
     marginBottom: 6,
-    color: "#0a7d7d",
+    color: "#0162B3",
     fontWeight: "500",
   },
   inputContainer: {
@@ -50,11 +52,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#e0f7f7",
     borderRadius: 8,
     paddingHorizontal: 12,
+    width: '100%', // Ajusta a largura do input container
   },
   input: {
     flex: 1,
     paddingVertical: 10,
-    color: "#0a7d7d",
+    // color: "#0a7d7d",
+    width: '100%', // Garante que o input ocupe toda a largura
   },
 });
 
