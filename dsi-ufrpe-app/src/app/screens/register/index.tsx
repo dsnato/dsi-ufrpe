@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, Alert } from 'react-native';
-import Input from '@/src/components/input';
 import ButtonPoint from '@/src/components/button';
-import { useNavigation } from '@react-navigation/native';
+import Input from '@/src/components/input';
 import PasswordInput from '@/src/components/password';
+import { useNavigation } from '@react-navigation/native';
+import React, { useState } from 'react';
+import { Alert, Image, StyleSheet, Text, View } from 'react-native';
 
 const RegisterScreen: React.FC = () => {
     const [form, setForm] = useState({
@@ -20,113 +20,109 @@ const RegisterScreen: React.FC = () => {
     };
 
     const handleSubmit = () => {
-        // Lógica de cadastro aqui
         Alert.alert('Cadastro', 'Usuário cadastrado com sucesso!');
     };
 
     return (
-        
         <View style={styles.container}>
-            <Text style={styles.title}>Cadastro</Text>
+            <View style={styles.header}>
+                <Image
+                    source={require('@/assets/images/hotel1.png')}
+                    style={styles.iconSmall}
+                />
+                <Text style={styles.appName}>Hostify</Text>
+            </View>
             <View style={styles.form}>
                 <Input
-                    
                     label="Nome"
-                    placeholder="Digite o seu Nome"
+                    placeholder="Digite seu nome"
                     value={form.name}
                     onChangeText={(text) => setForm({ ...form, name: text })}
                 />
                 <Input
-                    
-                    label="Email"
-                    placeholder="Digite o seu Email"
+                    label="Email Institucional"
+                    placeholder="Digite seu email"
                     value={form.email}
                     onChangeText={(text) => setForm({ ...form, email: text })}
                     keyboardType="email-address"
                     autoCapitalize="none"
                 />
                 <PasswordInput
-                    placeholder="Senha"
+                    placeholder="Digite sua senha"
                     value={form.password}
                     onChangeText={text => setForm({ ...form, password: text })}
                 />
                 <Input
                     label="Telefone"
-                    placeholder="Digite o seu Telefone"
+                    placeholder="(81) 9 0000-0000"
                     value={form.telefone}
                     onChangeText={(text) => setForm({ ...form, telefone: text })}
                     keyboardType="phone-pad"
-
                 />
-
-            </View>
-            <View style={styles.registerView}>
                 <ButtonPoint label="Cadastrar" onPress={handleSubmit} style={styles.button} />
                 <Text style={styles.footerText}>
-                    Já possui uma conta?{' '}
-                    <TouchableOpacity>
-                        <Text style={styles.footerLink} onPress={handleLoginRedirect}>Faça login</Text>
-                        </TouchableOpacity>
+                    Já tem uma conta?{' '}
+                    <Text style={styles.footerLink} onPress={handleLoginRedirect}>
+                        Entrar
                     </Text>
-                </View>
+                </Text>
             </View>
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: 'center',
+        backgroundColor: '#fff',
         alignItems: 'center',
-        backgroundColor: '#f5f5f5',
-        padding: 16,
-        rowGap: 10
+        justifyContent: 'center',
+        paddingHorizontal: 24,
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 30,
+    },
+    iconSmall: {
+        width: 40,
+        height: 40,
+        marginRight: 8,
+    },
+    appName: {
+        fontSize: 32,
+        fontWeight: 'bold',
+        color: '#2176ff',
     },
     form: {
         width: '100%',
-        padding: 16,
-        borderRadius: 8,
         backgroundColor: '#fff',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 5,
-    },
-    input: {
-        marginBottom: 12,
-    },
-    title: {
-        fontSize: 24,
-        marginBottom: 24,
-        color: '#333',
-        fontWeight: 'bold',
-        textAlign: 'center',
-    },
-    footerText: {
-        marginTop: 16,
-        color: '#666',
-    },
-    footerLink: {
-        color: '#007075',
-        fontWeight: 'bold',
-        textDecorationLine: 'underline',
+        borderRadius: 8,
+        padding: 0,
+        alignItems: 'center',
+        elevation: 2,
     },
     button: {
-        padding: 12,
-        borderRadius: 10,
-        width: '150%',
-        backgroundColor: '#1cad54ff',
-        alignItems: 'center',   
+        width: '100%',
+        backgroundColor: '#4a6cf7',
+        borderRadius: 4,
+        paddingVertical: 12,
+        marginTop: 8,
+        marginBottom: 16,
+        alignItems: 'center',
+        justifyContent: 'center'
     },
-    registerView: {
-         justifyContent: 'center',
-    alignItems: 'center',
-    position: 'absolute',
-    bottom: 32,
-    marginTop: 16,
-    marginBottom: 16,
-
+    footerText: {
+        color: '#666',
+        fontSize: 15,
+        textAlign: 'center',
+        marginTop: 4,
+    },
+    footerLink: {
+        color: '#2176ff',
+        fontWeight: 'bold',
+        textDecorationLine: 'underline',
     },
 });
 
