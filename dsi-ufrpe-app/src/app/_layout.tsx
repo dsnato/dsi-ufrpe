@@ -11,12 +11,11 @@ const Stack = createNativeStackNavigator();
 
 export default function AppLayout() {
   return (
-      <Stack.Navigator initialRouteName="Login">
-        {/* <Stack.Screen name="Initial" component={InitScreen} options={{ headerShown: false }} />
-         */}
+      <Stack.Navigator initialRouteName="Initial">
+        <Stack.Screen name="Initial" component={InitScreen} options={{ headerShown: false }} />
+        
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
-
 {/* 
         <Stack.Screen name="ClienteInserir" component={ClienteInserirScreen} options={{ headerShown: false }} />
         <Stack.Screen name="ClienteList" component={ClienteListScreen} options={{ headerShown: false }} />
