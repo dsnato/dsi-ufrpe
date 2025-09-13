@@ -1,49 +1,67 @@
-import Button from '@/src/components/button';
+import ButtonPoint from '@/src/components/button';
+import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from '@react-navigation/native';
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const LoginScreen: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [secure, setSecure] = useState(true);
+  const navigation = useNavigation();
 
   const handleLogin = () => {
-    // Adicione a lógica de login aqui
     Alert.alert('Login', `Email: ${email}\nPassword: ${password}`);
+  };
+
+  const registerTransition = () => {
+    navigation.navigate('Register' as never);
   };
 
   return (
     <View style={styles.container}>
+      <Image
+        source={require('@/assets/images/hotel1.png')}
+        style={styles.logo}
+      />
       <View style={styles.form}>
-        <Text style={styles.title}>Login</Text>
         <TextInput
-          style={styles.input}
           placeholder="Email"
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
           autoCapitalize="none"
-        />
-        <TextInput
           style={styles.input}
-          placeholder="Senha"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        /> 
-        
-        <Text style={{marginTop: 2, textAlign: 'left', color: '#666'}}>
-          Esqueceu a senha?  
-           <TouchableOpacity><Text style={{color: '#007075', fontWeight: 'bold',textDecorationLine: 'underline', paddingLeft: 3}}>Recuperar</Text></TouchableOpacity>
-        </Text>
-      </View> {/* Formulario de login */}
-
-      
-        
-        
-        <View style={styles.registerContainer}>
-          <Button label="Entrar" onPress={handleLogin}/>
-          <Text style={{color: '#666'}}>Ainda não possui um cadastro? <TouchableOpacity><Text style={{color: '#007075', paddingTop: 5, fontWeight: 'bold', textDecorationLine: 'underline'}}>Cadastre-se</Text></TouchableOpacity></Text>
+        />
+        {/* Campo de senha com o mesmo estilo do input de email, apenas adicionando o ícone */}
+        <View style={styles.inputIconWrapper}>
+          <TextInput
+            placeholder="Senha"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={secure}
+            style={styles.input}
+          />
+          <TouchableOpacity onPress={() => setSecure(!secure)} style={styles.iconEye}>
+            <Ionicons
+              name={secure ? "eye-off" : "eye"}
+              size={22}
+              color={secure ? "#737a7a" : "#2176ff"}
+            />
+          </TouchableOpacity>
         </View>
+        <ButtonPoint
+          label="Entrar"
+          style={styles.button}
+          onPress={handleLogin}
+        />
+        <Text style={styles.registerText}>
+          Não tem uma conta?{' '}
+          <Text style={styles.registerLink} onPress={registerTransition}>
+            Cadastre-se
+          </Text>
+        </Text>
+      </View>
     </View>
   );
 };
@@ -51,51 +69,70 @@ const LoginScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    position: 'relative',
-    flexDirection: 'column',
-    justifyContent: 'center',
+    backgroundColor: '#fff',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    justifyContent: 'center',
+  },
+  logo: {
+    width: 200,
+    height: 200,
+    marginBottom: 24,
+    marginTop: 32,
   },
   form: {
-    width: '80%',
-    padding: 32,
-    borderRadius: 8,
+    width: '85%',
     backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 0,
+    alignItems: 'center',
     elevation: 2,
-    color: '#333',
-  },
-  title: {
-    fontSize: 24,
-    marginBottom: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
   },
   input: {
+    width: '100%',
     marginBottom: 16,
-    padding: 8,
     borderRadius: 4,
     borderWidth: 1,
     borderColor: '#ccc',
+    padding: 10,
+    backgroundColor: '#fff',
+    color: '#9da3a3ff',
   },
   button: {
-    padding: 12,
+    width: '100%',
+    backgroundColor: '#4a6cf7',
     borderRadius: 4,
-    backgroundColor: '#1976d2',
+    paddingVertical: 12,
+    marginTop: 8,
+    marginBottom: 16,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  buttonText: {
-    color: '#fff',
+  registerText: {
+    color: '#666',
+    fontSize: 15,
+    textAlign: 'center',
+    marginTop: 4,
+  },
+  registerLink: {
+    color: '#2176ff',
     fontWeight: 'bold',
-    fontSize: 16,
+    textDecorationLine: 'underline',
   },
-  registerContainer: {
+  inputIconWrapper: {
+    width: '100%',
+    marginBottom: 16,
+    position: 'relative',
+    justifyContent: 'center',
+  },
+  iconEye: {
+    position: 'absolute',
+    right: 12,
+    top: -8,
+    bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    position: 'absolute',
-    bottom: 32,
-    marginTop: 16,
-    marginBottom: 16,
+    height: '100%',
+    padding: 6,
   },
 });
 
