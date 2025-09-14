@@ -1,11 +1,12 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import InitScreen from './screens/initscreen';
+//import InitScreen from './screens/initscreen';
 import LoginScreen from './screens/Login';
 import RegisterScreen from './screens/register';
-import ClienteInserirScreen from './screens/cliente/cliente-inserir';
-import ClienteListScreen from './screens/cliente/cliente-lista';
-import QuartoInserirScreen from './screens/quarto/quarto-inserir';
-import QuartoListScreen from './screens/quarto/quarto-lista';
+import HomeScreen from './screens/Home';
+//import ClienteInserirScreen from './screens/cliente/cliente-inserir';
+//import ClienteListScreen from './screens/cliente/cliente-lista';
+//import QuartoInserirScreen from './screens/quarto/quarto-inserir';
+//import QuartoListScreen from './screens/quarto/quarto-lista';
 
 const Stack = createNativeStackNavigator();
 
@@ -16,7 +17,7 @@ export default function AppLayout() {
          */}
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
-
+        <Stack.Screen name="Home" component={HomeScreen} options={{headerShown: false}}/>
 {/* 
         <Stack.Screen name="ClienteInserir" component={ClienteInserirScreen} options={{ headerShown: false }} />
         <Stack.Screen name="ClienteList" component={ClienteListScreen} options={{ headerShown: false }} />
