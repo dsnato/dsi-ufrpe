@@ -1,3 +1,3 @@
-import Home from './screens/Home';
+import Login from './screens/Login';
 
-export default Home;
+export default Login;
