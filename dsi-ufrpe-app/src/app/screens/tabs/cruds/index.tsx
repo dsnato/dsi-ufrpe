@@ -54,23 +54,6 @@ export default function Home() {
                     Próximas Reservas
                 </Text>
                 
-                <BookingCard
-                numeroQuarto={Mock.numeroQuarto}
-                numeroHospedes={Mock.numeroHospedes}
-                cliente={Mock.cliente}
-                dataCheckin={Mock.dataCheckin}
-                dataCheckout={Mock.dataCheckout}
-                tipoQuarto="Quarto duplo"
-                />
-
-                <BookingCard
-                numeroQuarto={Mock2.numeroQuarto}
-                numeroHospedes={Mock2.numeroHospedes}
-                cliente={Mock2.cliente}
-                dataCheckin={Mock2.dataCheckin}
-                dataCheckout={Mock2.dataCheckout}
-                tipoQuarto="Quarto solo"
-                />
             </View>
 
             <View style={styles.atividadesHoje}>
@@ -78,12 +61,6 @@ export default function Home() {
                     Atividades de Hoje
                 </Text>
 
-                <EventCard
-                custo={MockEvent.custo}
-                horario={MockEvent.horario}
-                titulo={MockEvent.titulo}
-                local={MockEvent.local}
-                />
             </View>
         </View>
     )
