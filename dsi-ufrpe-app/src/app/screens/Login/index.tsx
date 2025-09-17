@@ -1,6 +1,6 @@
 import ButtonPoint from '@/src/components/button';
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from '@react-navigation/native';
+import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
@@ -8,14 +8,13 @@ const LoginScreen: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [secure, setSecure] = useState(true);
-  const navigation = useNavigation();
 
   const handleLogin = () => {
     Alert.alert('Login', `Email: ${email}\nPassword: ${password}`);
   };
 
   const registerTransition = () => {
-    navigation.navigate('Register' as never);
+    router.navigate("/screens/register");
   };
 
   return (
