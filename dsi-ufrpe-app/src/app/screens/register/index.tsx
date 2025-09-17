@@ -1,7 +1,7 @@
 import ButtonPoint from '@/src/components/button';
 import Input from '@/src/components/input';
 import PasswordInput from '@/src/components/password';
-import { useNavigation } from '@react-navigation/native';
+import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, Image, StyleSheet, Text, View } from 'react-native';
 
@@ -13,10 +13,9 @@ const RegisterScreen: React.FC = () => {
         telefone: '',
     });
 
-    const navigation = useNavigation();
 
     const handleLoginRedirect = () => {
-        navigation.navigate('Login' as never);
+        router.navigate("/screens/Login")
     };
 
     const handleSubmit = () => {

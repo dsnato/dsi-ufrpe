@@ -1,3 +1,3 @@
-import HomeDashboard from './screens/home';
+import Login from './screens/Login';
 
-export default HomeDashboard;
+export default Login;
