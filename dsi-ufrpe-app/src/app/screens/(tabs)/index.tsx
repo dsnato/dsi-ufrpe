@@ -1,9 +1,8 @@
 import { Image } from "expo-image";
 import React from "react";
-import { StyleSheet, View, Text } from "react-native";
+import { StyleSheet, View, Text, ScrollView } from "react-native";
 import BookingCard from "@/src/components/BookingCard";
 import EventCard from "@/src/components/EventCard";
-import { ScrollView } from "react-native-gesture-handler";
 
 
 export default function Home() {

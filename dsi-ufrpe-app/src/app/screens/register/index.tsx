@@ -15,7 +15,7 @@ const RegisterScreen: React.FC = () => {
 
 
     const handleLoginRedirect = () => {
-        router.navigate("/screens/Login")
+        router.navigate("/")
     };
 
     const handleSubmit = () => {
