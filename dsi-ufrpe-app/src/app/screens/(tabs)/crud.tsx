@@ -1,4 +1,3 @@
-import { Image } from "expo-image";
 import React from "react";
 import { StyleSheet, View, Text } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
@@ -7,23 +6,19 @@ import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import CrudItem from "@/src/components/CrudItem";
+import Header from "@/src/components/Header";
+import { router } from "expo-router";
 
 export default function Crud() {
     return (
         <SafeAreaProvider>
             <SafeAreaView style={{backgroundColor: "black", width: "100%", flex: 1}}>
                 <View style={{backgroundColor: "white", flex: 1, width: "100%", height: "100%"}}>
-                    <View style={styles.header}>
-                        <Image
-                            source={require('@/assets/images/hotel1.png')}
-                            style={styles.iconSmall}
-                        />
-                        <Text style={styles.appName}>CRUD</Text>
-                    </View>
+                    <Header title={"CRUD"}/>
                     <View style={styles.mainContainer}>
                         <View style={styles.gridContainer}>
                             <View style={styles.gridRow}>
-                                <CrudItem label="Clientes">
+                                <CrudItem label="Clientes" onPress={() => router.navigate('screens/clientes')}>
                                     <FontAwesome name="users" size={64} color="#718FE9" />
                                 </CrudItem>
                                 <CrudItem label="Funcionários">
@@ -53,22 +48,6 @@ export default function Crud() {
 
 
 const styles = StyleSheet.create({
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 10,
-    },
-    appName: {
-        fontSize: 32,
-        fontWeight: 'bold',
-        color: '#2176ff',
-    },
-    iconSmall: {
-        width: 40,
-        height: 40,
-        marginRight: 8,
-    },
     mainContainer: {
         flex: 1,
         width: "100%",
