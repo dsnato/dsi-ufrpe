@@ -52,7 +52,7 @@ const LoginScreen: React.FC = () => {
         <ButtonPoint
           label="Entrar"
           style={styles.button}
-          onPress={handleLogin}
+          onPress={() => router.replace('/screens/(tabs)')}
         />
         <Text style={styles.registerText}>
           Não tem uma conta?{' '}
