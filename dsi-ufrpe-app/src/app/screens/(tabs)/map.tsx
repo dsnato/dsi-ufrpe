@@ -3,6 +3,7 @@ import React from "react";
 import { StyleSheet, View, Text } from "react-native";
 import BookingCard from "@/src/components/BookingCard";
 import EventCard from "@/src/components/EventCard";
+import Header from "@/src/components/Header";
 
 
 export default function Map() {
@@ -35,13 +36,7 @@ export default function Map() {
 
     return (
         <View style={styles.mainContainer}>
-            <View style={styles.header}>
-                <Image
-                    source={require('@/assets/images/hotel1.png')}
-                    style={styles.iconSmall}
-                />
-                <Text style={styles.appName}>MAPA</Text>
-            </View>
+            <Header title="MAPA"/>
 
             <View style={styles.welcomeMessage}>
                 <Text style={styles.text}>
