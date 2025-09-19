@@ -21,20 +21,20 @@ export default function Crud() {
                                 <CrudItem label="Clientes" onPress={() => router.navigate('screens/clientes')}>
                                     <FontAwesome name="users" size={64} color="#718FE9" />
                                 </CrudItem>
-                                <CrudItem label="Funcionários">
+                                <CrudItem label="Funcionários" onPress={() => router.navigate('/screens/CrudFuncionarios/Geral')}>
                                     <MaterialIcons name="engineering" size={64} color="#718FE9" />
                                 </CrudItem>
                             </View>
                             <View style={styles.gridRow}>
-                                <CrudItem label="Quartos">
+                                <CrudItem label="Quartos" onPress={() => router.navigate('/screens/CrudQuartos/Geral')}>
                                     <MaterialCommunityIcons name="bed" size={64} color="#718FE9" />
                                 </CrudItem>
-                                <CrudItem label="Reservas">
+                                <CrudItem label="Reservas" onPress={() => router.navigate('/screens/CrudReservas/Geral')}>
                                     <FontAwesome6 name="bell-concierge" size={64} color="#718FE9" />
                                 </CrudItem>
                             </View>
                             <View style={[styles.gridRow, {paddingHorizontal: 18, flexDirection: 'row'}]}>
-                                <CrudItem label="Atividades Recreativas" long={true}>
+                                <CrudItem label="Atividades Recreativas" long={true} onPress={() => router.navigate('/screens/CrudAtividades/Geral')}>
                                     <FontAwesome6 name="ticket" size={64} color="#718FE9" />
                                 </CrudItem>
                             </View>
