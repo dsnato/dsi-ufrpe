@@ -3,6 +3,7 @@ import React from "react";
 import { StyleSheet, View, Text, ScrollView } from "react-native";
 import BookingCard from "@/src/components/BookingCard";
 import EventCard from "@/src/components/EventCard";
+import Header from "@/src/components/Header";
 
 
 export default function Home() {
@@ -38,13 +39,7 @@ export default function Home() {
             <ScrollView style={{flex: 1}}>
 
             
-                <View style={styles.header}>
-                    <Image
-                        source={require('@/assets/images/hotel1.png')}
-                        style={styles.iconSmall}
-                    />
-                    <Text style={styles.appName}>Hostify</Text>
-                </View>
+                <Header title={"Hostify"}/>
 
                 <View style={styles.welcomeMessage}>
                     <Text style={styles.text}>

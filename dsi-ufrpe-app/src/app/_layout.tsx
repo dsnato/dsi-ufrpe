@@ -25,6 +25,12 @@ export default function AppLayout() {
           headerShown: false
         }} 
       />
+      <Stack.Screen 
+        name="screens/clientes/index" 
+        options={{ 
+          headerShown: false
+        }} 
+      />
     </Stack>
   );
 }
