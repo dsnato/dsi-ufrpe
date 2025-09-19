@@ -5,7 +5,7 @@ import BookingCard from "@/src/components/BookingCard";
 import EventCard from "@/src/components/EventCard";
 
 
-export default function Home() {
+export default function Map() {
     const nome = "nomeUsuario";
     
     const Mock = {
@@ -40,7 +40,7 @@ export default function Home() {
                     source={require('@/assets/images/hotel1.png')}
                     style={styles.iconSmall}
                 />
-                <Text style={styles.appName}>Hostify</Text>
+                <Text style={styles.appName}>MAPA</Text>
             </View>
 
             <View style={styles.welcomeMessage}>
