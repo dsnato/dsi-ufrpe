@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Alert, SafeAreaView } from 'react-native';
 import { useRouter } from 'expo-router';
-import FuncionarioForm from '@/src/components/FuncionarioForm';
+import FuncionarioForm from '@/src/components/FuncionarioForms';
 
 export default function CriarFuncionario() {
   const router = useRouter();
