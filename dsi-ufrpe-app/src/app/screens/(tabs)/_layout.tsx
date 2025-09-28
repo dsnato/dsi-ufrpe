@@ -1,35 +1,43 @@
 import { Tabs } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import Entypo from '@expo/vector-icons/Entypo';
+import { Ionicons } from '@expo/vector-icons';
+import { StyleSheet, View, Text } from "react-native";
 
 export default function TabLayout() {
   return (
     <Tabs screenOptions={{ 
-      tabBarActiveTintColor: 'blue',
-      headerShown: false
+      tabBarActiveTintColor: "#FF4F19",
+      headerShown: false,
+      tabBarStyle: {
+        height: 50
+      }
     }}>
       <Tabs.Screen
         name="map"
         options={{
-          title: 'Mapa',
+          title: 'Reservas',
           headerShown: false,
-          tabBarIcon: ({ color }) => <Entypo name="map" size={24} color={color}/>,
+          tabBarIcon: ({ color, focused }) => (
+              <Ionicons name="calendar" size={24} color={color}  />
+          ),
         }}
       />
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: 'Início',
           headerShown: false,
-          tabBarIcon: ({ color }) => <FontAwesome size={28} name="home" color={color} />,
+          tabBarIcon: ({ color, focused }) =>
+                <Ionicons name="home" size={24} color={color}  />
         }}
       />
       <Tabs.Screen
         name="crud"
         options={{
-          title: 'CRUD',
+          title: 'Clientes',
           headerShown: false,
-          tabBarIcon: ({ color }) => <Entypo name="circle-with-plus" size={24} color={color}  />,
+          tabBarIcon: ({ color }) => <Ionicons name="person" size={24} color={color}  />,
         }}
       />
     </Tabs>
