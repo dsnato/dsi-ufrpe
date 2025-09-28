@@ -1,140 +1,130 @@
-import { Image } from "expo-image";
 import React from "react";
 import { StyleSheet, View, Text, ScrollView } from "react-native";
-import BookingCard from "@/src/components/BookingCard";
-import EventCard from "@/src/components/EventCard";
-import Header from "@/src/components/Header";
-
+import HeaderName from "@/src/components/HeaderName";
+import { router } from "expo-router";
+import InfoCard from "@/src/components/infocard";
+import RoomInfoCard from "@/src/components/RoomInfoCard";
 
 export default function Home() {
-    const nome = "nomeUsuario";
-    
-    const Mock = {
-    tipoQuarto: "Quarto duplo",
-    numeroQuarto: 1,
-    cliente: "ricardo",
-    dataCheckin: "10/09/2025",
-    dataCheckout: "20/10/2025",
-    numeroHospedes: 10
-    };
-
-    const Mock2 = {
-    tipoQuarto: "Quarto duplo",
-    numeroQuarto: 64,
-    cliente: "João",
-    dataCheckin: "30/09/2025",
-    dataCheckout: "02/10/2025",
-    numeroHospedes: 3
-    };
-
-    const MockEvent = {
-        custo: "R$100",
-        horario: "18h",
-        titulo: "Calcinha Preta",
-        local: "Igrejinha"
+    function onLogout() {
+        router.replace("/screens/Login")
     }
 
     return (
-        <View style={styles.mainContainer}>
-            <ScrollView style={{flex: 1}}>
-
-            
-                <Header title={"Hostify"}/>
-
-                <View style={styles.welcomeMessage}>
-                    <Text style={styles.text}>
-                        Olá, {nome}, bem-vindo de volta!
+        <View style={styles.whiteContainer}>
+            <View style={styles.headerSection}>
+                <HeaderName nomeUsuario="Renato Samico" onLogout={onLogout}/>
+                <View style={styles.welcomeSection}>
+                    <Text style={styles.welcomeText}>
+                        Bem-vindo, Renato Samico!
                     </Text>
                 </View>
+            </View>
 
-                <View style={styles.proximasReservas}>
-                    <Text style={styles.textVariant}>
-                        Próximas Reservas
-                    </Text>
+            <View style={styles.midContainer}>
+                <ScrollView 
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                >
+                    <Text style={styles.textVariant}>Visão Geral</Text>
                     
-                    <BookingCard
-                    numeroQuarto={Mock.numeroQuarto}
-                    numeroHospedes={Mock.numeroHospedes}
-                    cliente={Mock.cliente}
-                    dataCheckin={Mock.dataCheckin}
-                    dataCheckout={Mock.dataCheckout}
-                    tipoQuarto="Quarto duplo"
-                    />
+                    <View style={styles.cardsSection}>
+                        <View style={styles.cardsRow}>
+                            <InfoCard iconName="calendar" subtitle="9 planejadas" title="Reservas" />
+                            <InfoCard iconName="person" subtitle="32 clientes" title="Cliente" />
+                        </View>
+                        
+                        <View style={styles.cardsRow}>
+                            <InfoCard iconName="people" subtitle="7 contratados" title="Funcionarios" />
+                            <InfoCard iconName="bed" subtitle="12 disponível" title="Quartos" />
+                        </View>
+                        
+                        <View style={styles.cardsRow}>
+                            <InfoCard iconName="happy" subtitle="5 agendadas" title="Atividades" />
+                        </View>
+                    </View>
 
-                    <BookingCard
-                    numeroQuarto={Mock2.numeroQuarto}
-                    numeroHospedes={Mock2.numeroHospedes}
-                    cliente={Mock2.cliente}
-                    dataCheckin={Mock2.dataCheckin}
-                    dataCheckout={Mock2.dataCheckout}
-                    tipoQuarto="Quarto solo"
-                    />
-                </View>
-
-                <View style={styles.atividadesHoje}>
-                    <Text style={styles.textVariant}>
-                        Atividades de Hoje
-                    </Text>
-
-                    <EventCard
-                    custo={MockEvent.custo}
-                    horario={MockEvent.horario}
-                    titulo={MockEvent.titulo}
-                    local={MockEvent.local}
-                    />
-                </View>
-            </ScrollView>
+                    <Text style={styles.textVariant}>Reservas do dia</Text>
+                    
+                    <View style={styles.roomInfoContainer}>
+                        <RoomInfoCard title="25/10 - 30/10" subtitle="Casal" />
+                        <RoomInfoCard title="10/11 - 20/11" subtitle="Quadruplo" />
+                    </View>
+                </ScrollView>
+            </View>
         </View>
     )
 }
 
-
 const styles = StyleSheet.create({
-    mainContainer: {
+    whiteContainer: {
         flex: 1,
-        width: "auto",
-        height: "auto",
-        backgroundColor: "#fafafa",
-        padding: 25,
-        rowGap: 20
+        backgroundColor: "#132F3B",
     },
+
+    headerSection: {
+        flex: 0.2, // 20% da tela para o header e welcome
+        justifyContent: 'space-between',
+    },
+
+    welcomeSection: {
+        justifyContent: 'center',
+        alignItems: 'flex-start',
+        paddingHorizontal: 20,
+        flex: 1,
+    },
+
+    midContainer: {
+        flex: 0.8, // 80% da tela
+        backgroundColor: "#F2F2F2",
+        borderTopEndRadius: 20,
+        borderTopStartRadius: 20,
+        paddingTop: 10,
+    },
+
+    scrollContent: {
+        paddingHorizontal: 20,
+        paddingBottom: 20,
+    },
+
+    textVariant: {
+        fontSize: 20,
+        color: "#4BBAED",
+        fontWeight: '900',
+        marginBottom: 10, // Espaçamento consistente
+    },
+
+    cardsSection: {
+        marginBottom: 0, // Espaçamento consistente entre seções
+    },
+
+    cardsRow: {
+        flexDirection: "row",
+        justifyContent: "center",
+        alignItems: "flex-start",
+        marginBottom: 16, // Espaçamento consistente entre linhas
+        paddingHorizontal: 8,
+        gap: 20, // Espaçamento consistente entre cards
+    },
+
+    roomInfoContainer: {
+        flexDirection: "row",
+        gap: 20, // Espaçamento consistente entre cards
+        justifyContent: "center",
+    },
+
+    welcomeText: {
+        fontSize: 18,
+        fontWeight: "bold",
+        color: "#FFE157",
+        textAlign: 'center',
+        alignSelf: 'flex-start',
+    },
+
+    // Estilos não utilizados removidos para limpeza
     text: {
         fontSize: 18,
         color: "#314EA6",
         fontWeight: "bold"
     },
-    textVariant: {
-        fontSize: 16,
-        color: "#0162B3",
-        fontWeight: 300
-    },
-    proximasReservas: {
-        width: "auto",
-        height: "auto",
-        rowGap: 5
-    },
-    atividadesHoje: {
-        width: "auto",
-        height: "auto",
-        rowGap: 5
-    },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    appName: {
-        fontSize: 32,
-        fontWeight: 'bold',
-        color: '#2176ff',
-    },
-    iconSmall: {
-        width: 40,
-        height: 40,
-        marginRight: 8,
-    },
-    welcomeMessage: {
-        width: "auto",
-        height: "auto"
-    }
-})
+});
