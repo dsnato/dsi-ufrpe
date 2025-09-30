@@ -1,14 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
-import { StyleSheet, View, Text, TouchableOpacity, Animated } from "react-native";
+import { Animated, StyleSheet, TouchableOpacity } from "react-native";
 
-interface InfoCardProps {
+type InfoCardProps = {
+  iconName: keyof typeof Ionicons.glyphMap; // typing mais seguro
   title: string;
   subtitle: string;
-  iconName: keyof typeof Ionicons.glyphMap; // typing mais seguro
 }
 
-export default function InfoCard({ iconName, title, subtitle }: InfoCardProps) {
+export default function InfoCard({ title, subtitle, iconName }: InfoCardProps) {
   const [backgroundAnim] = useState(new Animated.Value(0));
   const [titleAnim] = useState(new Animated.Value(0));
   const [iconAnim] = useState(new Animated.Value(0));
@@ -18,22 +18,22 @@ export default function InfoCard({ iconName, title, subtitle }: InfoCardProps) {
     Animated.parallel([
       Animated.timing(backgroundAnim, {
         toValue: 1,
-        duration: 200,
+        duration: 100,
         useNativeDriver: false,
       }),
       Animated.timing(titleAnim, {
         toValue: 1,
-        duration: 200,
+        duration: 100,
         useNativeDriver: false,
       }),
       Animated.timing(iconAnim, {
         toValue: 1,
-        duration: 200,
+        duration: 100,
         useNativeDriver: false,
       }),
       Animated.timing(subtitleAnim, {
         toValue: 1,
-        duration: 200,
+        duration: 100,
         useNativeDriver: false,
       }),
     ]).start();
@@ -43,22 +43,22 @@ export default function InfoCard({ iconName, title, subtitle }: InfoCardProps) {
     Animated.parallel([
       Animated.timing(backgroundAnim, {
         toValue: 0,
-        duration: 200,
+        duration: 100,
         useNativeDriver: false,
       }),
       Animated.timing(titleAnim, {
         toValue: 0,
-        duration: 200,
+        duration: 100,
         useNativeDriver: false,
       }),
       Animated.timing(iconAnim, {
         toValue: 0,
-        duration: 200,
+        duration: 100,
         useNativeDriver: false,
       }),
       Animated.timing(subtitleAnim, {
         toValue: 0,
-        duration: 200,
+        duration: 100,
         useNativeDriver: false,
       }),
     ]).start();
@@ -93,12 +93,7 @@ export default function InfoCard({ iconName, title, subtitle }: InfoCardProps) {
     >
       <Animated.View style={[styles.card, { backgroundColor }]}>
         <Animated.Text style={{ color: iconColor }}>
-          <Ionicons 
-            name={iconName} 
-            size={25} 
-            color={iconColor as any} 
-            style={styles.icon} 
-          />
+          <Ionicons name={iconName} size={25} style={styles.icon} />
         </Animated.Text>
 
         <Animated.Text style={[styles.title, { color: titleColor }]}>
