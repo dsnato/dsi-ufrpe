@@ -1,58 +1,58 @@
 import HeaderName from "@/src/components/HeaderName";
 import InfoCard from "@/src/components/InfoCard";
 import RoomInfoCard from "@/src/components/RoomInfoCard";
-import { router } from "expo-router";
 import React from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 export default function Home() {
-    function onLogout() {
-        router.replace("/screens/Login")
-    }
-
     return (
-        <View style={styles.whiteContainer}>
-            <View style={styles.headerSection}>
-                <HeaderName title="Renato Samico" iconNameLeft="person-circle" iconNameRight="exit" />
-                <View style={styles.welcomeSection}>
-                    <Text style={styles.welcomeText}>
-                        Bem-vindo, Renato Samico!
-                    </Text>
+        <SafeAreaProvider>
+            <SafeAreaView style={{flex: 1, backgroundColor: "#000"}}>
+                <View style={styles.whiteContainer}>
+                    <View style={styles.headerSection}>
+                        <HeaderName title="Renato Samico" iconNameLeft="person-circle" iconNameRight="exit"/>
+                        <View style={styles.welcomeSection}>
+                            <Text style={styles.welcomeText}>
+                                Bem-vindo, Renato Samico!
+                            </Text>
+                        </View>
+                    </View>
+
+                    <View style={styles.midContainer}>
+                        <ScrollView 
+                            contentContainerStyle={styles.scrollContent}
+                            showsVerticalScrollIndicator={false}
+                        >
+                            <Text style={styles.textVariant}>Visão Geral</Text>
+                            
+                            <View style={styles.cardsSection}>
+                                <View style={styles.cardsRow}>
+                                    <InfoCard iconName="calendar" subtitle="9 planejadas" title="Reservas" />
+                                    <InfoCard iconName="person" subtitle="32 clientes" title="Cliente" />
+                                </View>
+                                
+                                <View style={styles.cardsRow}>
+                                    <InfoCard iconName="people" subtitle="7 contratados" title="Funcionarios" />
+                                    <InfoCard iconName="bed" subtitle="12 disponível" title="Quartos" />
+                                </View>
+                                
+                                <View style={styles.cardsRow}>
+                                    <InfoCard iconName="happy" subtitle="5 agendadas" title="Atividades" />
+                                </View>
+                            </View>
+
+                            <Text style={styles.textVariant}>Reservas do dia</Text>
+                            
+                            <View style={styles.roomInfoContainer}>
+                                <RoomInfoCard title="25/10 - 30/10" subtitle="Casal" />
+                                <RoomInfoCard title="25/10 - 29/10" subtitle="Quadruplo" />
+                            </View>
+                        </ScrollView>
+                    </View>
                 </View>
-            </View>
-
-            <View style={styles.midContainer}>
-                <ScrollView 
-                    contentContainerStyle={styles.scrollContent}
-                    showsVerticalScrollIndicator={false}
-                >
-                    <Text style={styles.textVariant}>Visão Geral</Text>
-                    
-                    <View style={styles.cardsSection}>
-                        <View style={styles.cardsRow}>
-                            <InfoCard iconName="calendar" subtitle="9 planejadas" title="Reservas" />
-                            <InfoCard iconName="person" subtitle="32 clientes" title="Cliente" />
-                        </View>
-                        
-                        <View style={styles.cardsRow}>
-                            <InfoCard iconName="people" subtitle="7 contratados" title="Funcionarios" />
-                            <InfoCard iconName="bed" subtitle="12 disponível" title="Quartos" />
-                        </View>
-                        
-                        <View style={styles.cardsRow}>
-                            <InfoCard iconName="happy" subtitle="5 agendadas" title="Atividades" />
-                        </View>
-                    </View>
-
-                    <Text style={styles.textVariant}>Reservas do dia</Text>
-                    
-                    <View style={styles.roomInfoContainer}>
-                        <RoomInfoCard title="25/10 - 30/10" subtitle="Casal" />
-                        <RoomInfoCard title="10/11 - 20/11" subtitle="Quadruplo" />
-                    </View>
-                </ScrollView>
-            </View>
-        </View>
+            </SafeAreaView>
+        </SafeAreaProvider>
     )
 }
 
