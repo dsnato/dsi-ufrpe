@@ -15,17 +15,17 @@ export default function RoomInfoCard({ title, subtitle }: InfoCardProps) {
     Animated.parallel([
       Animated.timing(backgroundAnim, {
         toValue: 1,
-        duration: 200,
+        duration: 100,
         useNativeDriver: false,
       }),
       Animated.timing(titleAnim, {
         toValue: 1,
-        duration: 200,
+        duration: 100,
         useNativeDriver: false,
       }),
       Animated.timing(subtitleAnim, {
         toValue: 1,
-        duration: 200,
+        duration: 100,
         useNativeDriver: false,
       }),
     ]).start();
@@ -35,17 +35,17 @@ export default function RoomInfoCard({ title, subtitle }: InfoCardProps) {
     Animated.parallel([
       Animated.timing(backgroundAnim, {
         toValue: 0,
-        duration: 200,
+        duration: 100,
         useNativeDriver: false,
       }),
       Animated.timing(titleAnim, {
         toValue: 0,
-        duration: 200,
+        duration: 100,
         useNativeDriver: false,
       }),
       Animated.timing(subtitleAnim, {
         toValue: 0,
-        duration: 200,
+        duration: 100,
         useNativeDriver: false,
       }),
     ]).start();

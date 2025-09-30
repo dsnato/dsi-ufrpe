@@ -1,25 +1,24 @@
-import { Tabs } from 'expo-router';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import Entypo from '@expo/vector-icons/Entypo';
 import { Ionicons } from '@expo/vector-icons';
-import { StyleSheet, View, Text } from "react-native";
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import { Tabs } from 'expo-router';
 
 export default function TabLayout() {
   return (
     <Tabs screenOptions={{ 
       tabBarActiveTintColor: "#FF4F19",
+      tabBarInactiveTintColor: "#132F3B",
       headerShown: false,
       tabBarStyle: {
         height: 50
       }
     }}>
       <Tabs.Screen
-        name="map"
+        name="reservas"
         options={{
           title: 'Reservas',
           headerShown: false,
           tabBarIcon: ({ color, focused }) => (
-              <Ionicons name="calendar" size={24} color={color}  />
+              <FontAwesome5 name="concierge-bell" size={24} color={focused ? color: "#132F3B"}  />
           ),
         }}
       />
@@ -29,7 +28,7 @@ export default function TabLayout() {
           title: 'Início',
           headerShown: false,
           tabBarIcon: ({ color, focused }) =>
-                <Ionicons name="home" size={24} color={color}  />
+                <Ionicons name="home" size={24} color={focused ? color: "#132F3B"}  />
         }}
       />
       <Tabs.Screen
@@ -37,7 +36,7 @@ export default function TabLayout() {
         options={{
           title: 'Clientes',
           headerShown: false,
-          tabBarIcon: ({ color }) => <Ionicons name="person" size={24} color={color}  />,
+          tabBarIcon: ({ color, focused }) => <Ionicons name="person" size={24} color={focused ? color: "#132F3B"}  />,
         }}
       />
     </Tabs>

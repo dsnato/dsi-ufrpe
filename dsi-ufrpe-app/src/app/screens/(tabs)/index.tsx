@@ -1,9 +1,9 @@
-import React from "react";
-import { StyleSheet, View, Text, ScrollView } from "react-native";
 import HeaderName from "@/src/components/HeaderName";
-import { router } from "expo-router";
-import InfoCard from "@/src/components/infocard";
+import InfoCard from "@/src/components/InfoCard";
 import RoomInfoCard from "@/src/components/RoomInfoCard";
+import { router } from "expo-router";
+import React from "react";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 export default function Home() {
     function onLogout() {
@@ -13,7 +13,7 @@ export default function Home() {
     return (
         <View style={styles.whiteContainer}>
             <View style={styles.headerSection}>
-                <HeaderName nomeUsuario="Renato Samico" onLogout={onLogout}/>
+                <HeaderName title="Renato Samico" iconNameLeft="person-circle" iconNameRight="exit" />
                 <View style={styles.welcomeSection}>
                     <Text style={styles.welcomeText}>
                         Bem-vindo, Renato Samico!
@@ -126,5 +126,8 @@ const styles = StyleSheet.create({
         fontSize: 18,
         color: "#314EA6",
         fontWeight: "bold"
+    },
+    icon: {
+    marginBottom: 4,
     },
 });
