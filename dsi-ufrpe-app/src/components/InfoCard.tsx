@@ -3,12 +3,13 @@ import React, { useState } from "react";
 import { Animated, StyleSheet, TouchableOpacity } from "react-native";
 
 type InfoCardProps = {
-  iconName: keyof typeof Ionicons.glyphMap; // typing mais seguro
+  iconName?: keyof typeof Ionicons.glyphMap; // typing mais seguro
   title: string;
-  subtitle: string;
+  subtitle?: string;
+  elevate?: boolean;
 }
 
-export default function InfoCard({ title, subtitle, iconName }: InfoCardProps) {
+export default function InfoCard({ title, subtitle, iconName, elevate }: InfoCardProps) {
   const [backgroundAnim] = useState(new Animated.Value(0));
   const [titleAnim] = useState(new Animated.Value(0));
   const [iconAnim] = useState(new Animated.Value(0));
@@ -89,20 +90,20 @@ export default function InfoCard({ title, subtitle, iconName }: InfoCardProps) {
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       activeOpacity={1}
-      style={styles.touchable}
+      style={[styles.touchable, elevate === false ? { elevation: 0 } : null]}
     >
       <Animated.View style={[styles.card, { backgroundColor }]}>
-        <Animated.Text style={{ color: iconColor }}>
+        {iconName ? (<Animated.Text style={{ color: iconColor }}>
           <Ionicons name={iconName} size={25} style={styles.icon} />
-        </Animated.Text>
+        </Animated.Text>) : null}
 
         <Animated.Text style={[styles.title, { color: titleColor }]}>
           {title}
         </Animated.Text>
 
-        <Animated.Text style={[styles.subtitle, { color: subtitleColor }]}>
+        {subtitle ? <Animated.Text style={[styles.subtitle, { color: subtitleColor }]}>
           {subtitle}
-        </Animated.Text>
+        </Animated.Text> : null}
       </Animated.View>
     </TouchableOpacity>
   );
@@ -135,10 +136,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: "bold",
+    textAlign: "center",
   },
   
   subtitle: {
     fontSize: 14,
-    fontWeight: "600"
+    fontWeight: "600",
+    textAlign: "center",
   },
 });
