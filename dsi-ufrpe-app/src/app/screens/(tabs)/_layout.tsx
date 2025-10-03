@@ -1,24 +1,28 @@
 import { Ionicons } from '@expo/vector-icons';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { Tabs } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-export default function TabLayout() {
+export default function Layout() {
+  const insets = useSafeAreaInsets();
+  const screenOptions = {
+    tabBarActiveTintColor: "#FF4F19",
+    tabBarInactiveTintColor: "#132F3B",
+    headerShown: false,
+    tabBarStyle: {
+      height: 50 + insets.bottom,
+      paddingBottom: insets.bottom,
+    }
+  };
   return (
-    <Tabs screenOptions={{ 
-      tabBarActiveTintColor: "#FF4F19",
-      tabBarInactiveTintColor: "#132F3B",
-      headerShown: false,
-      tabBarStyle: {
-        height: 50
-      }
-    }}>
+    <Tabs screenOptions={screenOptions}>
       <Tabs.Screen
         name="reservas"
         options={{
           title: 'Reservas',
           headerShown: false,
           tabBarIcon: ({ color, focused }) => (
-              <FontAwesome5 name="concierge-bell" size={24} color={focused ? color: "#132F3B"}  />
+            <FontAwesome5 name="concierge-bell" size={24} color={focused ? color: "#132F3B"}  />
           ),
         }}
       />
@@ -28,7 +32,7 @@ export default function TabLayout() {
           title: 'Início',
           headerShown: false,
           tabBarIcon: ({ color, focused }) =>
-                <Ionicons name="home" size={24} color={focused ? color: "#132F3B"}  />
+            <Ionicons name="home" size={24} color={focused ? color: "#132F3B"}  />
         }}
       />
       <Tabs.Screen
