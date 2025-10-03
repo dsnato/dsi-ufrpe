@@ -1,9 +1,7 @@
-import { Image } from "expo-image";
-import React from "react";
-import { StyleSheet, View, Text } from "react-native";
-import BookingCard from "@/src/components/BookingCard";
-import EventCard from "@/src/components/EventCard";
 import Header from "@/src/components/Header";
+import React from "react";
+import { StyleSheet, Text, View } from "react-native";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 
 export default function Map() {
@@ -35,29 +33,33 @@ export default function Map() {
     }
 
     return (
-        <View style={styles.mainContainer}>
-            <Header title="MAPA"/>
+        <SafeAreaProvider>
+            <SafeAreaView style={{ flex: 1, backgroundColor: "#000" }}>
+                <View style={styles.mainContainer}>
+                    <Header title="MAPA"/>
 
-            <View style={styles.welcomeMessage}>
-                <Text style={styles.text}>
-                    Olá, {nome}, bem-vindo de volta!
-                </Text>
-            </View>
+                    <View style={styles.welcomeMessage}>
+                        <Text style={styles.text}>
+                            Olá, {nome}, bem-vindo de volta!
+                        </Text>
+                    </View>
 
-            <View style={styles.proximasReservas}>
-                <Text style={styles.textVariant}>
-                    Próximas Reservas
-                </Text>
-                
-            </View>
+                    <View style={styles.proximasReservas}>
+                        <Text style={styles.textVariant}>
+                            Próximas Reservas
+                        </Text>
+                        
+                    </View>
 
-            <View style={styles.atividadesHoje}>
-                <Text style={styles.textVariant}>
-                    Atividades de Hoje
-                </Text>
+                    <View style={styles.atividadesHoje}>
+                        <Text style={styles.textVariant}>
+                            Atividades de Hoje
+                        </Text>
 
-            </View>
-        </View>
+                    </View>
+                </View>
+            </SafeAreaView>
+        </SafeAreaProvider>
     )
 }
 
