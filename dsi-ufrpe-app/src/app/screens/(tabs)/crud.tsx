@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet, View, Text } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
@@ -14,7 +14,7 @@ export default function Crud() {
         <SafeAreaProvider>
             <SafeAreaView style={{backgroundColor: "black", width: "100%", flex: 1}}>
                 <View style={{backgroundColor: "white", flex: 1, width: "100%", height: "100%"}}>
-                    <Header title={"CRUD"}/>
+                    <Header title={"CRUD2"}/>
                     <View style={styles.mainContainer}>
                         <View style={styles.gridContainer}>
                             <View style={styles.gridRow}>

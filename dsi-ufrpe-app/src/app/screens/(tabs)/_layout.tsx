@@ -36,7 +36,7 @@ export default function Layout() {
         }}
       />
       <Tabs.Screen
-        name="crud"
+        name="cliente"
         options={{
           title: 'Clientes',
           headerShown: false,
