@@ -1,44 +1,48 @@
-import { StyleSheet, Text, TextInput, TextInputProps, View } from "react-native";
+import { StyleSheet, TextInput, TextInputProps, View, Image } from "react-native";
 
 type Props = TextInputProps & {
-    label: string;
+    label?: string;
+    leftIcon?: React.ReactNode; // Permite passa um ícone
 };
 
-export default function Input({ label, ...rest }: Props) {
+// Com o leftIcon, poderá ser passado de maneira livre o ícone a partir das tags necessárias (seja por Ionicons ou Image)
+
+export default function InputText({ label, leftIcon, ...rest }: Props) {
     return (
-        <View style={styles.container}>
-            <Text style={styles.label}>{label}</Text>
-            <View style={styles.inputContainer}>
-                <TextInput style={styles.input} placeholderTextColor="rgba(157, 163, 163)" {...rest} />
+        <View style={styles.inputContainer}>
+            <View style={styles.inputRow}>
+                {leftIcon}
+                <TextInput
+                    placeholder={label}
+                    style={styles.input}
+                    placeholderTextColor="#a0a0a0"
+                    {...rest}
+                />
             </View>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        marginVertical: 12,
-        width: '100%', // Ajusta a largura do container
-    },
-    label: {
-        fontSize: 16,
-        marginBottom: 6,
-        color: "#0162B3",
-        fontWeight: "500",
-    },
     inputContainer: {
-        borderBlockColor: "#737a7aff",
-        backgroundColor: "#e0f7f7",
-        borderRadius: 4,
-        paddingHorizontal: 12,
+        backgroundColor: "#EFEFF0", // fundo cinza claro
+        borderColor: "#c4c4c4",
+        borderWidth: 1,
+        borderRadius: 20,
+        paddingHorizontal: 16,
+        justifyContent: "space-between",
+        height: 45, // mesma altura para todos
+        marginVertical: 20,
+        width: '100%'
+    },
+    inputRow: {
         flexDirection: "row",
         alignItems: "center",
-        width: '100%', // Ajusta a largura do input container
+        height: '100%',
     },
     input: {
         flex: 1,
-        paddingVertical: 10,
-        color: "#7b8888ff",
-        width: '100%', // Garante que o input ocupe toda a largura
+        fontSize: 14,
+        color: "#000", // cor do texto digitado
     },
 });
