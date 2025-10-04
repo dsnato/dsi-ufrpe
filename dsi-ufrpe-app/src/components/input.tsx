@@ -1,44 +1,34 @@
-import { StyleSheet, Text, TextInput, TextInputProps, View } from "react-native";
+import { StyleSheet, TextInput, TextInputProps, View } from "react-native";
 
-type Props = TextInputProps & {
-    label: string;
-};
+type Props = TextInputProps;
 
-export default function Input({ label, ...rest }: Props) {
+export default function InputText({ ...rest }: Props) {
     return (
-        <View style={styles.container}>
-            <Text style={styles.label}>{label}</Text>
-            <View style={styles.inputContainer}>
-                <TextInput style={styles.input} placeholderTextColor="rgba(157, 163, 163)" {...rest} />
-            </View>
+        <View style={styles.inputContainer}>
+            <TextInput
+                style={styles.input}
+                placeholderTextColor="#a0a0a0"
+                {...rest}
+            />
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        marginVertical: 12,
-        width: '100%', // Ajusta a largura do container
-    },
-    label: {
-        fontSize: 16,
-        marginBottom: 6,
-        color: "#0162B3",
-        fontWeight: "500",
-    },
     inputContainer: {
-        borderBlockColor: "#737a7aff",
-        backgroundColor: "#e0f7f7",
-        borderRadius: 4,
-        paddingHorizontal: 12,
-        flexDirection: "row",
-        alignItems: "center",
-        width: '100%', // Ajusta a largura do input container
+        backgroundColor: "#EFEFF0", // fundo cinza claro
+        borderColor: "#c4c4c4",
+        borderWidth: 1,
+        borderRadius: 20,
+        paddingHorizontal: 16,
+        justifyContent: "center",
+        height: 45, // mesma altura para todos
+        marginVertical: 20,
+        width: '100%'
     },
     input: {
         flex: 1,
-        paddingVertical: 10,
-        color: "#7b8888ff",
-        width: '100%', // Garante que o input ocupe toda a largura
+        fontSize: 14,
+        color: "#000", // cor do texto digitado
     },
 });
