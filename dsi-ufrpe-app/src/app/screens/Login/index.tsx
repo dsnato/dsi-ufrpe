@@ -33,7 +33,7 @@ const LoginScreen: React.FC = () => {
       {/* Container do Form */}
       <View style={styles.form}>
         {/* Email */}
-        <InputText label='Email' leftIcon={<Image source={require("@/assets/images/at-email.png")} style={{ marginRight: 10 }}></Image>}></InputText>
+        <InputText label='E-mail' leftIcon={<Image source={require("@/assets/images/at-email.png")} style={{ marginRight: 10 }}></Image>}></InputText>
 
         {/* Senha */}
         <PasswordInput leftIcon={<Image source={require("@/assets/images/key-password.png")} style={{ marginRight: 10 }}></Image>}></PasswordInput>
