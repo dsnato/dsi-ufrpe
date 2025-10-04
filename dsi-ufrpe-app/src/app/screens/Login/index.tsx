@@ -1,7 +1,8 @@
 import ButtonPoint from '@/src/components/button';
-import { Ionicons } from "@expo/vector-icons";
 import { router } from 'expo-router';
 import React, { useState } from 'react';
+import InputText from '@/src/components/input';
+import PasswordInput from '@/src/components/password';
 import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const LoginScreen: React.FC = () => {
@@ -19,47 +20,33 @@ const LoginScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Image
-        source={require('@/assets/images/hotel1.png')}
-        style={styles.logo}
-      />
+
+      {/* Container da Logo */}
+      <View style={styles.logoContainer}>
+        <Image
+          source={require('@/assets/images/hotel1.png')}
+          style={styles.logo}
+        />
+        <Text style={styles.logoText}>Hostify</Text>
+      </View>
+
+      {/* Container do Form */}
       <View style={styles.form}>
-        <TextInput
-          placeholder="Email"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          style={styles.input}
-        />
-        {/* Campo de senha com o mesmo estilo do input de email, apenas adicionando o ícone */}
-        <View style={styles.inputIconWrapper}>
-          <TextInput
-            placeholder="Senha"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry={secure}
-            style={styles.input}
-          />
-          <TouchableOpacity onPress={() => setSecure(!secure)} style={styles.iconEye}>
-            <Ionicons
-              name={secure ? "eye-off" : "eye"}
-              size={22}
-              color={secure ? "#737a7a" : "#2176ff"}
-            />
-          </TouchableOpacity>
-        </View>
-        <ButtonPoint
-          label="Entrar"
-          style={styles.button}
-          onPress={() => router.replace('/screens/(tabs)')}
-        />
-        <Text style={styles.registerText}>
-          Não tem uma conta?{' '}
-          <Text style={styles.registerLink} onPress={registerTransition}>
-            Cadastre-se
+        {/* Email */}
+        <InputText label='Email' leftIcon={<Image source={require("@/assets/images/at-email.png")} style={{ marginRight: 10 }}></Image>}></InputText>
+
+        {/* Senha */}
+        <PasswordInput leftIcon={<Image source={require("@/assets/images/key-password.png")} style={{ marginRight: 10 }}></Image>}></PasswordInput>
+
+        <View style={styles.buttonContainer}>
+          <ButtonPoint label="Entrar" onPress={() => router.replace('/screens/(tabs)')} />
+          <Text style={styles.registerText}>
+            Não tem uma conta? <Text style={styles.registerLink} onPress={registerTransition}>Cadastre-se</Text>
           </Text>
-        </Text>
+          <Text style={styles.registerText}>
+            Esqueceu a senha? <Text style={styles.registerLink} onPress={registerTransition}>Recuperar</Text>
+          </Text>
+        </View>
       </View>
     </View>
   );
@@ -68,23 +55,46 @@ const LoginScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#132F3B',
     alignItems: 'center',
     justifyContent: 'center',
   },
+  logoContainer: {
+    position: 'absolute',
+    top: 80,              // controla a altura da logo
+    alignSelf: 'center',
+    alignItems: 'center',
+    zIndex: 2,            // garante que fique acima do form
+  },
   logo: {
-    width: 200,
-    height: 200,
-    marginBottom: 24,
-    marginTop: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 150,
+    height: 150,
+  },
+  logoText: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#0162B3',
+    marginTop: 8,
   },
   form: {
-    width: '85%',
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 0,
+    flex: 1,                   // ocupa todo o espaço disponível
+    width: '100%',             // vai de ponta a ponta
+    backgroundColor: '#EFEFF0',// cor do retângulo
+    borderTopLeftRadius: 20,   // arredonda só em cima
+    borderTopRightRadius: 20,
+    paddingVertical: 24,
+    paddingHorizontal: 20,
     alignItems: 'center',
-    elevation: 2,
+    justifyContent: 'center',
+    // sombra para parecer "cartão"
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    marginTop: 140,
   },
   input: {
     width: '100%',
@@ -96,26 +106,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     color: '#9da3a3ff',
   },
-  button: {
+  buttonContainer: {
     width: '100%',
-    backgroundColor: '#4a6cf7',
-    borderRadius: 4,
-    paddingVertical: 12,
-    marginTop: 8,
-    marginBottom: 16,
+    marginTop: 20,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 10,
   },
   registerText: {
     color: '#666',
     fontSize: 15,
     textAlign: 'center',
-    marginTop: 4,
   },
   registerLink: {
-    color: '#2176ff',
+    color: '#0162B3',
     fontWeight: 'bold',
-    textDecorationLine: 'underline',
   },
   inputIconWrapper: {
     width: '100%',
