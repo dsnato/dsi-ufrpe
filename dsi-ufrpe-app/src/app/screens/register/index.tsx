@@ -1,5 +1,5 @@
 import ButtonPoint from '@/src/components/button';
-import Input from '@/src/components/input';
+import InputText from '@/src/components/input';
 import PasswordInput from '@/src/components/password';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
@@ -24,104 +24,87 @@ const RegisterScreen: React.FC = () => {
 
     return (
         <View style={styles.container}>
-            <View style={styles.header}>
-                <Image
-                    source={require('@/assets/images/hotel1.png')}
-                    style={styles.iconSmall}
-                />
-                <Text style={styles.appName}>Hostify</Text>
-            </View>
+            <Text style={styles.textCadastro}>
+                Cadastro
+            </Text>
             <View style={styles.form}>
-                <Input
-                    label="Nome"
-                    placeholder="Digite seu nome"
-                    value={form.name}
-                    onChangeText={(text) => setForm({ ...form, name: text })}
-                />
-                <Input
-                    label="Email Institucional"
-                    placeholder="Digite seu email"
-                    value={form.email}
-                    onChangeText={(text) => setForm({ ...form, email: text })}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                />
-                <PasswordInput
-                    placeholder="Digite sua senha"
-                    value={form.password}
-                    onChangeText={text => setForm({ ...form, password: text })}
-                />
-                <Input
-                    label="Telefone"
-                    placeholder="(81) 9 0000-0000"
-                    value={form.telefone}
-                    onChangeText={(text) => setForm({ ...form, telefone: text })}
-                    keyboardType="phone-pad"
-                />
-                <ButtonPoint label="Cadastrar" onPress={handleSubmit} style={styles.button} />
-                <Text style={styles.footerText}>
-                    Já tem uma conta?{' '}
-                    <Text style={styles.footerLink} onPress={handleLoginRedirect}>
-                        Entrar
+                <View style={styles.inputsContainer}>
+                    <InputText label='Nome' leftIcon={<Image source={require("@/assets/images/edit-name.png")} style={{ marginRight: 10 }}></Image>}></InputText>
+                    <InputText label='E-mail' leftIcon={<Image source={require("@/assets/images/at-email.png")} style={{ marginRight: 10 }}></Image>}></InputText>
+                    <PasswordInput label='Senha' leftIcon={<Image source={require("@/assets/images/key-password.png")} style={{ marginRight: 10 }}></Image>}></PasswordInput>
+                    <PasswordInput label='Confirmar Senha'  leftIcon={<Image source={require("@/assets/images/key-password.png")} style={{ marginRight: 10 }}></Image>}></PasswordInput>
+                    <InputText label='CNPJ'  leftIcon={<Image source={require("@/assets/images/id-cnpj.png")} style={{ marginRight: 10 }}></Image>}></InputText>
+                    <InputText label='Nome do Hotel'  leftIcon={<Image source={require("@/assets/images/nome-hotel.png")} style={{ marginRight: 10 }}></Image>}></InputText>
+                </View>
+
+                <View style={styles.buttonContainer}>
+                    <ButtonPoint label="Cadastrar" onPress={handleSubmit} />
+                    <View style={styles.separator} />
+                    <Text style={styles.footerText}>
+                        Já tem uma conta?{' '}
+                        <Text style={styles.footerLink} onPress={handleLoginRedirect}>
+                            Entrar
+                        </Text>
                     </Text>
-                </Text>
+                </View>
             </View>
         </View>
     );
 };
 
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingHorizontal: 24,
+        backgroundColor: '#132f3b',
     },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: 30,
-    },
-    iconSmall: {
-        width: 40,
-        height: 40,
-        marginRight: 8,
-    },
-    appName: {
-        fontSize: 32,
+    textCadastro: {
+        color: '#ffe157',
+        fontSize: 24,
         fontWeight: 'bold',
-        color: '#2176ff',
+        textAlign: 'center',
+        marginTop: 60,
+        marginBottom: 20,
     },
     form: {
+        flex: 1,
         width: '100%',
-        backgroundColor: '#fff',
-        borderRadius: 8,
-        padding: 0,
-        alignItems: 'center',
-        elevation: 2,
+        backgroundColor: '#efeff0',
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        paddingVertical: 30,
+        paddingHorizontal: 24,
+        paddingBottom: 20,
+        elevation: 6,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 6,
+        marginTop: 20,
     },
-    button: {
+    inputsContainer: {
         width: '100%',
-        backgroundColor: '#4a6cf7',
-        borderRadius: 4,
-        paddingVertical: 12,
-        marginTop: 8,
-        marginBottom: 16,
+        gap: 12,
+    },
+    buttonContainer: {
+        width: '100%',
+        marginTop: 20,
         alignItems: 'center',
-        justifyContent: 'center'
+    },
+    separator: {
+        width: '80%',
+        height: 1,
+        backgroundColor: '#ccc',
+        marginVertical: 20,
     },
     footerText: {
         color: '#666',
-        fontSize: 15,
+        fontSize: 14,
         textAlign: 'center',
-        marginTop: 4,
     },
     footerLink: {
-        color: '#2176ff',
+        color: '#0162b3',
         fontWeight: 'bold',
-        textDecorationLine: 'underline',
     },
 });
 
