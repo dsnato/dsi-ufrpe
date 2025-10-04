@@ -1,5 +1,4 @@
 import ButtonPoint from '@/src/components/button';
-import { Ionicons } from "@expo/vector-icons";
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import InputText from '@/src/components/input';
@@ -34,12 +33,10 @@ const LoginScreen: React.FC = () => {
       {/* Container do Form */}
       <View style={styles.form}>
         {/* Email */}
-        <InputText placeholder='Email'></InputText>
+        <InputText label='Email' leftIcon={<Image source={require("@/assets/images/at-email.png")} style={{ marginRight: 10 }}></Image>}></InputText>
 
         {/* Senha */}
-        <PasswordInput></PasswordInput>
-
-
+        <PasswordInput leftIcon={<Image source={require("@/assets/images/key-password.png")} style={{ marginRight: 10 }}></Image>}></PasswordInput>
 
         <View style={styles.buttonContainer}>
           <ButtonPoint label="Entrar" onPress={() => router.replace('/screens/(tabs)')} />
@@ -113,13 +110,13 @@ const styles = StyleSheet.create({
     width: '100%',
     marginTop: 20,
     alignItems: 'center',
-
+    justifyContent: 'center',
+    gap: 10,
   },
   registerText: {
     color: '#666',
     fontSize: 15,
     textAlign: 'center',
-    marginTop: 10,
   },
   registerLink: {
     color: '#0162B3',

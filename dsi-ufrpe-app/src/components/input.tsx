@@ -1,15 +1,24 @@
-import { StyleSheet, TextInput, TextInputProps, View } from "react-native";
+import { StyleSheet, TextInput, TextInputProps, View, Image } from "react-native";
 
-type Props = TextInputProps;
+type Props = TextInputProps & {
+    label?: string;
+    leftIcon?: React.ReactNode; // Permite passa um ícone
+};
 
-export default function InputText({ ...rest }: Props) {
+// Com o leftIcon, poderá ser passado de maneira livre o ícone a partir das tags necessárias (seja por Ionicons ou Image)
+
+export default function InputText({ label, leftIcon, ...rest }: Props) {
     return (
         <View style={styles.inputContainer}>
-            <TextInput
-                style={styles.input}
-                placeholderTextColor="#a0a0a0"
-                {...rest}
-            />
+            <View style={styles.inputRow}>
+                {leftIcon}
+                <TextInput
+                    placeholder={label}
+                    style={styles.input}
+                    placeholderTextColor="#a0a0a0"
+                    {...rest}
+                />
+            </View>
         </View>
     );
 }
@@ -21,10 +30,15 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderRadius: 20,
         paddingHorizontal: 16,
-        justifyContent: "center",
+        justifyContent: "space-between",
         height: 45, // mesma altura para todos
         marginVertical: 20,
         width: '100%'
+    },
+    inputRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        height: '100%',
     },
     input: {
         flex: 1,
