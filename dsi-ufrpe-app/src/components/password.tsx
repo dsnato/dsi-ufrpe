@@ -6,15 +6,16 @@ import { StyleSheet, Text, TextInput, TextInputProps, TouchableOpacity, View } f
 
 type Props = TextInputProps & {
   label?: string;
+  leftIcon?: React.ReactNode;
 };
 
-const PasswordInput = ({ label = "Senha", ...rest }: Props) => {
+const PasswordInput = ({ label = "Senha", leftIcon, ...rest }: Props) => {
   const [secure, setSecure] = useState(true);
   const [password, setPassword] = useState('');
 
   return (
     <View style={styles.inputContainer}>
-      <InputText placeholder={label} secureTextEntry={secure} value={password} onChangeText={setPassword}></InputText>
+      <InputText placeholder={label} secureTextEntry={secure} value={password} onChangeText={setPassword} leftIcon={leftIcon}></InputText>
       <TouchableOpacity onPress={() => setSecure(!secure)} style={styles.iconEye}>
         <Ionicons
           name={secure ? "eye-off" : "eye"}
