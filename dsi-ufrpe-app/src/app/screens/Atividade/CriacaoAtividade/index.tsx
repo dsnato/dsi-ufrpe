@@ -11,11 +11,11 @@ const CriarAtividade: React.FC = () => {
                 <Image source={require("@/assets/images/callback-vector.png")}></Image>
             </TouchableOpacity>
             <View style={styles.form}>
-                < InputWithText labelText="Nome da Atividade" placeholder="Digite o nome da Atividade" />
+                < InputWithText labelText="Nome da Atividade" placeholder="Digite o nome da Atividade" required={true} />
                 < InputWithText labelText="Descrição da Atividade" placeholder="Digite a descrição da Atividade" />
                 < InputWithText labelText="Local da Atividade" placeholder="Digite o local da Atividade" />
-                < InputWithText labelText="Data da Atividade" placeholder="Digite a data da Atividade" />
-                < InputWithText labelText="Hora da Atividade" placeholder="Digite o horário da Atividade" />
+                < InputWithText labelText="Data da Atividade" placeholder="Digite a data da Atividade" required={true} />
+                < InputWithText labelText="Hora da Atividade" placeholder="Digite o horário da Atividade" required={true} />
                 <ButtonPoint label='Confirmar Atividade'></ButtonPoint>
             </View>
         </View>
