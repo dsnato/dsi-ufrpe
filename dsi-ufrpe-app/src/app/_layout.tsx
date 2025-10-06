@@ -31,6 +31,14 @@ export default function AppLayout() {
           headerShown: false
         }} 
       />
+
+      <Stack.Screen
+        name="screens/Quarto/CriacaoQuarto/index"
+        options={{
+          headerShown: false
+        }}
+      />
     </Stack>
+    
   );
 }
