@@ -43,6 +43,18 @@ export default function AppLayout() {
           headerShown: false
         }}
       />
+      <Stack.Screen
+        name="screens/Atividade/InfoAtividade/index"
+        options={{
+          headerShown: false
+        }}
+      />
+      <Stack.Screen
+        name="screens/Atividade/ListagemAtividade/index"
+        options={{
+          headerShown: false
+        }}
+      />
     </Stack>
   );
 }
