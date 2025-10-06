@@ -7,9 +7,10 @@ type InfoCardProps = {
   title: string;
   subtitle?: string;
   elevate?: boolean;
+  textColor?: string;
 }
 
-export default function InfoCard({ title, subtitle, iconName, elevate }: InfoCardProps) {
+export default function InfoCard({ title, subtitle, iconName, elevate, textColor }: InfoCardProps) {
   const [backgroundAnim] = useState(new Animated.Value(0));
   const [titleAnim] = useState(new Animated.Value(0));
   const [iconAnim] = useState(new Animated.Value(0));
@@ -97,7 +98,7 @@ export default function InfoCard({ title, subtitle, iconName, elevate }: InfoCar
           <Ionicons name={iconName} size={25} style={styles.icon} />
         </Animated.Text>) : null}
 
-        <Animated.Text style={[styles.title, { color: titleColor }]}>
+        <Animated.Text style={[styles.title, { color: titleColor }, textColor ? { color: textColor } : null]}>
           {title}
         </Animated.Text>
 
@@ -118,7 +119,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5, // Para Android
   },
-  
+
   card: {
     borderRadius: 20,
     padding: 8,
@@ -128,17 +129,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     rowGap: 3,
   },
-  
+
   icon: {
     marginBottom: 4,
   },
-  
+
   title: {
     fontSize: 16,
     fontWeight: "bold",
     textAlign: "center",
   },
-  
+
   subtitle: {
     fontSize: 14,
     fontWeight: "600",
