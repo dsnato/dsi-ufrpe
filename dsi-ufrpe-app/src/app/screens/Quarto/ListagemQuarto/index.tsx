@@ -1,102 +1,111 @@
-import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Modal, Alert, StyleSheet, TextInput } from 'react-native';
-import { useRouter } from 'expo-router';
-import QuartoListItem from '@/src/components/QuartoListItem';
-import QuartoForm from '@/src/components/QuartoForm'
+import HeaderName from "@/src/components/HeaderName";
+import InfoCard from "@/src/components/InfoCard";
+import TextInputRounded from "@/src/components/TextInputRounded";
+import { useRouter } from "expo-router";
+import { useState } from "react";
+import { FlatList, StyleSheet, Text, View } from "react-native";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 const initialData = [
-  { id: '1', numero_quarto: '101', tipo: 'Solteiro', capacidade: 1, preco_diario: 100, foto_quarto: '' },
-  { id: '2', numero_quarto: '102', tipo: 'Casal', capacidade: 2, preco_diario: 150, foto_quarto: '' },
-  { id: '3', numero_quarto: '103', tipo: 'Suite', capacidade: 4, preco_diario: 300, foto_quarto: '' },
+  { id: '1', numero: '101', tipo: 'solteiro' },
+  { id: '2', numero: '102', tipo: 'casal' },
+  { id: '3', numero: '103', tipo: 'solteiro' },
+  { id: '4', numero: '104', tipo: 'casal' },
+  { id: '5', numero: '105', tipo: 'solteiro' },
+  { id: '6', numero: '106', tipo: 'casal' },
+  { id: '7', numero: '107', tipo: 'solteiro' },
+  { id: '8', numero: '108', tipo: 'casal' },
+  { id: '9', numero: '109', tipo: 'solteiro' },
+  { id: '10', numero: '110', tipo: 'casal' },
 ];
 
-export default function CrudQuartosGeral() {
-  const router = useRouter();
-  const [items, setItems] = useState(initialData);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<any>(null);
-  const [search, setSearch] = useState('');
+export default function Crud() {
+    const router = useRouter();
+    const [items, setItems] = useState(initialData);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [selectedItem, setSelectedItem] = useState<any>(null);
+    const [search, setSearch] = useState('');
 
-  const handleEditPress = (item: any) => {
-    setSelectedItem(item);
-    setModalVisible(true);
-  };
+    const handleUpdate = (updatedData: any) => {
+        setItems(prev => prev.map(i => i.id === updatedData.id ? updatedData : i));
+        setModalVisible(false);
+        setSelectedItem(null);
+    };
+const filteredItems = items.filter(i => i.numero.toLowerCase().includes(search.toLowerCase()) || i.tipo.includes(search));
 
-  const handleUpdate = (updatedData: any) => {
-    setItems(prev => prev.map(i => i.id === updatedData.id ? updatedData : i));
-    setModalVisible(false);
-    setSelectedItem(null);
-  };
 
-  const handleDelete = (itemId: string) => {
-    Alert.alert(
-      'Confirmar Exclusão',
-      'Você tem certeza que deseja excluir este item?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Excluir', style: 'destructive', onPress: () => setItems(prev => prev.filter(i => i.id !== itemId)) },
-      ]
-    );
-  };
-
-  const filteredItems = items.filter(i => i.numero_quarto.includes(search) || i.tipo.toLowerCase().includes(search.toLowerCase()));
-
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>CRUD de Quartos</Text>
-      </View>
-
-      <TextInput
-        placeholder="Pesquisar..."
-        style={styles.searchInput}
-        value={search}
-        onChangeText={setSearch}
-      />
-
-      <FlatList
-        data={filteredItems}
-        keyExtractor={item => item.id}
-        renderItem={({ item }) => (
-          <QuartoListItem
-            item={item}
-            onPress={handleEditPress}
-            onDelete={handleDelete}
-          />
-        )}
-      />
-
-      <TouchableOpacity style={styles.createButton} onPress={() => router.push('/screens/CrudQuartos/Criacao')}>
-        <Text style={styles.createButtonText}>Criar</Text>
-      </TouchableOpacity>
-
-      <Modal
-        visible={modalVisible}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <QuartoForm
-              initialValues={selectedItem}
-              buttonText="Salvar"
-              onSubmit={handleUpdate}
-            />
-          </View>
-        </View>
-      </Modal>
-    </View>
-  );
+    return (
+        <SafeAreaProvider>
+            <SafeAreaView style={{backgroundColor: "black", width: "100%", flex: 1}}>
+                <View style={{backgroundColor: "white", flex: 1, width: "100%", height: "100%"}}>
+                    <View style={styles.mainContainer}>
+                        <View style={{alignItems: 'center', marginBottom: 20}}>
+                            <Text style={{fontSize: 24, fontWeight: 'bold', alignSelf: 'flex-start', marginHorizontal: 50, marginTop: 15, color: '#FFE157'}}>Funcionalidades</Text>
+                            <View style={styles.gridContainer}>
+                                <InfoCard title="Adicionar Quarto" elevate={false} />
+                            </View>
+                        </View>
+                        <TextInputRounded value={search} onChangeText={setSearch} />
+                        <View style={[styles.gridContainer, {flex: 1, backgroundColor: "#EFEFF0" ,borderTopLeftRadius: 50, borderTopRightRadius: 50, paddingHorizontal: 30, justifyContent: 'center', paddingTop: 20, flexDirection: 'column'}]}>
+                            <Text style={{fontSize: 24, fontWeight: 'bold', alignSelf: 'flex-start', marginTop: 15, color: '#4BBAED'}}>Lista de Quartos</Text>
+                            <FlatList
+                                data={filteredItems}
+                                keyExtractor={item => item.id}
+                                numColumns={2}
+                                renderItem={({ item }) => (
+                                    <View style={{flex: 1, margin: 5}}>
+                                        <InfoCard
+                                            iconName="bed"
+                                            // elevate={false}
+                                            title={item.numero}
+                                            subtitle={item.tipo}
+                                            // onPress={handleEditPress}
+                                        />
+                                    </View>
+                                )}
+                            />
+                        </View>
+                    </View>
+                </View>
+            </SafeAreaView>
+        </SafeAreaProvider>
+    )
 }
 
+
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 25, backgroundColor: '#fff' },
-  header: { backgroundColor: '#4169E1', padding: 15, borderRadius: 8, marginBottom: 15 },
-  headerText: { color: '#fff', fontWeight: 'bold', textAlign: 'center', fontSize: 18 },
-  createButton: { backgroundColor: '#4169E1', padding: 15, borderRadius: 8, alignItems: 'center', marginTop: 10 },
-  createButtonText: { color: '#fff', fontWeight: 'bold' },
-  modalOverlay: { flex:1, justifyContent:'center', alignItems:'center', backgroundColor:'rgba(0,0,0,0.5)' },
-  modalContainer: { width:'90%', maxHeight:'80%', backgroundColor:'#fff', borderRadius:10, padding:20 },
-  searchInput: { borderWidth:1, borderColor:'#718FE9', borderRadius:8, padding:10, marginBottom:10, width:'100%' },
-});
+    mainContainer: {
+        flex: 1,
+        width: "100%",
+        backgroundColor: "#132F3B",
+    },
+    gridContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    padding: 10,
+    gap: 10,
+    // backgroundColor: "red",
+  },
+  gridRow: {
+    flexDirection: 'row',
+    gap: 10,
+    paddingHorizontal: 26,
+    justifyContent: 'center'
+  },
+  gridItem: {
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: '#718FE9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 10,
+    width: '50%',
+    height: 160,
+  },
+  text: {
+    fontSize: 24,
+    color: "#718FE9",
+    fontWeight: "bold",
+    textAlign: 'center'
+  }
+})
