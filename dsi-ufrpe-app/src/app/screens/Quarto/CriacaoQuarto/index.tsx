@@ -11,10 +11,10 @@ const CriarQuarto: React.FC = () => {
                 <Image source={require("@/assets/images/callback-vector.png")}></Image>
             </TouchableOpacity>
             <View style={styles.form}>
-                <InputWithText labelText="Número do quarto" placeholder="Inserir número do quarto" />
-                <InputWithText labelText="Tipo do quarto" placeholder="Inserir tipo do quarto" />
-                <InputWithText labelText="Capacidade do quarto" placeholder="Escolher capacidade do quarto" />
-                <InputWithText labelText="Preço do quarto" placeholder="Escolher preço do quarto" />
+                <InputWithText labelText="Número do quarto" placeholder="Inserir número do quarto" required={true} />
+                <InputWithText labelText="Tipo do quarto" placeholder="Inserir tipo do quarto" required={true} />
+                <InputWithText labelText="Capacidade do quarto" placeholder="Escolher capacidade do quarto" required={true} />
+                <InputWithText labelText="Preço do quarto" placeholder="Escolher preço do quarto" required={true} />
                 <ButtonPoint label='Criar Quarto'></ButtonPoint>
             </View>
         </View>
