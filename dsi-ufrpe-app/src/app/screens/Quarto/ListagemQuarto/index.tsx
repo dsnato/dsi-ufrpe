@@ -38,7 +38,6 @@ const filteredItems = items.filter(i => i.numero.toLowerCase().includes(search.t
         <SafeAreaProvider>
             <SafeAreaView style={{backgroundColor: "black", width: "100%", flex: 1}}>
                 <View style={{backgroundColor: "white", flex: 1, width: "100%", height: "100%"}}>
-                    <HeaderName title="Renato Samico" iconNameLeft="person-circle" iconNameRight="exit"/>
                     <View style={styles.mainContainer}>
                         <View style={{alignItems: 'center', marginBottom: 20}}>
                             <Text style={{fontSize: 24, fontWeight: 'bold', alignSelf: 'flex-start', marginHorizontal: 50, marginTop: 15, color: '#FFE157'}}>Funcionalidades</Text>
