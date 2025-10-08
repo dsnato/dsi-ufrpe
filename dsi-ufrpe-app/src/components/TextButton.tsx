@@ -5,14 +5,18 @@ import InputText from "./input";
 type Props = {
     labelText: string,
     placeholder: string,
+    required?: boolean, // Faz com que adicione o asterisco vermelho se for true
 }
 
 
 // Componente
-export default function InputWithText({ labelText, placeholder }: Props) {
+export default function InputWithText({ labelText, placeholder, required }: Props) {
     return <>
         <View style={styles.container}>
-            <Text style={styles.text}> {labelText}</Text>
+            <Text style={styles.text}>
+                {labelText}
+                {required && <Text style={{ color: '#DE3E3E', fontSize: 16, fontWeight: 'bold' }}> *</Text>}
+            </Text>
             <InputText placeholder={placeholder} />
         </View>
     </>;

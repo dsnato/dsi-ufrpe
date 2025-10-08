@@ -1,33 +1,58 @@
 import React from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
-import QuartoForm from '@/src/components/QuartoForm';
+import { View, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import InputWithText from '@/src/components/TextButton';
+import ButtonPoint from '@/src/components/button';
 
-export default function CriacaoQuarto() {
-  const router = useRouter();
+const CriarQuarto: React.FC = () => {
 
-  const handleCreate = (formData: any) => {
-    console.log('Novo Quarto:', formData);
-    Alert.alert('Sucesso', 'Quarto criado com sucesso!');
-    router.back();
-  };
-
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Criar Quarto</Text>
-      </View>
-
-      <View style={styles.formContainer}>
-        <QuartoForm onSubmit={handleCreate} buttonText="Cadastrar" />
-      </View>
-    </View>
-  );
+    return (
+        <View style={styles.container}>
+            <TouchableOpacity onPress={() => { }} style={styles.backButton}>
+                <Image source={require("@/assets/images/callback-vector.png")}></Image>
+            </TouchableOpacity>
+            <View style={styles.form}>
+                <InputWithText labelText="Número do quarto" placeholder="Inserir número do quarto" required={true} />
+                <InputWithText labelText="Tipo do quarto" placeholder="Inserir tipo do quarto" required={true} />
+                <InputWithText labelText="Capacidade do quarto" placeholder="Escolher capacidade do quarto" required={true} />
+                <InputWithText labelText="Preço do quarto" placeholder="Escolher preço do quarto" required={true} />
+                <ButtonPoint label='Criar Quarto'></ButtonPoint>
+            </View>
+        </View>
+    );
 }
 
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  header: { backgroundColor: '#4169E1', padding: 15 },
-  headerText: { color: '#fff', fontWeight: 'bold', textAlign: 'center', fontSize: 18 },
-  formContainer: { flex: 1, padding: 25 },
-});
+    backButton: {
+        position: 'absolute',
+        top: 40,
+        left: 20,
+        zIndex: 1,
+    },
+    container: {
+        flex: 1,
+        backgroundColor: '#132F3B',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    form: {
+        flex: 1,                   // ocupa todo o espaço disponível
+        width: '100%',             // vai de ponta a ponta
+        backgroundColor: '#EFEFF0',// cor do retângulo
+        borderTopLeftRadius: 20,   // arredonda só em cima
+        borderTopRightRadius: 20,
+        paddingVertical: 24,
+        paddingHorizontal: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+        // sombra para parecer "cartão"
+        elevation: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        marginTop: 100,
+    }
+})
+
+export default CriarQuarto;
