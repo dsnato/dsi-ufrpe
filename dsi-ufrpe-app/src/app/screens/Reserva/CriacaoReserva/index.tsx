@@ -1,48 +1,60 @@
 import React from 'react';
-import { View, Text, StyleSheet, Alert, SafeAreaView } from 'react-native';
-import { useRouter } from 'expo-router';
-import ReservaForm from '@/src/components/ReservaForm';
+import { View, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import InputWithText from '@/src/components/TextButton';
+import ButtonPoint from '@/src/components/button';
 
-export default function CriarReservaScreen() {
-  const router = useRouter();
+const CriarAtividade: React.FC = () => {
 
-  const handleCreate = (formData: any) => {
-    console.log('Reserva criada:', formData);
-    Alert.alert('Sucesso', 'Reserva criada com sucesso!');
-    router.back();
-  };
+    return (
+        <View style={styles.container}>
+            <TouchableOpacity onPress={() => { }} style={styles.backButton}>
+                <Image source={require("@/assets/images/callback-vector.png")}></Image>
+            </TouchableOpacity>
+            <View style={styles.form}>
+                < InputWithText labelText="Data de Check-in" placeholder="Digite a Data do Check-in" required={true} />
+                < InputWithText labelText="Data de Check-out" placeholder="Digite a Data de Check-out" />
+                < InputWithText labelText="Tipo de Quarto" placeholder="Digite o tipo de Quarto" />
+                < InputWithText labelText="Valor total" placeholder="Digite o valor de Quarto" required={true} />
+                <ButtonPoint label='Confirmar Reserva'></ButtonPoint>
+            </View>
+        </View>
 
-  return (
-    <SafeAreaView style={styles.safe}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Criar Reserva</Text>
-      </View>
+    );
 
-      <View style={styles.container}>
-        <ReservaForm onSubmit={handleCreate} buttonText="Cadastrar" />
-      </View>
-    </SafeAreaView>
-  );
 }
 
+
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: '#4169E1',
-  },
-  header: {
-    backgroundColor: '#4169E1',
-    paddingVertical: 20,
-    alignItems: 'center',
-  },
-  headerTitle: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 18,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    padding: 25,
-  },
-});
+    backButton: {
+        position: 'absolute',
+        top: 40,
+        left: 20,
+        zIndex: 1,
+    },
+    container: {
+        flex: 1,
+        backgroundColor: '#132F3B',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    form: {
+        flex: 1,                   // ocupa todo o espaço disponível
+        width: '100%',             // vai de ponta a ponta
+        backgroundColor: '#EFEFF0',// cor do retângulo
+        borderTopLeftRadius: 20,   // arredonda só em cima
+        borderTopRightRadius: 20,
+        paddingVertical: 24,
+        paddingHorizontal: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+        // sombra para parecer "cartão"
+        elevation: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        marginTop: 100,
+    }
+})
+
+export default CriarAtividade;
