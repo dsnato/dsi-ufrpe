@@ -1,11 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import InputWithText from '@/src/components/TextButton';
 import ButtonPoint from '@/src/components/button';
-import SelectInput from '@/src/components/SelectInput';
 
 const CriarAtividade: React.FC = () => {
-    const [roomType, setRoomType] = useState<string>('');
 
     return (
         <View style={styles.container}>
@@ -15,21 +13,9 @@ const CriarAtividade: React.FC = () => {
             <View style={styles.form}>
                 < InputWithText labelText="Data de Check-in" placeholder="Digite a Data do Check-in" required={true} />
                 < InputWithText labelText="Data de Check-out" placeholder="Digite a Data de Check-out" />
-                <SelectInput
-                    labelText="Tipo de Quarto"
-                    options={[
-                        { label: 'Solteiro', value: 'solteiro' },
-                        { label: 'Casal', value: 'casal' },
-                        { label: 'Triplo', value: 'triplo' },
-                        { label: 'Quadruplo', value: 'quadruplo' },
-                    ]}
-                    selectedValue={roomType}
-                    onValueChange={(v) => setRoomType(v)}
-                    placeholder="Selecione o tipo de quarto"
-                />
-                < InputWithText labelText="Data da Atividade" placeholder="Digite a data da Atividade" required={true} />
-                < InputWithText labelText="Hora da Atividade" placeholder="Digite o horário da Atividade" required={true} />
-                <ButtonPoint label='Confirmar Atividade'></ButtonPoint>
+                < InputWithText labelText="Tipo de Quarto" placeholder="Digite o tipo de Quarto" />
+                < InputWithText labelText="Valor total" placeholder="Digite o valor de Quarto" required={true} />
+                <ButtonPoint label='Confirmar Reserva'></ButtonPoint>
             </View>
         </View>
 
