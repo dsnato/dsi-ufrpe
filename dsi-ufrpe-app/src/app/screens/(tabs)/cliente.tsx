@@ -17,7 +17,7 @@ const initialData = clientes;
 
 export default function Crud() {
     const router = useRouter();
-    const [items, setItems] = useState(initialData);
+    const [items] = useState(initialData);
     const [search, setSearch] = useState('');
     const filteredItems = items.filter(i => i.nome.toLowerCase().includes(search.toLowerCase()) || i.cpf.includes(search));
 
