@@ -1,16 +1,17 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
-import { Animated, StyleSheet, TouchableOpacity } from "react-native";
+import { Animated, StyleSheet, TouchableOpacity, TouchableOpacityProps } from "react-native";
 
-type InfoCardProps = {
+type InfoCardProps = TouchableOpacityProps & {
   iconName?: keyof typeof Ionicons.glyphMap; // typing mais seguro
   title: string;
   subtitle?: string;
   elevate?: boolean;
   textColor?: string;
+
 }
 
-export default function InfoCard({ title, subtitle, iconName, elevate, textColor }: InfoCardProps) {
+export default function InfoCard({ title, subtitle, iconName, elevate, textColor, ...rest }: InfoCardProps) {
   const [backgroundAnim] = useState(new Animated.Value(0));
   const [titleAnim] = useState(new Animated.Value(0));
   const [iconAnim] = useState(new Animated.Value(0));
@@ -90,6 +91,7 @@ export default function InfoCard({ title, subtitle, iconName, elevate, textColor
     <TouchableOpacity
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
+      {...rest}
       activeOpacity={1}
       style={[styles.touchable, elevate === false ? { elevation: 0 } : null]}
     >
@@ -112,6 +114,7 @@ export default function InfoCard({ title, subtitle, iconName, elevate, textColor
 
 const styles = StyleSheet.create({
   touchable: {
+    width: 160,
     borderRadius: 20,
     shadowColor: "#000",
     shadowOffset: { width: 2, height: 3 },
