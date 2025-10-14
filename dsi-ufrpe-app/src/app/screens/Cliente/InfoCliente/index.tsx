@@ -35,13 +35,13 @@ export default function InfoCard() {
                             placeholder={ "Imagem de Perfil" }
                             contentFit="cover"
                         />
-                        <Text style={{fontSize: 24, fontWeight: 'bold', marginTop: 20, color: '#FFE157'}}>{user?.nome}</Text>
+                        <Text style={{fontSize: 24, fontWeight: 'bold', marginTop: 20, color: '#FFE157'}}>{user?.name}</Text>
                     </View>
                     <ScrollView style={styles.InfoContainer}>
-                        <InfoDetail title="Cadastro de Pessoa Física (CPF)" label={user?.nome}/>
-                        <InfoDetail title="Endereço" label={`${user?.nome}, ${user?.nome}, ${user?.nome}, ${user?.nome} - ${user?.nome}, CEP: ${user?.nome}`}/>
-                        <InfoDetail title="Celular" label={user?.nome}/>
-                        <InfoDetail title="Email" label={user?.nome}/>
+                        <InfoDetail title="Cadastro de Pessoa Física (CPF)" label={user?.cpf}/>
+                        <InfoDetail title="Endereço" label={`${user?.street}, ${user?.number}, ${user?.neighborhood}, ${user?.city} - ${user?.state}, CEP: ${user?.zipCode}`}/>
+                        <InfoDetail title="Celular" label={user?.phone}/>
+                        <InfoDetail title="Email" label={user?.email}/>
                         <View style={{height: 100, width: '100%', marginTop: 20, marginBottom: 50, flexDirection: 'row', justifyContent: 'space-around'}}>
                             <TouchableOpacity style={{justifyContent: 'center', backgroundColor: '#fafafa', paddingHorizontal: 48, height: 80, borderRadius: 20, elevation: 5}}>
                                 <Text style={{fontSize: 20, fontWeight: 'bold', color: "#4BBAED"}}>Editar</Text>

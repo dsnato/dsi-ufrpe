@@ -9,8 +9,16 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 type Client = {
     id: string;
-    nome: string;
+    name: string;
     cpf: string;
+    street: string;
+    number: string;
+    neighborhood: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    // phone: string;
+    // email: string;
 };
 
 const initialData = clientes;
@@ -19,7 +27,7 @@ export default function Crud() {
     const router = useRouter();
     const [items] = useState(initialData);
     const [search, setSearch] = useState('');
-    const filteredItems = items.filter(i => i.nome.toLowerCase().includes(search.toLowerCase()) || i.cpf.includes(search));
+    const filteredItems = items.filter(i => i.name.toLowerCase().includes(search.toLowerCase()) || i.cpf.includes(search));
 
     function handleInfoClients(item: Client) {
         router.push({
@@ -56,7 +64,7 @@ export default function Crud() {
                                                             <InfoCard
                                                                 iconName="person-circle"
                                                                 // elevate={false}
-                                                                title={item.nome}
+                                                                title={item.name}
                                                                 subtitle={item.cpf}
                                                                 onPress={() => handleInfoClients(item)}
                                                             />
