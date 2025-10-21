@@ -2,10 +2,43 @@ import HeaderName from "@/src/components/HeaderName";
 import InfoCard from "@/src/components/InfoCard";
 import RoomInfoCard from "@/src/components/RoomInfoCard";
 import React from "react";
+import { useRouter } from "expo-router";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 export default function Home() {
+    const router = useRouter();
+
+    function handleClients() {
+        router.push({
+            pathname: "/screens/Cliente/ListagemCliente"
+        });
+    }
+
+    function handleReservations() {
+        router.push({
+            pathname: "/screens/Reserva/ListagemReserva",
+        });
+    }
+
+    function handleEmployees() {
+        router.push({
+            pathname: "/screens/Funcionario/ListagemFuncionario",
+        });
+    }
+
+    function handleRooms() {
+        router.push({
+            pathname: "/screens/Quarto/ListagemQuarto",
+        });
+    }
+
+    function handleActivities() {
+        router.push({
+            pathname: "/screens/Atividade/ListagemAtividade",
+        });
+    }
+
     return (
         <SafeAreaProvider>
             <SafeAreaView style={{flex: 1, backgroundColor: "#000"}}>
@@ -28,17 +61,17 @@ export default function Home() {
                             
                             <View style={styles.cardsSection}>
                                 <View style={styles.cardsRow}>
-                                    <InfoCard iconName="calendar" subtitle="9 planejadas" title="Reservas" />
-                                    <InfoCard iconName="person" subtitle="32 clientes" title="Cliente" />
+                                    <InfoCard iconName="calendar" subtitle="9 planejadas" title="Reservas" onPress={()=> handleReservations()}/>
+                                    <InfoCard iconName="person" subtitle="32 clientes" title="Cliente" onPress={()=> handleClients()}/>
                                 </View>
                                 
                                 <View style={styles.cardsRow}>
-                                    <InfoCard iconName="people" subtitle="7 contratados" title="Funcionarios" />
-                                    <InfoCard iconName="bed" subtitle="12 disponível" title="Quartos" />
+                                    <InfoCard iconName="people" subtitle="7 contratados" title="Funcionarios" onPress={() => handleEmployees()}/>
+                                    <InfoCard iconName="bed" subtitle="12 disponível" title="Quartos" onPress={() => handleRooms()}/>
                                 </View>
                                 
                                 <View style={styles.cardsRow}>
-                                    <InfoCard iconName="happy" subtitle="5 agendadas" title="Atividades" />
+                                    <InfoCard iconName="happy" subtitle="5 agendadas" title="Atividades" onPress={() => handleActivities()}/>
                                 </View>
                             </View>
 
