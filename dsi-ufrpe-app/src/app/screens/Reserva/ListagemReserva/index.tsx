@@ -31,6 +31,13 @@ export default function Crud() {
         setModalVisible(false);
         setSelectedItem(null);
     };
+
+    function handleInfoReserva() {
+        router.push({
+            pathname: "/screens/Reserva/InfoReserva",
+            // params: { id: item.id }
+        });
+    }
 const filteredItems = items.filter(i => i.numero.toLowerCase().includes(search.toLowerCase()) || i.dataReserva.includes(search));
 
 
@@ -42,7 +49,7 @@ const filteredItems = items.filter(i => i.numero.toLowerCase().includes(search.t
                         <View style={{alignItems: 'center', marginBottom: 20}}>
                             <Text style={{fontSize: 24, fontWeight: 'bold', alignSelf: 'flex-start', marginHorizontal: 50, marginTop: 15, color: '#FFE157'}}>Funcionalidades</Text>
                             <View style={styles.gridContainer}>
-                                <InfoCard title="Adicionar" elevate={false} />                            
+                                <InfoCard title="Adicionar" elevate={false} onPress={() => {router.push('/screens/Reserva/CriacaoReserva')}}/>                            
                             </View>
                         </View>
                         <TextInputRounded value={search} onChangeText={setSearch} />
@@ -58,7 +65,7 @@ const filteredItems = items.filter(i => i.numero.toLowerCase().includes(search.t
                                             iconName="bed"                                            // elevate={false}
                                             title={item.numero}
                                             subtitle={item.dataReserva}
-                                            // onPress={handleEditPress}
+                                            onPress={handleInfoReserva}
                                         />
                                     </View>
                                 )}
