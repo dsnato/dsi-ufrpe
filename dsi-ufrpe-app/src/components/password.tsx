@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
+import { StyleSheet, TextInputProps, TouchableOpacity, View } from "react-native";
 import InputText from "./input";
-import { StyleSheet, Text, TextInput, TextInputProps, TouchableOpacity, View } from "react-native";
 
 
 type Props = TextInputProps & {
@@ -11,11 +11,10 @@ type Props = TextInputProps & {
 
 const PasswordInput = ({ label = "Senha", leftIcon, ...rest }: Props) => {
   const [secure, setSecure] = useState(true);
-  const [password, setPassword] = useState('');
 
   return (
     <View style={styles.inputContainer}>
-      <InputText placeholder={label} secureTextEntry={secure} value={password} onChangeText={setPassword} leftIcon={leftIcon}></InputText>
+      <InputText placeholder={label} secureTextEntry={secure} leftIcon={leftIcon} {...rest}></InputText>
       <TouchableOpacity onPress={() => setSecure(!secure)} style={styles.iconEye}>
         <Ionicons
           name={secure ? "eye-off" : "eye"}

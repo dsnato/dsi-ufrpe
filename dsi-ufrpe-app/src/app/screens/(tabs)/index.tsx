@@ -1,12 +1,49 @@
+import { supabase } from "@/lib/supabase";
 import HeaderName from "@/src/components/HeaderName";
 import InfoCard from "@/src/components/InfoCard";
 import RoomInfoCard from "@/src/components/RoomInfoCard";
-import React from "react";
+import { Session } from "@supabase/supabase-js";
 import { useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { Alert } from "react-native";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
-export default function Home() {
+export default function Home({ session }: { session: Session }) {
+    const [loading, setLoading] = useState(true)
+    const [username, setUsername] = useState('')
+    const [website, setWebsite] = useState('')
+    const [avatarUrl, setAvatarUrl] = useState('')
+    useEffect(() => {
+        if (session) getProfile()
+    }, [session])
+
+    async function getProfile() {
+        try {
+        setLoading(true)
+        if (!session?.user) throw new Error('No user on the session!')
+        const { data, error, status } = await supabase
+            .from('profiles')
+            .select(`username, website, avatar_url`)
+            .eq('id', session?.user.id)
+            .single()
+        if (error && status !== 406) {
+            throw error
+        }
+        if (data) {
+            setUsername(data.username)
+            setWebsite(data.website)
+            setAvatarUrl(data.avatar_url)
+        }
+        } catch (error) {
+        if (error instanceof Error) {
+            Alert.alert(error.message)
+        }
+        } finally {
+        setLoading(false)
+        }
+    }
+    
     const router = useRouter();
 
     function handleClients() {
