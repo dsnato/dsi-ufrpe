@@ -2,9 +2,11 @@ import { supabase } from '@/lib/supabase';
 import ButtonPoint from '@/src/components/button';
 import InputText from '@/src/components/input';
 import PasswordInput from '@/src/components/password';
+import { useToast } from '@/src/components/ToastContext';
+import { getSuccessMessage, getValidationMessage, translateAuthError } from '@/src/utils/errorMessages';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, AppState, Image, StyleSheet, Text, View } from 'react-native';
+import { AppState, Image, StyleSheet, Text, View } from 'react-native';
 
 AppState.addEventListener('change', (state) => {
   if (state === 'active') {
@@ -18,12 +20,15 @@ const LoginScreen: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-
-  const handleLogin = () => {
-    Alert.alert('Login', `Email: ${email}\nPassword: ${password}`);
-  };
+  const { showSuccess, showError } = useToast();
 
   async function signInWithEmail() {
+    // Validações antes de enviar
+    if (!email || !password) {
+      showError(getValidationMessage(email ? 'password' : 'email', 'required'));
+      return;
+    }
+
     setLoading(true)
     const { error } = await supabase.auth.signInWithPassword({
       email: email,
@@ -31,14 +36,12 @@ const LoginScreen: React.FC = () => {
     })
     
     if (error) {
-      Alert.alert('Erro no Login', error.message)
+      showError(translateAuthError(error.message))
     } else {
-      Alert.alert('Sucesso!', 'Login realizado com sucesso!', [
-        {
-          text: 'OK',
-          onPress: () => router.replace('/screens/(tabs)')
-        }
-      ])
+      showSuccess(getSuccessMessage('login'))
+      setTimeout(() => {
+        router.replace('/screens/(tabs)')
+      }, 3000)
     }
     
     setLoading(false)
@@ -80,7 +83,7 @@ const LoginScreen: React.FC = () => {
         <View style={styles.buttonContainer}>
           <ButtonPoint
           label="Entrar"
-          // onPress={() => router.replace('/screens/(tabs)')}
+          loading={loading}
           onPress={() => {signInWithEmail()}}
           />
           <Text style={styles.registerText}>
