@@ -1,4 +1,4 @@
-import { StyleSheet, TextInput, TextInputProps, View, Image } from "react-native";
+import { StyleSheet, TextInput, TextInputProps, View } from "react-native";
 
 type Props = TextInputProps & {
     label?: string;
@@ -32,7 +32,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         justifyContent: "space-between",
         height: 45, // mesma altura para todos
-        marginVertical: 20,
+        marginVertical: 10,
         width: '100%'
     },
     inputRow: {
