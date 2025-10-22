@@ -2,10 +2,17 @@ import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import InfoText from '@/src/components/InfoText';
 import InfoCard from '@/src/components/InfoCard';
-
+import { useRouter } from 'expo-router';
 
 const InfoAtividade: React.FC = () => {
+    const router = useRouter();
 
+    function handleEditReservation() {
+        router.push({
+            pathname: "/screens/Reserva/EdicaoReserva",
+            // params: { id: item.id }
+        });
+    }
 
     return (
         <View style={styles.container}>
@@ -30,7 +37,7 @@ const InfoAtividade: React.FC = () => {
                     <InfoCard title='Confirmar Check-out' textColor='#DE3E3E'></InfoCard>
                 </View>
                 <View style={styles.options}>
-                    <InfoCard title='Editar Informação' textColor='#4BBAED'></InfoCard>
+                    <InfoCard title='Editar Informação' onPress={() => {handleEditReservation()}}></InfoCard>
                     <InfoCard title='Excluir' textColor='#DE3E3E'></InfoCard>
                 </View>
             </View>

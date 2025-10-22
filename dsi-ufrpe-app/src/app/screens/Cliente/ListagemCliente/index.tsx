@@ -1,37 +1,33 @@
 import HeaderName from "@/src/components/HeaderName";
 import InfoCard from "@/src/components/InfoCard";
 import TextInputRounded from "@/src/components/TextInputRounded";
+import clientes from "@/src/data/clientes.json";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { FlatList, StyleSheet, Text, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
-const initialData = [
-    { id: '1', nome: 'João Silva', cpf: '123.456.789-00' },
-    { id: '2', nome: 'Maria Santos', cpf: '987.654.321-00' },
-    { id: '3', nome: 'Pedro Oliveira', cpf: '456.123.789-11' },
-    { id: '4', nome: 'Ana Costa', cpf: '789.321.654-22' },
-    { id: '5', nome: 'Carlos Pereira', cpf: '654.987.321-33' },
-    { id: '6', nome: 'Juliana Lima', cpf: '321.654.987-44' },
-    { id: '7', nome: 'Roberto Alves', cpf: '147.258.369-55' },
-    { id: '8', nome: 'Fernanda Souza', cpf: '258.369.147-66' },
-    { id: '9', nome: 'Ricardo Martins', cpf: '369.147.258-77' },
-    { id: '10', nome: 'Amanda Rocha', cpf: '951.753.824-88' },
-];
+const initialData = clientes;
+
+type Client = {
+    id: string;
+    name: string;
+    cpf: string;
+    street: string;
+    number: string;
+    neighborhood: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    // phone: string;
+    // email: string;
+};
 
 export default function Crud() {
     const router = useRouter();
-    const [items, setItems] = useState(initialData);
-    const [modalVisible, setModalVisible] = useState(false);
-    const [selectedItem, setSelectedItem] = useState<any>(null);
+    const [items] = useState(initialData);
     const [search, setSearch] = useState('');
-
-    const handleUpdate = (updatedData: any) => {
-        setItems(prev => prev.map(i => i.id === updatedData.id ? updatedData : i));
-        setModalVisible(false);
-        setSelectedItem(null);
-    };
-const filteredItems = items.filter(i => i.nome.toLowerCase().includes(search.toLowerCase()) || i.cpf.includes(search));
+const filteredItems = items.filter(i => i.name.toLowerCase().includes(search.toLowerCase()) || i.cpf.includes(search));
 
 
     return (
@@ -59,9 +55,12 @@ const filteredItems = items.filter(i => i.nome.toLowerCase().includes(search.toL
                                         <InfoCard
                                             iconName="person-circle"
                                             // elevate={false}
-                                            title={item.nome}
+                                            title={item.name}
                                             subtitle={item.cpf}
-                                            // onPress={handleEditPress}
+                                            onPress={() => router.push({
+                                                pathname: "/screens/Cliente/InfoCliente",
+                                                params: { id: item.id }
+                                            })}
                                         />
                                     </View>
                                 )}
