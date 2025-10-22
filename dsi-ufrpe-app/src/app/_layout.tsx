@@ -1,12 +1,14 @@
+import { ToastProvider } from '@/src/components/ToastContext';
 import { Stack } from 'expo-router';
 
 export default function AppLayout() {
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false
-      }}
-    >
+    <ToastProvider>
+      <Stack
+        screenOptions={{
+          headerShown: false
+        }}
+      >
       <Stack.Screen name="screens/Login/index" options={{ headerShown: false }} />
       <Stack.Screen name="screens/register/index" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -46,6 +48,6 @@ export default function AppLayout() {
       <Stack.Screen name="screens/(tabs)/cliente" options={{ headerShown: false }} />
       <Stack.Screen name="screens/(tabs)/reservas" options={{ headerShown: false }} />
     </Stack>
-    
+    </ToastProvider>
   );
 }
