@@ -26,9 +26,29 @@ export default function RegisterScreen() {
         } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
+        options: {
+            data: {
+            display_name: form.name,
+            phone: form.telefone,
+            cnpj: form.cnpj,
+            hotel_name: form.hotelName,
+            }
+        }
         })
-        if (error) Alert.alert(error.message)
-        if (!session) Alert.alert('Please check your inbox for email verification!')
+        
+        if (error) {
+            Alert.alert('Erro no Cadastro', error.message)
+        } else if (!session) {
+            Alert.alert('Verificação Necessária', 'Por favor, verifique seu e-mail para confirmar o cadastro!')
+        } else {
+            Alert.alert('Sucesso!', 'Usuário cadastrado com sucesso!', [
+                {
+                    text: 'OK',
+                    onPress: () => router.replace('/')
+                }
+            ])
+        }
+        
         setLoading(false)
     }
 
@@ -38,15 +58,33 @@ export default function RegisterScreen() {
         router.navigate("/")
     };
 
-    const handleSubmit = () => {
-        Alert.alert('Cadastro', 'Usuário cadastrado com sucesso!');
-    };
-
     const handleSubmitRegister = () => {
-        if ((form.name || form.email || form.password || form.telefone) === null) {
-            Alert.alert('Erro', 'Por favor, preencha todos os campos.');
+        // Validação dos campos obrigatórios
+        if (!form.name || !form.email || !form.password || !form.confirmPassword) {
+            Alert.alert('Erro', 'Por favor, preencha todos os campos obrigatórios.');
             return;
         }
+
+        // Validação de confirmação de senha
+        if (form.password !== form.confirmPassword) {
+            Alert.alert('Erro', 'As senhas não conferem.');
+            return;
+        }
+
+        // Validação de email básica
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(form.email)) {
+            Alert.alert('Erro', 'Por favor, insira um e-mail válido.');
+            return;
+        }
+
+        // Validação de senha mínima
+        if (form.password.length < 6) {
+            Alert.alert('Erro', 'A senha deve ter no mínimo 6 caracteres.');
+            return;
+        }
+
+        // Se tudo estiver ok, faz o cadastro
         signUpWithEmail();
     }
 
@@ -88,6 +126,12 @@ export default function RegisterScreen() {
                     style={{ marginRight: 10 }}></Image>}
                     value={form.hotelName}
                     onChangeText={(text) => setForm({ ...form, hotelName: text })} />
+                    <InputText label='Telefone'
+                    leftIcon={<Image source={require("@/assets/images/callback-vector.png")}
+                    style={{ marginRight: 10 }}></Image>}
+                    value={form.telefone}
+                    onChangeText={(text) => setForm({ ...form, telefone: text })}
+                    keyboardType="phone-pad" />
                 </View>
 
                 <View style={styles.buttonContainer}>
@@ -95,27 +139,9 @@ export default function RegisterScreen() {
                     <View style={styles.separator} />
                     <Text style={styles.footerText}>
                         Já tem uma conta?{' '}
-                        {/* <Text style={styles.footerLink} onPress={handleLoginRedirect}>
+                        <Text style={styles.footerLink} onPress={handleLoginRedirect}>
                             Entrar
-                        </Text> */}
                         </Text>
-                    <Text style={styles.footerLink} onPress={handleLoginRedirect}>
-                        {form.name}
-                    </Text>
-                    <Text style={styles.footerLink} onPress={handleLoginRedirect}>
-                        {form.email}
-                    </Text>
-                    <Text style={styles.footerLink} onPress={handleLoginRedirect}>
-                        {form.password}
-                    </Text>
-                    <Text style={styles.footerLink} onPress={handleLoginRedirect}>
-                        {form.confirmPassword}
-                    </Text>
-                    <Text style={styles.footerLink} onPress={handleLoginRedirect}>
-                        {form.cnpj}
-                    </Text>
-                    <Text style={styles.footerLink} onPress={handleLoginRedirect}>
-                        {form.hotelName}
                     </Text>
                 </View>
             </View>

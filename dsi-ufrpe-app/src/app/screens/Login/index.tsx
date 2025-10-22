@@ -57,8 +57,7 @@ const LoginScreen: React.FC = () => {
           source={require('@/assets/images/hotel1.png')}
           style={styles.logo}
         />
-        <Text style={styles.logoText}>{email}</Text>
-        <Text style={styles.logoText}>{password}</Text>
+        <Text style={styles.logoText}>Hostify</Text>
       </View>
 
       {/* Container do Form */}
