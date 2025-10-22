@@ -1,18 +1,48 @@
+import { supabase } from '@/lib/supabase';
 import ButtonPoint from '@/src/components/button';
-import { router } from 'expo-router';
-import React, { useState } from 'react';
 import InputText from '@/src/components/input';
 import PasswordInput from '@/src/components/password';
-import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { router } from 'expo-router';
+import React, { useState } from 'react';
+import { Alert, AppState, Image, StyleSheet, Text, View } from 'react-native';
+
+AppState.addEventListener('change', (state) => {
+  if (state === 'active') {
+    supabase.auth.startAutoRefresh()
+  } else {
+    supabase.auth.stopAutoRefresh()
+  }
+})
 
 const LoginScreen: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [secure, setSecure] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = () => {
     Alert.alert('Login', `Email: ${email}\nPassword: ${password}`);
   };
+
+  async function signInWithEmail() {
+    setLoading(true)
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email,
+      password: password,
+    })
+    
+    if (error) {
+      Alert.alert('Erro no Login', error.message)
+    } else {
+      Alert.alert('Sucesso!', 'Login realizado com sucesso!', [
+        {
+          text: 'OK',
+          onPress: () => router.replace('/screens/(tabs)')
+        }
+      ])
+    }
+    
+    setLoading(false)
+  }
 
   const registerTransition = () => {
     router.navigate("/screens/register");
@@ -27,19 +57,33 @@ const LoginScreen: React.FC = () => {
           source={require('@/assets/images/hotel1.png')}
           style={styles.logo}
         />
-        <Text style={styles.logoText}>Hostify</Text>
+        <Text style={styles.logoText}>{email}</Text>
+        <Text style={styles.logoText}>{password}</Text>
       </View>
 
       {/* Container do Form */}
       <View style={styles.form}>
         {/* Email */}
-        <InputText label='E-mail' leftIcon={<Image source={require("@/assets/images/at-email.png")} style={{ marginRight: 10 }}></Image>}></InputText>
+        <InputText
+        label='E-mail'
+        leftIcon={<Image source={require("@/assets/images/at-email.png")}
+        style={{ marginRight: 10 }}></Image>}
+        value={email}
+        onChange={event => setEmail(event.nativeEvent.text)}></InputText>
 
         {/* Senha */}
-        <PasswordInput leftIcon={<Image source={require("@/assets/images/key-password.png")} style={{ marginRight: 10 }}></Image>}></PasswordInput>
+        <PasswordInput
+        leftIcon={<Image source={require("@/assets/images/key-password.png")} 
+        style={{ marginRight: 10 }}></Image>}
+        value={password}
+        onChange={event => setPassword(event.nativeEvent.text)}></PasswordInput>
 
         <View style={styles.buttonContainer}>
-          <ButtonPoint label="Entrar" onPress={() => router.replace('/screens/(tabs)')} />
+          <ButtonPoint
+          label="Entrar"
+          // onPress={() => router.replace('/screens/(tabs)')}
+          onPress={() => {signInWithEmail()}}
+          />
           <Text style={styles.registerText}>
             Não tem uma conta? <Text style={styles.registerLink} onPress={registerTransition}>Cadastre-se</Text>
           </Text>

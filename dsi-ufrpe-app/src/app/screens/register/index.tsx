@@ -1,3 +1,4 @@
+import { supabase } from '@/lib/supabase';
 import ButtonPoint from '@/src/components/button';
 import InputText from '@/src/components/input';
 import PasswordInput from '@/src/components/password';
@@ -5,13 +6,32 @@ import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, Image, StyleSheet, Text, View } from 'react-native';
 
-const RegisterScreen: React.FC = () => {
+export default function RegisterScreen() {
+    const [loading, setLoading] = useState(false);
     const [form, setForm] = useState({
         name: '',
         email: '',
         password: '',
+        confirmPassword: '',
+        cnpj: '',
+        hotelName: '',
         telefone: '',
     });
+
+    async function signUpWithEmail() {
+        setLoading(true)
+        const {
+        data: { session },
+        error,
+        } = await supabase.auth.signUp({
+        email: form.email,
+        password: form.password,
+        })
+        if (error) Alert.alert(error.message)
+        if (!session) Alert.alert('Please check your inbox for email verification!')
+        setLoading(false)
+    }
+
 
 
     const handleLoginRedirect = () => {
@@ -22,6 +42,14 @@ const RegisterScreen: React.FC = () => {
         Alert.alert('Cadastro', 'Usuário cadastrado com sucesso!');
     };
 
+    const handleSubmitRegister = () => {
+        if ((form.name || form.email || form.password || form.telefone) === null) {
+            Alert.alert('Erro', 'Por favor, preencha todos os campos.');
+            return;
+        }
+        signUpWithEmail();
+    }
+
     return (
         <View style={styles.container}>
             <Text style={styles.textCadastro}>
@@ -29,22 +57,65 @@ const RegisterScreen: React.FC = () => {
             </Text>
             <View style={styles.form}>
                 <View style={styles.inputsContainer}>
-                    <InputText label='Nome' leftIcon={<Image source={require("@/assets/images/edit-name.png")} style={{ marginRight: 10 }}></Image>}></InputText>
-                    <InputText label='E-mail' leftIcon={<Image source={require("@/assets/images/at-email.png")} style={{ marginRight: 10 }}></Image>}></InputText>
-                    <PasswordInput label='Senha' leftIcon={<Image source={require("@/assets/images/key-password.png")} style={{ marginRight: 10 }}></Image>}></PasswordInput>
-                    <PasswordInput label='Confirmar Senha' leftIcon={<Image source={require("@/assets/images/key-password.png")} style={{ marginRight: 10 }}></Image>}></PasswordInput>
-                    <InputText label='CNPJ' leftIcon={<Image source={require("@/assets/images/id-cnpj.png")} style={{ marginRight: 10 }}></Image>}></InputText>
-                    <InputText label='Nome do Hotel' leftIcon={<Image source={require("@/assets/images/nome-hotel.png")} style={{ marginRight: 10 }}></Image>}></InputText>
+                    <InputText label='Nome'
+                    leftIcon={<Image source={require("@/assets/images/edit-name.png")}
+                    style={{ marginRight: 10 }}></Image>}
+                    value={form.name}
+                    onChangeText={(text) => setForm({ ...form, name: text })} />
+                    <InputText label='E-mail'
+                    leftIcon={<Image source={require("@/assets/images/at-email.png")}
+                    style={{ marginRight: 10 }}></Image>}
+                    value={form.email}
+                    onChangeText={(text) => setForm({ ...form, email: text })} />
+                    <PasswordInput label='Senha'
+                    leftIcon={<Image source={require("@/assets/images/key-password.png")}
+                    style={{ marginRight: 10 }}></Image>}
+                    value={form.password}
+                    onChangeText={(text) => setForm({ ...form, password: text })} />
+                    <PasswordInput label='Confirmar Senha'
+                    leftIcon={<Image source={require("@/assets/images/key-password.png")}
+                    style={{ marginRight: 10 }}></Image>}
+                    value={form.confirmPassword}
+                    onChangeText={(text) => setForm({ ...form, confirmPassword: text })}
+                    onBlur={() => {if(form.confirmPassword !== form.password) Alert.alert('As senhas não conferem.')}} />
+                    <InputText label='CNPJ'
+                    leftIcon={<Image source={require("@/assets/images/id-cnpj.png")}
+                    style={{ marginRight: 10 }}></Image>}
+                    value={form.cnpj}
+                    onChangeText={(text) => setForm({ ...form, cnpj: text })} />
+                    <InputText label='Nome do Hotel'
+                    leftIcon={<Image source={require("@/assets/images/nome-hotel.png")}
+                    style={{ marginRight: 10 }}></Image>}
+                    value={form.hotelName}
+                    onChangeText={(text) => setForm({ ...form, hotelName: text })} />
                 </View>
 
                 <View style={styles.buttonContainer}>
-                    <ButtonPoint label="Cadastrar" onPress={handleSubmit} />
+                    <ButtonPoint label="Cadastrar" onPress={handleSubmitRegister} />
                     <View style={styles.separator} />
                     <Text style={styles.footerText}>
                         Já tem uma conta?{' '}
-                        <Text style={styles.footerLink} onPress={handleLoginRedirect}>
+                        {/* <Text style={styles.footerLink} onPress={handleLoginRedirect}>
                             Entrar
+                        </Text> */}
                         </Text>
+                    <Text style={styles.footerLink} onPress={handleLoginRedirect}>
+                        {form.name}
+                    </Text>
+                    <Text style={styles.footerLink} onPress={handleLoginRedirect}>
+                        {form.email}
+                    </Text>
+                    <Text style={styles.footerLink} onPress={handleLoginRedirect}>
+                        {form.password}
+                    </Text>
+                    <Text style={styles.footerLink} onPress={handleLoginRedirect}>
+                        {form.confirmPassword}
+                    </Text>
+                    <Text style={styles.footerLink} onPress={handleLoginRedirect}>
+                        {form.cnpj}
+                    </Text>
+                    <Text style={styles.footerLink} onPress={handleLoginRedirect}>
+                        {form.hotelName}
                     </Text>
                 </View>
             </View>
@@ -107,5 +178,3 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
 });
-
-export default RegisterScreen;
