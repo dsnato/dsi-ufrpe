@@ -2,12 +2,15 @@ import { supabase } from '@/lib/supabase';
 import ButtonPoint from '@/src/components/button';
 import InputText from '@/src/components/input';
 import PasswordInput from '@/src/components/password';
+import { useToast } from '@/src/components/ToastContext';
+import { getSuccessMessage, getValidationMessage, translateAuthError } from '@/src/utils/errorMessages';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, Image, StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 
 export default function RegisterScreen() {
     const [loading, setLoading] = useState(false);
+    const { showSuccess, showError, showInfo } = useToast();
     const [form, setForm] = useState({
         name: '',
         email: '',
@@ -37,16 +40,14 @@ export default function RegisterScreen() {
         })
         
         if (error) {
-            Alert.alert('Erro no Cadastro', error.message)
+            showError(translateAuthError(error.message))
         } else if (!session) {
-            Alert.alert('Verificação Necessária', 'Por favor, verifique seu e-mail para confirmar o cadastro!')
+            showInfo('📧 Verifique seu e-mail para confirmar o cadastro e ativar sua conta!')
         } else {
-            Alert.alert('Sucesso!', 'Usuário cadastrado com sucesso!', [
-                {
-                    text: 'OK',
-                    onPress: () => router.replace('/')
-                }
-            ])
+            showSuccess(getSuccessMessage('signup'))
+            setTimeout(() => {
+                router.replace('/')
+            }, 3000)
         }
         
         setLoading(false)
@@ -59,28 +60,43 @@ export default function RegisterScreen() {
     };
 
     const handleSubmitRegister = () => {
-        // Validação dos campos obrigatórios
-        if (!form.name || !form.email || !form.password || !form.confirmPassword) {
-            Alert.alert('Erro', 'Por favor, preencha todos os campos obrigatórios.');
+        // Validação do nome
+        if (!form.name) {
+            showError(getValidationMessage('name', 'required'));
+            return;
+        }
+
+        // Validação do email
+        if (!form.email) {
+            showError(getValidationMessage('email', 'required'));
+            return;
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(form.email)) {
+            showError(getValidationMessage('email', 'invalid'));
+            return;
+        }
+
+        // Validação da senha
+        if (!form.password) {
+            showError(getValidationMessage('password', 'required'));
+            return;
+        }
+
+        if (form.password.length < 6) {
+            showError(getValidationMessage('password', 'invalid'));
             return;
         }
 
         // Validação de confirmação de senha
+        if (!form.confirmPassword) {
+            showError('Por favor, confirme sua senha.');
+            return;
+        }
+
         if (form.password !== form.confirmPassword) {
-            Alert.alert('Erro', 'As senhas não conferem.');
-            return;
-        }
-
-        // Validação de email básica
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(form.email)) {
-            Alert.alert('Erro', 'Por favor, insira um e-mail válido.');
-            return;
-        }
-
-        // Validação de senha mínima
-        if (form.password.length < 6) {
-            Alert.alert('Erro', 'A senha deve ter no mínimo 6 caracteres.');
+            showError(getValidationMessage('password', 'mismatch'));
             return;
         }
 
@@ -115,7 +131,7 @@ export default function RegisterScreen() {
                     style={{ marginRight: 10 }}></Image>}
                     value={form.confirmPassword}
                     onChangeText={(text) => setForm({ ...form, confirmPassword: text })}
-                    onBlur={() => {if(form.confirmPassword !== form.password) Alert.alert('As senhas não conferem.')}} />
+                    onBlur={() => {if(form.confirmPassword && form.confirmPassword !== form.password) showError(getValidationMessage('password', 'mismatch'))}} />
                     <InputText label='CNPJ'
                     leftIcon={<Image source={require("@/assets/images/id-cnpj.png")}
                     style={{ marginRight: 10 }}></Image>}
@@ -135,7 +151,7 @@ export default function RegisterScreen() {
                 </View>
 
                 <View style={styles.buttonContainer}>
-                    <ButtonPoint label="Cadastrar" onPress={handleSubmitRegister} />
+                    <ButtonPoint label="Cadastrar" loading={loading} onPress={handleSubmitRegister} />
                     <View style={styles.separator} />
                     <Text style={styles.footerText}>
                         Já tem uma conta?{' '}

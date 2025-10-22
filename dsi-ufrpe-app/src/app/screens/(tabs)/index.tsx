@@ -21,7 +21,7 @@ export default function Home({ session }: { session: Session }) {
     async function getProfile() {
         try {
         setLoading(true)
-        if (!session?.user) throw new Error('No user on the session!')
+        if (!session?.user) throw new Error('No user on the session!') 
         const { data, error, status } = await supabase
             .from('profiles')
             .select(`username, website, avatar_url`)
