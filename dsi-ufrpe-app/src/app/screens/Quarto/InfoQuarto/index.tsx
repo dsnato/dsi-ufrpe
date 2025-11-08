@@ -1,99 +1,420 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import InfoText from '@/src/components/InfoText';
-import InfoCard from '@/src/components/InfoCard';
+import { ErrorState } from '@/src/components/ErrorState';
+import { Loading } from '@/src/components/Loading';
+import { QuartoService } from '@/src/services/QuartoService';
+import { Quarto } from '@/src/types/quarto';
+import { formatCurrency, withPlaceholder } from '@/src/utils/formatters';
+import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 
-const InfoAtividade: React.FC = () => {
+const InfoQuarto: React.FC = () => {
+    const router = useRouter();
+    const { id } = useLocalSearchParams<{ id: string }>();
 
+    // Estados
+    const [quarto, setQuarto] = useState<Quarto | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    /**
+     * ✅ REQUISITO 1: Carregamento dos dados usando ID da URL
+     * ✅ REQUISITO 6: Atualização automática após retornar da edição (useFocusEffect)
+     */
+    const loadQuarto = useCallback(async () => {
+        if (!id) {
+            setError('ID do quarto não fornecido');
+            setLoading(false);
+            return;
+        }
+
+        setLoading(true);
+        setError(null);
+
+        const data = await QuartoService.getById(id);
+
+        if (!data) {
+            setError('Quarto não encontrado');
+            setLoading(false);
+            return;
+        }
+
+        setQuarto(data);
+        setLoading(false);
+    }, [id]);
+
+    // Recarrega os dados sempre que a tela receber foco
+    useFocusEffect(
+        useCallback(() => {
+            loadQuarto();
+        }, [loadQuarto])
+    );
+
+    /**
+     * ✅ REQUISITO 5: Modal de confirmação antes de excluir
+     */
+    const handleDelete = () => {
+        Alert.alert(
+            "Confirmar Exclusão",
+            "Tem certeza que deseja excluir este quarto? Esta ação não pode ser desfeita.",
+            [
+                {
+                    text: "Cancelar",
+                    style: "cancel"
+                },
+                {
+                    text: "Excluir",
+                    style: "destructive",
+                    onPress: async () => {
+                        const success = await QuartoService.delete(id);
+
+                        if (success) {
+                            Alert.alert(
+                                "Sucesso",
+                                "Quarto excluído com sucesso!",
+                                [
+                                    {
+                                        text: "OK",
+                                        onPress: () => router.push("/screens/Quarto/ListagemQuarto")
+                                    }
+                                ]
+                            );
+                        } else {
+                            Alert.alert(
+                                "Erro",
+                                "Não foi possível excluir o quarto. Tente novamente."
+                            );
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
+    /**
+     * ✅ REQUISITO 2: Exibição de loading durante busca
+     */
+    if (loading) {
+        return (
+            <View style={styles.container}>
+                <View style={styles.header}>
+                    <TouchableOpacity onPress={() => router.push("/screens/Quarto/ListagemQuarto")} style={styles.backButton}>
+                        <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
+                    </TouchableOpacity>
+                    <View style={styles.breadcrumb}>
+                        <Text style={styles.breadcrumbText}>Quartos</Text>
+                        <Ionicons name="chevron-forward" size={16} color="#E0F2FE" />
+                        <Text style={styles.breadcrumbTextActive}>Detalhes</Text>
+                    </View>
+                </View>
+                <View style={styles.subContainer}>
+                    <Loading message="Carregando quarto..." />
+                </View>
+            </View>
+        );
+    }
+
+    /**
+     * ✅ REQUISITO 3: Mensagem de erro amigável se não encontrado
+     */
+    if (error || !quarto) {
+        return (
+            <View style={styles.container}>
+                <View style={styles.header}>
+                    <TouchableOpacity onPress={() => router.push("/screens/Quarto/ListagemQuarto")} style={styles.backButton}>
+                        <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
+                    </TouchableOpacity>
+                    <View style={styles.breadcrumb}>
+                        <Text style={styles.breadcrumbText}>Quartos</Text>
+                        <Ionicons name="chevron-forward" size={16} color="#E0F2FE" />
+                        <Text style={styles.breadcrumbTextActive}>Detalhes</Text>
+                    </View>
+                </View>
+                <View style={styles.subContainer}>
+                    <ErrorState
+                        message={error || 'Quarto não encontrado'}
+                        onRetry={loadQuarto}
+                        onGoBack={() => router.push("/screens/Quarto/ListagemQuarto")}
+                    />
+                </View>
+            </View>
+        );
+    }
 
     return (
         <View style={styles.container}>
-            <TouchableOpacity onPress={() => { }} style={styles.img}>
-                <Image source={require("@/assets/images/callback-vector.png")}></Image>
-            </TouchableOpacity>
-            <View style={styles.headContainer}>
-                <Text style={styles.textAt}>Nome da Atividade</Text>
+            {/* ✅ REQUISITO 9: Breadcrumb/indicador de navegação */}
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => router.push("/screens/Quarto/ListagemQuarto")} style={styles.backButton}>
+                    <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
+                </TouchableOpacity>
+                <View style={styles.breadcrumb}>
+                    <Text style={styles.breadcrumbText}>Quartos</Text>
+                    <Ionicons name="chevron-forward" size={16} color="#E0F2FE" />
+                    <Text style={styles.breadcrumbTextActive}>Detalhes</Text>
+                </View>
             </View>
+
+            {/* Container branco com informações */}
             <View style={styles.subContainer}>
-                <View style={styles.subSubContainer}>
-                    <View style={{ width: '100%', marginBottom: 20 }}>
-                        <InfoText text='Número do quarto' title='110'></InfoText>
-                        <InfoText text='Tipo de quarto' title='Solteiro'></InfoText>
-                        <InfoText text='Capacidade do quarto' title='2 pessoas'></InfoText>
-                        <InfoText text='Preço do quarto' title='R$150,00'></InfoText>
+                <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
+                    {/* Título do quarto com badge de disponibilidade */}
+                    <View style={styles.roomTitleContainer}>
+                        <View style={styles.titleRow}>
+                            {/* ✅ REQUISITO 7 e 8: Formatação e tratamento de valores vazios */}
+                            <Text style={styles.roomTitle}>
+                                Quarto {withPlaceholder(quarto.numero, 'S/N')}
+                            </Text>
+                            <View style={[
+                                styles.statusBadge,
+                                { backgroundColor: quarto.disponivel ? '#10B981' : '#EF4444' }
+                            ]}>
+                                <Text style={styles.statusText}>
+                                    {quarto.disponivel ? 'Disponível' : 'Ocupado'}
+                                </Text>
+                            </View>
+                        </View>
+                        <Text style={styles.roomSubtitle}>Número do quarto</Text>
+
+                        {/* Linha divisória entre título e informações */}
+                        <View style={styles.titleSeparator} />
                     </View>
-                </View>
+
+                    {/* ✅ REQUISITO 7 e 8: Informações formatadas com placeholders */}
+                    <View style={styles.infoRow}>
+                        <Ionicons name="bed-outline" size={20} color="#0162B3" />
+                        <View style={styles.infoTextContainer}>
+                            <Text style={styles.infoLabel}>TIPO DE QUARTO</Text>
+                            <Text style={styles.infoValue}>
+                                {withPlaceholder(quarto.tipo, 'Tipo não informado')}
+                            </Text>
+                        </View>
+                    </View>
+
+                    <View style={styles.infoRow}>
+                        <Ionicons name="people-outline" size={20} color="#0162B3" />
+                        <View style={styles.infoTextContainer}>
+                            <Text style={styles.infoLabel}>CAPACIDADE DO QUARTO</Text>
+                            <Text style={styles.infoValue}>
+                                {quarto.capacidade} {quarto.capacidade === 1 ? 'pessoa' : 'pessoas'}
+                            </Text>
+                        </View>
+                    </View>
+
+                    <View style={styles.infoRow}>
+                        <Ionicons name="cash-outline" size={20} color="#0162B3" />
+                        <View style={styles.infoTextContainer}>
+                            <Text style={styles.infoLabel}>PREÇO DO QUARTO</Text>
+                            <Text style={styles.infoValue}>{formatCurrency(quarto.preco)}</Text>
+                        </View>
+                    </View>
+
+                    {quarto.descricao && (
+                        <View style={styles.infoRow}>
+                            <Ionicons name="document-text-outline" size={20} color="#0162B3" />
+                            <View style={styles.infoTextContainer}>
+                                <Text style={styles.infoLabel}>DESCRIÇÃO</Text>
+                                <Text style={styles.infoValue}>
+                                    {withPlaceholder(quarto.descricao, 'Sem descrição')}
+                                </Text>
+                            </View>
+                        </View>
+                    )}
+                </ScrollView>
+
+                {/* Linha divisória */}
+                <View style={styles.separator} />
+
+                {/* Botões de ação */}
                 <View style={styles.options}>
-                    <InfoCard title='Editar Informação'></InfoCard>
-                    <InfoCard title='Excluir'/>
+                    {/* ✅ REQUISITO 4: Botão editar com ID correto */}
+                    <TouchableOpacity
+                        style={styles.buttonPrimary}
+                        onPress={() => router.push({
+                            pathname: "/screens/Quarto/EdicaoQuarto",
+                            params: { id: quarto.id }
+                        })}
+                    >
+                        <Ionicons name="create-outline" size={20} color="#FFFFFF" style={styles.buttonIcon} />
+                        <Text style={styles.buttonPrimaryText}>Editar Quarto</Text>
+                    </TouchableOpacity>
+
+                    {/* ✅ REQUISITO 5: Modal de confirmação implementado */}
+                    <TouchableOpacity style={styles.buttonDanger} onPress={handleDelete}>
+                        <Ionicons name="trash-outline" size={20} color="#EF4444" style={styles.buttonIcon} />
+                        <Text style={styles.buttonDangerText}>Excluir</Text>
+                    </TouchableOpacity>
                 </View>
             </View>
-
-
         </View>
     )
 }
 
 
 const styles = StyleSheet.create({
-    headContainer: {
-        width: '100%',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    textAt: {
-        fontSize: 20,
-        color: '#FFE157',
-        marginTop: 60,
-        marginBottom: 20,
-        fontWeight: 'bold',
-    },
-    img: {
-        position: 'absolute',
-        top: 40,
-        left: 20,
-        zIndex: 1,
-    },
     container: {
         flex: 1,
         backgroundColor: '#132F3B',
+    },
+    header: {
+        flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
+        paddingTop: 50,
+        paddingBottom: 16,
+        paddingHorizontal: 16,
+        backgroundColor: '#132F3B',
+    },
+    backButton: {
+        marginRight: 16,
+    },
+    breadcrumb: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        flex: 1,
+    },
+    breadcrumbText: {
+        fontSize: 14,
+        color: '#E0F2FE',
+        opacity: 0.7,
+    },
+    breadcrumbTextActive: {
+        fontSize: 14,
+        color: '#FFE157',
+        fontWeight: '600',
     },
     subContainer: {
-        flex: 1,                   // ocupa todo o espaço disponível
-        width: '100%',             // vai de ponta a ponta
-        backgroundColor: '#EFEFF0',// cor do retângulo
-        borderTopLeftRadius: 20,   // arredonda só em cima
+        flex: 1,
+        width: '100%',
+        backgroundColor: '#FFFFFF',
+        borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         paddingVertical: 24,
         paddingHorizontal: 20,
-        alignItems: 'center',
-        justifyContent: 'center',
-        // sombra para parecer "cartão"
         elevation: 4,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: -2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
-        // marginTop: 100,
+        marginTop: 20,
     },
-    subSubContainer: {
+    scrollContent: {
         flex: 1,
+    },
+    roomTitleContainer: {
+        marginBottom: 24,
+    },
+    titleRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 8,
+    },
+    roomTitle: {
+        fontSize: 30,
+        fontWeight: 'bold',
+        color: '#1E293B',
+        flex: 1,
+    },
+    statusBadge: {
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 12,
+        marginLeft: 12,
+    },
+    statusText: {
+        color: '#FFFFFF',
+        fontSize: 12,
+        fontWeight: '600',
+        textTransform: 'uppercase',
+    },
+    roomSubtitle: {
+        fontSize: 16,
+        color: '#64748B',
+        textTransform: 'uppercase',
+    },
+    titleSeparator: {
         width: '100%',
-        alignItems: 'flex-start',
-        justifyContent: 'flex-start',
+        height: 1,
+        backgroundColor: '#E2E8F0',
+        marginTop: 20,
+    },
+    separator: {
+        width: '100%',
+        height: 1,
+        backgroundColor: '#E2E8F0',
         marginBottom: 20,
     },
-    options: {
+    infoRow: {
         flexDirection: 'row',
-        justifyContent: 'space-around',
-        paddingHorizontal: 20,
+        alignItems: 'flex-start',
+        marginBottom: 20,
+        paddingVertical: 8,
+    },
+    infoTextContainer: {
+        marginLeft: 12,
+        flex: 1,
+    },
+    infoLabel: {
+        fontSize: 16,
+        color: '#64748B',
+        fontWeight: '600',
+        textTransform: 'uppercase',
+        marginBottom: 4,
+        letterSpacing: 0.5,
+    },
+    infoValue: {
+        fontSize: 18,
+        color: '#1E293B',
+        fontWeight: '500',
+        lineHeight: 24,
+    },
+    options: {
         width: '100%',
-        columnGap: 10
-    }
+        gap: 12,
+        paddingTop: 16,
+        paddingBottom: 8,
+    },
+    buttonPrimary: {
+        width: '100%',
+        height: 48,
+        backgroundColor: '#0162B3',
+        borderRadius: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 3,
+    },
+    buttonPrimaryText: {
+        color: '#FFFFFF',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    buttonDanger: {
+        width: '100%',
+        height: 48,
+        backgroundColor: 'transparent',
+        borderRadius: 12,
+        borderWidth: 1.5,
+        borderColor: '#EF4444',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    buttonDangerText: {
+        color: '#EF4444',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    buttonIcon: {
+        marginRight: 8,
+    },
 })
 
 
-export default InfoAtividade;
+export default InfoQuarto;
