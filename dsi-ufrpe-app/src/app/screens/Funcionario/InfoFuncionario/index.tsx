@@ -3,12 +3,14 @@ import { ErrorState } from '@/src/components/ErrorState';
 import { InfoHeader } from '@/src/components/InfoHeader';
 import { InfoRow } from '@/src/components/InfoRow';
 import { Loading } from '@/src/components/Loading';
+import { ProfileSection } from '@/src/components/ProfileSection';
+import { Separator } from '@/src/components/Separator';
 import { FuncionarioService } from '@/src/services/FuncionarioService';
 import { Funcionario } from '@/src/types/funcionario';
 import { formatCPF, formatPhone, withPlaceholder } from '@/src/utils/formatters';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 
 const InfoFuncionario: React.FC = () => {
@@ -132,26 +134,17 @@ const InfoFuncionario: React.FC = () => {
             <InfoHeader entity="Funcionários" onBackPress={() => router.back()} />
 
             {/* Seção de foto e nome no fundo azul */}
-            <View style={styles.profileSection}>
-                <Image
-                    source={require("@/assets/images/photo-model.png")}
-                    style={styles.profileImage}
-                />
-                {/* ✅ REQUISITO 7 e 8: Formatação e tratamento de valores vazios */}
-                <Text style={styles.profileName}>
-                    {withPlaceholder(funcionario.name, 'Nome não informado')}
-                </Text>
-                <Text style={styles.profileRole}>
-                    {withPlaceholder(funcionario.role, 'Cargo não informado')}
-                </Text>
-            </View>
+            <ProfileSection
+                name={withPlaceholder(funcionario.name, 'Nome não informado')}
+                subtitle={withPlaceholder(funcionario.role, 'Cargo não informado')}
+            />
 
             {/* Container branco com informações */}
             <View style={styles.subContainer}>
                 <View style={styles.funcionarioTitleContainer}>
                     <Text style={styles.funcionarioTitle}>Informações Pessoais</Text>
                 </View>
-                <View style={styles.separator} />
+                <Separator />
                 <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
                     {/* ✅ REQUISITO 7 e 8: Informações formatadas com placeholders */}
                     <InfoRow
@@ -174,7 +167,7 @@ const InfoFuncionario: React.FC = () => {
                 </ScrollView>
 
                 {/* Linha divisória */}
-                <View style={styles.separator} />
+                <Separator />
 
                 {/* Botões de ação */}
                 <View style={styles.options}>
@@ -237,32 +230,6 @@ const styles = StyleSheet.create({
         color: '#FFE157',
         fontWeight: '600',
     },
-    profileSection: {
-        alignItems: 'center',
-        paddingVertical: 20,
-        paddingHorizontal: 20,
-        backgroundColor: '#132F3B',
-    },
-    profileImage: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
-        borderWidth: 3,
-        borderColor: '#FFFFFF',
-        marginBottom: 12,
-    },
-    profileName: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        color: '#FFE157',
-        textAlign: 'center',
-        marginBottom: 4,
-    },
-    profileRole: {
-        fontSize: 18,
-        color: '#E0F2FE',
-        textAlign: 'center',
-    },
     subContainer: {
         flex: 1,
         width: '100%',
@@ -279,7 +246,7 @@ const styles = StyleSheet.create({
         marginTop: 20,
     },
     scrollContent: {
-        flex: 1,
+        flexGrow: 0,
     },
     funcionarioTitleContainer: {
         marginBottom: 16,
@@ -288,12 +255,6 @@ const styles = StyleSheet.create({
         fontSize: 20,
         fontWeight: 'bold',
         color: '#1E293B',
-    },
-    separator: {
-        width: '100%',
-        height: 1,
-        backgroundColor: '#E2E8F0',
-        marginBottom: 20,
     },
     infoRow: {
         flexDirection: 'row',

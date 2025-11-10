@@ -3,12 +3,14 @@ import { ErrorState } from '@/src/components/ErrorState';
 import { InfoHeader } from '@/src/components/InfoHeader';
 import { InfoRow } from '@/src/components/InfoRow';
 import { Loading } from '@/src/components/Loading';
+import { StatusBadge } from '@/src/components/StatusBadge';
+import { TitleSection } from '@/src/components/TitleSection';
 import { ReservationService } from '@/src/services/ReservationService';
 import { Reservation } from '@/src/types/reservation';
 import { formatCurrency, formatDate, withPlaceholder } from '@/src/utils/formatters';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 
 const InfoReserva: React.FC = () => {
     const router = useRouter();
@@ -145,24 +147,16 @@ const InfoReserva: React.FC = () => {
             <View style={styles.subContainer}>
                 <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
                     {/* Título da reserva com badge de status */}
-                    <View style={styles.reservaTitleContainer}>
-                        <View style={styles.titleRow}>
-                            {/* ✅ REQUISITO 7 e 8: Formatação e tratamento de valores vazios */}
-                            <Text style={styles.reservaTitle}>
-                                Reserva {withPlaceholder(reserva.id, 'S/N')}
-                            </Text>
-                            <View style={[
-                                styles.statusBadge,
-                                { backgroundColor: getStatusColor(reserva.status) }
-                            ]}>
-                                <Text style={styles.statusText}>{reserva.status}</Text>
-                            </View>
-                        </View>
-                        <Text style={styles.reservaSubtitle}>Número da reserva</Text>
-
-                        {/* Linha divisória entre título e informações */}
-                        <View style={styles.titleSeparator} />
-                    </View>
+                    <TitleSection
+                        title={`Reserva ${withPlaceholder(reserva.id, 'S/N')}`}
+                        subtitle="Número da reserva"
+                        badge={
+                            <StatusBadge
+                                text={reserva.status}
+                                color={getStatusColor(reserva.status)}
+                            />
+                        }
+                    />
 
                     {/* ✅ REQUISITO 7 e 8: Informações formatadas com placeholders */}
                     <InfoRow
@@ -216,7 +210,6 @@ const InfoReserva: React.FC = () => {
                         />
                     )}
                 </ScrollView>
-                <View style={styles.titleSeparator} />
 
                 {/* Botões de ação */}
                 <View style={styles.options}>
@@ -314,51 +307,7 @@ const styles = StyleSheet.create({
         marginTop: 20,
     },
     scrollContent: {
-        flex: 1,
-    },
-    reservaTitleContainer: {
-        marginBottom: 24,
-    },
-    titleRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: 8,
-    },
-    reservaTitle: {
-        fontSize: 30,
-        fontWeight: 'bold',
-        color: '#1E293B',
-        flex: 1,
-    },
-    statusBadge: {
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 12,
-        marginLeft: 12,
-    },
-    statusText: {
-        color: '#FFFFFF',
-        fontSize: 12,
-        fontWeight: '600',
-        textTransform: 'uppercase',
-    },
-    reservaSubtitle: {
-        fontSize: 16,
-        color: '#64748B',
-        textTransform: 'uppercase',
-    },
-    titleSeparator: {
-        width: '100%',
-        height: 1,
-        backgroundColor: '#E2E8F0',
-        marginTop: 20,
-    },
-    separator: {
-        width: '100%',
-        height: 1,
-        backgroundColor: '#E2E8F0',
-        marginBottom: 20,
+        flexGrow: 0,
     },
     infoRow: {
         flexDirection: 'row',

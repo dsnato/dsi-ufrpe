@@ -1,14 +1,17 @@
+import { ActionButton } from '@/src/components/ActionButton';
 import { ErrorState } from '@/src/components/ErrorState';
 import { InfoHeader } from '@/src/components/InfoHeader';
 import { InfoRow } from '@/src/components/InfoRow';
-import { ActionButton } from '@/src/components/ActionButton';
 import { Loading } from '@/src/components/Loading';
+import { Separator } from '@/src/components/Separator';
+import { StatusBadge } from '@/src/components/StatusBadge';
+import { TitleSection } from '@/src/components/TitleSection';
 import { AtividadeService } from '@/src/services/AtividadeService';
 import { Atividade } from '@/src/types/atividade';
 import { formatDate, formatTime, withPlaceholder } from '@/src/utils/formatters';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 
 const InfoAtividade: React.FC = () => {
     const router = useRouter();
@@ -134,26 +137,16 @@ const InfoAtividade: React.FC = () => {
             <View style={styles.subContainer}>
                 <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
                     {/* Título da atividade com badge de status */}
-                    <View style={styles.atividadeTitleContainer}>
-                        <View style={styles.titleRow}>
-                            {/* ✅ REQUISITO 7 e 8: Formatação e tratamento de valores vazios */}
-                            <Text style={styles.atividadeTitle}>
-                                {withPlaceholder(atividade.nome, 'Sem nome')}
-                            </Text>
-                            <View style={[
-                                styles.statusBadge,
-                                { backgroundColor: atividade.ativa ? '#10B981' : '#6B7280' }
-                            ]}>
-                                <Text style={styles.statusText}>
-                                    {atividade.ativa ? 'Ativa' : 'Inativa'}
-                                </Text>
-                            </View>
-                        </View>
-                        <Text style={styles.atividadeSubtitle}>Atividade recreativa</Text>
-
-                        {/* Linha divisória entre título e informações */}
-                        <View style={styles.titleSeparator} />
-                    </View>
+                    <TitleSection
+                        title={withPlaceholder(atividade.nome, 'Sem nome')}
+                        subtitle="Atividade recreativa"
+                        badge={
+                            <StatusBadge
+                                text={atividade.ativa ? 'Ativa' : 'Inativa'}
+                                color={atividade.ativa ? '#10B981' : '#6B7280'}
+                            />
+                        }
+                    />
 
                     {/* ✅ REQUISITO 7 e 8: Informações formatadas com placeholders */}
                     <InfoRow
@@ -185,7 +178,7 @@ const InfoAtividade: React.FC = () => {
                 <View style={styles.options}>
 
                     {/* Linha divisória */}
-                    <View style={styles.separator} />
+                    <Separator />
 
                     {/* ✅ REQUISITO 4: Botão editar com ID correto */}
                     <ActionButton
@@ -267,51 +260,7 @@ const styles = StyleSheet.create({
         marginTop: 20,
     },
     scrollContent: {
-        flex: 1,
-    },
-    atividadeTitleContainer: {
-        marginBottom: 24,
-    },
-    titleRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: 8,
-    },
-    atividadeTitle: {
-        fontSize: 30,
-        fontWeight: 'bold',
-        color: '#1E293B',
-        flex: 1,
-    },
-    statusBadge: {
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 12,
-        marginLeft: 12,
-    },
-    statusText: {
-        color: '#FFFFFF',
-        fontSize: 12,
-        fontWeight: '600',
-        textTransform: 'uppercase',
-    },
-    atividadeSubtitle: {
-        fontSize: 16,
-        color: '#64748B',
-        textTransform: 'uppercase',
-    },
-    titleSeparator: {
-        width: '100%',
-        height: 1,
-        backgroundColor: '#E2E8F0',
-        marginTop: 20,
-    },
-    separator: {
-        width: '100%',
-        height: 1,
-        backgroundColor: '#E2E8F0',
-        marginBottom: 20,
+        flexGrow: 0,
     },
     infoRow: {
         flexDirection: 'row',
