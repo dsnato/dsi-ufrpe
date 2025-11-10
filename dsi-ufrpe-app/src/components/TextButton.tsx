@@ -1,23 +1,31 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View, KeyboardTypeOptions } from "react-native";
 import InputText from "./input";
 
 // Definindo as Props do componente
 type Props = {
     labelText: string,
     placeholder: string,
-    required?: boolean, // Faz com que adicione o asterisco vermelho se for true
+    required?: boolean,
+    value?: string,
+    onChangeText?: (text: string) => void,
+    keyboardType?: KeyboardTypeOptions,
 }
 
 
 // Componente
-export default function InputWithText({ labelText, placeholder, required }: Props) {
+export default function InputWithText({ labelText, placeholder, required, value, onChangeText, keyboardType }: Props) {
     return <>
         <View style={styles.container}>
             <Text style={styles.text}>
                 {labelText}
                 {required && <Text style={{ color: '#DE3E3E', fontSize: 16, fontWeight: 'bold' }}> *</Text>}
             </Text>
-            <InputText placeholder={placeholder} />
+            <InputText 
+                placeholder={placeholder} 
+                value={value}
+                onChangeText={onChangeText}
+                keyboardType={keyboardType}
+            />
         </View>
     </>;
 }

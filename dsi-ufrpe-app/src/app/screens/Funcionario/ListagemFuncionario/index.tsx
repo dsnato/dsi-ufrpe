@@ -1,39 +1,50 @@
 import HeaderName from "@/src/components/HeaderName";
 import InfoCard from "@/src/components/InfoCard";
 import TextInputRounded from "@/src/components/TextInputRounded";
-import { useRouter } from "expo-router";
-import { useState } from "react";
-import { FlatList, StyleSheet, Text, View } from "react-native";
+import { useRouter, useFocusEffect } from "expo-router";
+import { useState, useCallback } from "react";
+import { FlatList, StyleSheet, Text, View, ActivityIndicator, Alert, RefreshControl, TouchableOpacity } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { listarFuncionarios } from "@/src/services/funcionariosService";
+import type { Funcionario } from "@/src/services/funcionariosService";
 
-const initialData = [
-  { id: '1', nome: 'Ana Clara', cpf: '987.654.321-00' },
-  { id: '2', nome: 'Ana Júlia', cpf: '917.234.222-20' },
-  { id: '3', nome: 'Carlos José', cpf: '127.124.334-09' },
-  { id: '4', nome: 'João Lucas', cpf: '045.254.111-30' },
-  { id: '5', nome: 'Maria Silva', cpf: '231.632.345-98' },
-  { id: '6', nome: 'Maria da Paz', cpf: '230.103.984-14' },
-  { id: '7', nome: 'Edson Gomes', cpf: '655.923.103-87' },
-  { id: '8', nome: 'Milka Marques', cpf: '789.456.123-24' },
-  { id: '9', nome: 'Adriana Salsa', cpf: '834.943.114-45' },
-  { id: '10', nome: 'Evandro Silva', cpf: '201.349.583-58' },
-  { id: '11', nome: 'Vinícius Araujo', cpf: '028.095.545-34' },
-  { id: '12', nome: 'Denilson Gomes', cpf: '459.293.201-57' },
-];
-
-export default function Crud() {
+export default function ListagemFuncionario() {
     const router = useRouter();
-    const [items, setItems] = useState(initialData);
-    const [modalVisible, setModalVisible] = useState(false);
-    const [selectedItem, setSelectedItem] = useState<any>(null);
+    const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [search, setSearch] = useState('');
 
-    const handleUpdate = (updatedData: any) => {
-        setItems(prev => prev.map(i => i.id === updatedData.id ? updatedData : i));
-        setModalVisible(false);
-        setSelectedItem(null);
+    const carregarFuncionarios = async () => {
+        try {
+            setLoading(true);
+            const dados = await listarFuncionarios();
+            setFuncionarios(dados);
+        } catch (error) {
+            const mensagem = error instanceof Error ? error.message : 'Erro ao carregar funcionários';
+            Alert.alert('Erro', mensagem);
+            console.error('Erro ao carregar funcionários:', error);
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
+        }
     };
-const filteredItems = items.filter(i => i.nome.toLowerCase().includes(search.toLowerCase()) || i.cpf.includes(search));
+
+    useFocusEffect(
+        useCallback(() => {
+            carregarFuncionarios();
+        }, [])
+    );
+
+    const handleRefresh = () => {
+        setRefreshing(true);
+        carregarFuncionarios();
+    };
+
+    const filteredItems = funcionarios.filter(f => 
+        f.nome_completo.toLowerCase().includes(search.toLowerCase()) || 
+        f.cpf.includes(search)
+    );
 
 
     return (
@@ -50,22 +61,39 @@ const filteredItems = items.filter(i => i.nome.toLowerCase().includes(search.toL
                         <TextInputRounded value={search} onChangeText={setSearch} />
                         <View style={[styles.gridContainer, {flex: 1, backgroundColor: "#EFEFF0" ,borderTopLeftRadius: 50, borderTopRightRadius: 50, paddingHorizontal: 30, justifyContent: 'center', paddingTop: 20, flexDirection: 'column'}]}>
                             <Text style={{fontSize: 24, fontWeight: 'bold', alignSelf: 'flex-start', marginTop: 15, color: '#4BBAED'}}>Lista de Funcionários</Text>
-                            <FlatList
-                                data={filteredItems}
-                                keyExtractor={item => item.id}
-                                numColumns={2}
-                                renderItem={({ item }) => (
-                                    <View style={{flex: 1, margin: 5}}>
-                                        <InfoCard
-                                            iconName="person"
-                                            // elevate={false}
-                                            title={item.nome}
-                                            subtitle={item.cpf}
-                                            // onPress={handleEditPress}
-                                        />
-                                    </View>
-                                )}
-                            />
+                            
+                            {loading && !refreshing ? (
+                                <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+                                    <ActivityIndicator size="large" color="#4BBAED" />
+                                    <Text style={{marginTop: 10, color: '#64748B'}}>Carregando funcionários...</Text>
+                                </View>
+                            ) : filteredItems.length === 0 ? (
+                                <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+                                    <Text style={{fontSize: 16, color: '#64748B'}}>
+                                        {search ? 'Nenhum funcionário encontrado' : 'Nenhum funcionário cadastrado'}
+                                    </Text>
+                                </View>
+                            ) : (
+                                <FlatList
+                                    data={filteredItems}
+                                    keyExtractor={item => item.id!}
+                                    numColumns={2}
+                                    refreshControl={
+                                        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={['#4BBAED']} />
+                                    }
+                                    renderItem={({ item }) => (
+                                        <View style={{flex: 1, margin: 5}}>
+                                            <TouchableOpacity onPress={() => router.push(`/screens/Funcionario/InfoFuncionario?id=${item.id}`)}>
+                                                <InfoCard
+                                                    iconName="person"
+                                                    title={item.nome_completo}
+                                                    subtitle={item.cpf}
+                                                />
+                                            </TouchableOpacity>
+                                        </View>
+                                    )}
+                                />
+                            )}
                         </View>
                     </View>
                 </View>

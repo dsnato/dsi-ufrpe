@@ -1,12 +1,9 @@
-import { ErrorState } from '@/src/components/ErrorState';
-import { Loading } from '@/src/components/Loading';
-import { QuartoService } from '@/src/services/QuartoService';
-import { Quarto } from '@/src/types/quarto';
-import { formatCurrency, withPlaceholder } from '@/src/utils/formatters';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
+import { buscarQuartoPorId, excluirQuarto } from '@/src/services/quartosService';
+import type { Quarto } from '@/src/services/quartosService';
 
 
 const InfoQuarto: React.FC = () => {
@@ -32,16 +29,21 @@ const InfoQuarto: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        const data = await QuartoService.getById(id);
+        try {
+            const data = await buscarQuartoPorId(id);
+            
+            if (!data) {
+                setError('Quarto não encontrado');
+                setLoading(false);
+                return;
+            }
 
-        if (!data) {
-            setError('Quarto não encontrado');
+            setQuarto(data);
             setLoading(false);
-            return;
+        } catch (error) {
+            setError(error instanceof Error ? error.message : 'Erro ao carregar quarto');
+            setLoading(false);
         }
-
-        setQuarto(data);
-        setLoading(false);
     }, [id]);
 
     // Recarrega os dados sempre que a tela receber foco
@@ -67,9 +69,8 @@ const InfoQuarto: React.FC = () => {
                     text: "Excluir",
                     style: "destructive",
                     onPress: async () => {
-                        const success = await QuartoService.delete(id);
-
-                        if (success) {
+                        try {
+                            await excluirQuarto(id);
                             Alert.alert(
                                 "Sucesso",
                                 "Quarto excluído com sucesso!",
@@ -80,10 +81,10 @@ const InfoQuarto: React.FC = () => {
                                     }
                                 ]
                             );
-                        } else {
+                        } catch (error) {
                             Alert.alert(
                                 "Erro",
-                                "Não foi possível excluir o quarto. Tente novamente."
+                                error instanceof Error ? error.message : "Não foi possível excluir o quarto."
                             );
                         }
                     }
@@ -109,7 +110,8 @@ const InfoQuarto: React.FC = () => {
                     </View>
                 </View>
                 <View style={styles.subContainer}>
-                    <Loading message="Carregando quarto..." />
+                    <ActivityIndicator size="large" color="#4BBAED" />
+                    <Text style={{marginTop: 10, color: '#64748B'}}>Carregando quarto...</Text>
                 </View>
             </View>
         );
@@ -132,11 +134,19 @@ const InfoQuarto: React.FC = () => {
                     </View>
                 </View>
                 <View style={styles.subContainer}>
-                    <ErrorState
-                        message={error || 'Quarto não encontrado'}
-                        onRetry={loadQuarto}
-                        onGoBack={() => router.push("/screens/Quarto/ListagemQuarto")}
-                    />
+                    <Text style={{fontSize: 18, color: '#EF4444', marginBottom: 20}}>{error || 'Quarto não encontrado'}</Text>
+                    <TouchableOpacity 
+                        style={styles.buttonPrimary}
+                        onPress={loadQuarto}
+                    >
+                        <Text style={styles.buttonPrimaryText}>Tentar Novamente</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                        style={[styles.buttonDanger, {marginTop: 10}]}
+                        onPress={() => router.push("/screens/Quarto/ListagemQuarto")}
+                    >
+                        <Text style={styles.buttonDangerText}>Voltar</Text>
+                    </TouchableOpacity>
                 </View>
             </View>
         );
@@ -164,14 +174,14 @@ const InfoQuarto: React.FC = () => {
                         <View style={styles.titleRow}>
                             {/* ✅ REQUISITO 7 e 8: Formatação e tratamento de valores vazios */}
                             <Text style={styles.roomTitle}>
-                                Quarto {withPlaceholder(quarto.numero, 'S/N')}
+                                Quarto {quarto.numero_quarto || 'S/N'}
                             </Text>
                             <View style={[
                                 styles.statusBadge,
-                                { backgroundColor: quarto.disponivel ? '#10B981' : '#EF4444' }
+                                { backgroundColor: quarto.status === 'Disponível' ? '#10B981' : '#EF4444' }
                             ]}>
                                 <Text style={styles.statusText}>
-                                    {quarto.disponivel ? 'Disponível' : 'Ocupado'}
+                                    {quarto.status || 'Ocupado'}
                                 </Text>
                             </View>
                         </View>
@@ -187,7 +197,7 @@ const InfoQuarto: React.FC = () => {
                         <View style={styles.infoTextContainer}>
                             <Text style={styles.infoLabel}>TIPO DE QUARTO</Text>
                             <Text style={styles.infoValue}>
-                                {withPlaceholder(quarto.tipo, 'Tipo não informado')}
+                                {quarto.tipo || 'Tipo não informado'}
                             </Text>
                         </View>
                     </View>
@@ -206,17 +216,19 @@ const InfoQuarto: React.FC = () => {
                         <Ionicons name="cash-outline" size={20} color="#0162B3" />
                         <View style={styles.infoTextContainer}>
                             <Text style={styles.infoLabel}>PREÇO DO QUARTO</Text>
-                            <Text style={styles.infoValue}>{formatCurrency(quarto.preco)}</Text>
+                            <Text style={styles.infoValue}>
+                                R$ {quarto.preco_diario?.toFixed(2).replace('.', ',')}
+                            </Text>
                         </View>
                     </View>
 
-                    {quarto.descricao && (
+                    {quarto.foto_quarto && (
                         <View style={styles.infoRow}>
                             <Ionicons name="document-text-outline" size={20} color="#0162B3" />
                             <View style={styles.infoTextContainer}>
-                                <Text style={styles.infoLabel}>DESCRIÇÃO</Text>
+                                <Text style={styles.infoLabel}>FOTO</Text>
                                 <Text style={styles.infoValue}>
-                                    {withPlaceholder(quarto.descricao, 'Sem descrição')}
+                                    {quarto.foto_quarto || 'Sem foto'}
                                 </Text>
                             </View>
                         </View>

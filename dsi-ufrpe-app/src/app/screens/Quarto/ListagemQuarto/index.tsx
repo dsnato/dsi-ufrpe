@@ -2,36 +2,51 @@ import HeaderName from "@/src/components/HeaderName";
 import InfoCard from "@/src/components/InfoCard";
 import TextInputRounded from "@/src/components/TextInputRounded";
 import { useRouter } from "expo-router";
-import { useState } from "react";
-import { FlatList, StyleSheet, Text, View } from "react-native";
+import { useState, useEffect, useCallback } from "react";
+import { FlatList, StyleSheet, Text, View, ActivityIndicator, Alert, RefreshControl, TouchableOpacity } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { listarQuartos } from "@/src/services/quartosService";
+import type { Quarto } from "@/src/services/quartosService";
+import { useFocusEffect } from "expo-router";
 
-const initialData = [
-  { id: '1', numero: '101', tipo: 'solteiro' },
-  { id: '2', numero: '102', tipo: 'casal' },
-  { id: '3', numero: '103', tipo: 'solteiro' },
-  { id: '4', numero: '104', tipo: 'casal' },
-  { id: '5', numero: '105', tipo: 'solteiro' },
-  { id: '6', numero: '106', tipo: 'casal' },
-  { id: '7', numero: '107', tipo: 'solteiro' },
-  { id: '8', numero: '108', tipo: 'casal' },
-  { id: '9', numero: '109', tipo: 'solteiro' },
-  { id: '10', numero: '110', tipo: 'casal' },
-];
-
-export default function Crud() {
+export default function ListagemQuarto() {
     const router = useRouter();
-    const [items, setItems] = useState(initialData);
-    const [modalVisible, setModalVisible] = useState(false);
-    const [selectedItem, setSelectedItem] = useState<any>(null);
+    const [quartos, setQuartos] = useState<Quarto[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [search, setSearch] = useState('');
 
-    const handleUpdate = (updatedData: any) => {
-        setItems(prev => prev.map(i => i.id === updatedData.id ? updatedData : i));
-        setModalVisible(false);
-        setSelectedItem(null);
+    const carregarQuartos = async () => {
+        try {
+            setLoading(true);
+            const dados = await listarQuartos();
+            setQuartos(dados);
+        } catch (error) {
+            const mensagem = error instanceof Error ? error.message : 'Erro ao carregar quartos';
+            Alert.alert('Erro', mensagem);
+            console.error('Erro ao carregar quartos:', error);
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
+        }
     };
-const filteredItems = items.filter(i => i.numero.toLowerCase().includes(search.toLowerCase()) || i.tipo.includes(search));
+
+    // Carrega dados ao montar e quando a tela receber foco
+    useFocusEffect(
+        useCallback(() => {
+            carregarQuartos();
+        }, [])
+    );
+
+    const handleRefresh = () => {
+        setRefreshing(true);
+        carregarQuartos();
+    };
+
+    const filteredItems = quartos.filter(q => 
+        q.numero_quarto.toLowerCase().includes(search.toLowerCase()) || 
+        q.tipo.toLowerCase().includes(search.toLowerCase())
+    );
 
 
     return (
@@ -48,22 +63,39 @@ const filteredItems = items.filter(i => i.numero.toLowerCase().includes(search.t
                         <TextInputRounded value={search} onChangeText={setSearch} />
                         <View style={[styles.gridContainer, {flex: 1, backgroundColor: "#EFEFF0" ,borderTopLeftRadius: 50, borderTopRightRadius: 50, paddingHorizontal: 30, justifyContent: 'center', paddingTop: 20, flexDirection: 'column'}]}>
                             <Text style={{fontSize: 24, fontWeight: 'bold', alignSelf: 'flex-start', marginTop: 15, color: '#4BBAED'}}>Lista de Quartos</Text>
-                            <FlatList
-                                data={filteredItems}
-                                keyExtractor={item => item.id}
-                                numColumns={2}
-                                renderItem={({ item }) => (
-                                    <View style={{flex: 1, margin: 5}}>
-                                        <InfoCard
-                                            iconName="bed"
-                                            // elevate={false}
-                                            title={item.numero}
-                                            subtitle={item.tipo}
-                                            // onPress={handleEditPress}
-                                        />
-                                    </View>
-                                )}
-                            />
+                            
+                            {loading && !refreshing ? (
+                                <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+                                    <ActivityIndicator size="large" color="#4BBAED" />
+                                    <Text style={{marginTop: 10, color: '#64748B'}}>Carregando quartos...</Text>
+                                </View>
+                            ) : filteredItems.length === 0 ? (
+                                <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+                                    <Text style={{fontSize: 16, color: '#64748B'}}>
+                                        {search ? 'Nenhum quarto encontrado' : 'Nenhum quarto cadastrado'}
+                                    </Text>
+                                </View>
+                            ) : (
+                                <FlatList
+                                    data={filteredItems}
+                                    keyExtractor={item => item.id!}
+                                    numColumns={2}
+                                    refreshControl={
+                                        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={['#4BBAED']} />
+                                    }
+                                    renderItem={({ item }) => (
+                                        <View style={{flex: 1, margin: 5}}>
+                                            <TouchableOpacity onPress={() => router.push(`/screens/Quarto/InfoQuarto?id=${item.id}`)}>
+                                                <InfoCard
+                                                    iconName="bed"
+                                                    title={item.numero_quarto}
+                                                    subtitle={item.tipo}
+                                                />
+                                            </TouchableOpacity>
+                                        </View>
+                                    )}
+                                />
+                            )}
                         </View>
                     </View>
                 </View>

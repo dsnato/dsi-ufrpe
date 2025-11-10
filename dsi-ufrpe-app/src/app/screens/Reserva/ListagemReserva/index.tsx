@@ -1,44 +1,50 @@
 import HeaderName from "@/src/components/HeaderName";
 import InfoCard from "@/src/components/InfoCard";
 import TextInputRounded from "@/src/components/TextInputRounded";
-import { useRouter } from "expo-router";
-import { useState } from "react";
-import { FlatList, StyleSheet, Text, View } from "react-native";
+import { useRouter, useFocusEffect } from "expo-router";
+import { useState, useCallback } from "react";
+import { FlatList, StyleSheet, Text, View, ActivityIndicator, Alert, RefreshControl, TouchableOpacity } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { listarReservas } from "@/src/services/reservasService";
+import type { Reserva } from "@/src/services/reservasService";
 
-const initialData = [
-    { id: '1', numero: '042', dataReserva: '10/10/26 a 20/10/26' },
-    { id: '2', numero: '007', dataReserva: '05/11/26 a 12/11/26' },
-    { id: '3', numero: '100', dataReserva: '01/12/26 a 07/12/26' },
-    { id: '4', numero: '021', dataReserva: '15/10/26 a 18/10/26' },
-    { id: '5', numero: '089', dataReserva: '20/09/26 a 25/09/26' },
-    { id: '6', numero: '034', dataReserva: '02/01/27 a 09/01/27' },
-    { id: '7', numero: '076', dataReserva: '10/02/27 a 14/02/27' },
-    { id: '8', numero: '058', dataReserva: '22/11/26 a 29/11/26' },
-    { id: '9', numero: '013', dataReserva: '30/12/26 a 05/01/27' },
-    { id: '10', numero: '066', dataReserva: '07/03/27 a 14/03/27' },
-];
-
-export default function Crud() {
+export default function ListagemReserva() {
     const router = useRouter();
-    const [items, setItems] = useState(initialData);
-    const [modalVisible, setModalVisible] = useState(false);
-    const [selectedItem, setSelectedItem] = useState<any>(null);
+    const [reservas, setReservas] = useState<Reserva[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [search, setSearch] = useState('');
 
-    const handleUpdate = (updatedData: any) => {
-        setItems(prev => prev.map(i => i.id === updatedData.id ? updatedData : i));
-        setModalVisible(false);
-        setSelectedItem(null);
+    const carregarReservas = async () => {
+        try {
+            setLoading(true);
+            const dados = await listarReservas();
+            setReservas(dados);
+        } catch (error) {
+            const mensagem = error instanceof Error ? error.message : 'Erro ao carregar reservas';
+            Alert.alert('Erro', mensagem);
+            console.error('Erro ao carregar reservas:', error);
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
+        }
     };
 
-    function handleInfoReserva() {
-        router.push({
-            pathname: "/screens/Reserva/InfoReserva",
-            // params: { id: item.id }
-        });
-    }
-const filteredItems = items.filter(i => i.numero.toLowerCase().includes(search.toLowerCase()) || i.dataReserva.includes(search));
+    useFocusEffect(
+        useCallback(() => {
+            carregarReservas();
+        }, [])
+    );
+
+    const handleRefresh = () => {
+        setRefreshing(true);
+        carregarReservas();
+    };
+
+    const filteredItems = reservas.filter(r => 
+        r.clientes?.nome_completo.toLowerCase().includes(search.toLowerCase()) ||
+        r.quartos?.numero_quarto.includes(search)
+    );
 
 
     return (
@@ -54,22 +60,40 @@ const filteredItems = items.filter(i => i.numero.toLowerCase().includes(search.t
                         </View>
                         <TextInputRounded value={search} onChangeText={setSearch} />
                         <View style={[styles.gridContainer, {flex: 1, backgroundColor: "#EFEFF0" ,borderTopLeftRadius: 50, borderTopRightRadius: 50, paddingHorizontal: 30, justifyContent: 'center', paddingTop: 20, flexDirection: 'column'}]}>
-                            <Text style={{fontSize: 24, fontWeight: 'bold', alignSelf: 'flex-start', marginTop: 15, color: '#4BBAED'}}>Lista de Clientes</Text>
-                            <FlatList
-                                data={filteredItems}
-                                keyExtractor={item => item.id}
-                                numColumns={2}
-                                renderItem={({ item }) => (
-                                    <View style={{flex: 1, margin: 5}}>
-                                        <InfoCard
-                                            iconName="bed"                                            // elevate={false}
-                                            title={item.numero}
-                                            subtitle={item.dataReserva}
-                                            onPress={handleInfoReserva}
-                                        />
-                                    </View>
-                                )}
-                            />
+                            <Text style={{fontSize: 24, fontWeight: 'bold', alignSelf: 'flex-start', marginTop: 15, color: '#4BBAED'}}>Lista de Reservas</Text>
+                            
+                            {loading && !refreshing ? (
+                                <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+                                    <ActivityIndicator size="large" color="#4BBAED" />
+                                    <Text style={{marginTop: 10, color: '#64748B'}}>Carregando reservas...</Text>
+                                </View>
+                            ) : filteredItems.length === 0 ? (
+                                <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+                                    <Text style={{fontSize: 16, color: '#64748B'}}>
+                                        {search ? 'Nenhuma reserva encontrada' : 'Nenhuma reserva cadastrada'}
+                                    </Text>
+                                </View>
+                            ) : (
+                                <FlatList
+                                    data={filteredItems}
+                                    keyExtractor={item => item.id!}
+                                    numColumns={2}
+                                    refreshControl={
+                                        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={['#4BBAED']} />
+                                    }
+                                    renderItem={({ item }) => (
+                                        <View style={{flex: 1, margin: 5}}>
+                                            <TouchableOpacity onPress={() => router.push(`/screens/Reserva/InfoReserva?id=${item.id}`)}>
+                                                <InfoCard
+                                                    iconName="bed"
+                                                    title={item.quartos?.numero_quarto || 'Quarto S/N'}
+                                                    subtitle={`${item.data_checkin} a ${item.data_checkout}`}
+                                                />
+                                            </TouchableOpacity>
+                                        </View>
+                                    )}
+                                />
+                            )}
                         </View>
                     </View>
                 </View>
