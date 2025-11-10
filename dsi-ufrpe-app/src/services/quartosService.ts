@@ -1,0 +1,155 @@
+import { supabase } from '../../lib/supabase';
+
+export interface Quarto {
+  id?: string;
+  numero_quarto: string;
+  tipo: string;
+  capacidade: number;
+  preco_diario: number;
+  status?: string;
+  foto_quarto?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+/**
+ * Buscar todos os quartos
+ */
+export const listarQuartos = async (): Promise<Quarto[]> => {
+  const { data, error } = await supabase
+    .from('quartos')
+    .select('*')
+    .order('numero_quarto', { ascending: true });
+
+  if (error) {
+    console.error('Erro ao listar quartos:', error);
+    throw new Error(error.message);
+  }
+
+  return data || [];
+};
+
+/**
+ * Buscar quarto por ID
+ */
+export const buscarQuartoPorId = async (id: string): Promise<Quarto | null> => {
+  const { data, error } = await supabase
+    .from('quartos')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error) {
+    console.error('Erro ao buscar quarto:', error);
+    throw new Error(error.message);
+  }
+
+  return data;
+};
+
+/**
+ * Criar novo quarto
+ */
+export const criarQuarto = async (quarto: Omit<Quarto, 'id' | 'created_at' | 'updated_at'>): Promise<Quarto> => {
+  const { data, error } = await supabase
+    .from('quartos')
+    .insert([{
+      ...quarto,
+      status: quarto.status || 'Disponível'
+    }])
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Erro ao criar quarto:', error);
+    throw new Error(error.message);
+  }
+
+  return data;
+};
+
+/**
+ * Atualizar quarto existente
+ */
+export const atualizarQuarto = async (id: string, quarto: Partial<Quarto>): Promise<Quarto> => {
+  const { data, error } = await supabase
+    .from('quartos')
+    .update(quarto)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Erro ao atualizar quarto:', error);
+    throw new Error(error.message);
+  }
+
+  return data;
+};
+
+/**
+ * Excluir quarto
+ */
+export const excluirQuarto = async (id: string): Promise<void> => {
+  const { error } = await supabase
+    .from('quartos')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error('Erro ao excluir quarto:', error);
+    throw new Error(error.message);
+  }
+};
+
+/**
+ * Buscar quartos disponíveis
+ */
+export const listarQuartosDisponiveis = async (): Promise<Quarto[]> => {
+  const { data, error } = await supabase
+    .from('quartos')
+    .select('*')
+    .eq('status', 'Disponível')
+    .order('numero_quarto', { ascending: true });
+
+  if (error) {
+    console.error('Erro ao listar quartos disponíveis:', error);
+    throw new Error(error.message);
+  }
+
+  return data || [];
+};
+
+/**
+ * Buscar quartos com filtros
+ */
+export const buscarQuartos = async (filtros: {
+  tipo?: string;
+  capacidadeMinima?: number;
+  precoMaximo?: number;
+  status?: string;
+}): Promise<Quarto[]> => {
+  let query = supabase.from('quartos').select('*');
+
+  if (filtros.tipo) {
+    query = query.eq('tipo', filtros.tipo);
+  }
+  if (filtros.capacidadeMinima) {
+    query = query.gte('capacidade', filtros.capacidadeMinima);
+  }
+  if (filtros.precoMaximo) {
+    query = query.lte('preco_diario', filtros.precoMaximo);
+  }
+  if (filtros.status) {
+    query = query.eq('status', filtros.status);
+  }
+
+  const { data, error } = await query.order('numero_quarto', { ascending: true });
+
+  if (error) {
+    console.error('Erro ao buscar quartos com filtros:', error);
+    throw new Error(error.message);
+  }
+
+  return data || [];
+};
