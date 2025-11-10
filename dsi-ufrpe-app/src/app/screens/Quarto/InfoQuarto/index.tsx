@@ -1,12 +1,14 @@
+import { ActionButton } from '@/src/components/ActionButton';
 import { ErrorState } from '@/src/components/ErrorState';
+import { InfoHeader } from '@/src/components/InfoHeader';
+import { InfoRow } from '@/src/components/InfoRow';
 import { Loading } from '@/src/components/Loading';
 import { QuartoService } from '@/src/services/QuartoService';
 import { Quarto } from '@/src/types/quarto';
 import { formatCurrency, withPlaceholder } from '@/src/utils/formatters';
-import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 
 const InfoQuarto: React.FC = () => {
@@ -98,16 +100,7 @@ const InfoQuarto: React.FC = () => {
     if (loading) {
         return (
             <View style={styles.container}>
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.push("/screens/Quarto/ListagemQuarto")} style={styles.backButton}>
-                        <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
-                    </TouchableOpacity>
-                    <View style={styles.breadcrumb}>
-                        <Text style={styles.breadcrumbText}>Quartos</Text>
-                        <Ionicons name="chevron-forward" size={16} color="#E0F2FE" />
-                        <Text style={styles.breadcrumbTextActive}>Detalhes</Text>
-                    </View>
-                </View>
+                <InfoHeader entity="Quartos" onBackPress={() => router.back()} />
                 <View style={styles.subContainer}>
                     <Loading message="Carregando quarto..." />
                 </View>
@@ -121,16 +114,7 @@ const InfoQuarto: React.FC = () => {
     if (error || !quarto) {
         return (
             <View style={styles.container}>
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.push("/screens/Quarto/ListagemQuarto")} style={styles.backButton}>
-                        <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
-                    </TouchableOpacity>
-                    <View style={styles.breadcrumb}>
-                        <Text style={styles.breadcrumbText}>Quartos</Text>
-                        <Ionicons name="chevron-forward" size={16} color="#E0F2FE" />
-                        <Text style={styles.breadcrumbTextActive}>Detalhes</Text>
-                    </View>
-                </View>
+                <InfoHeader entity="Quartos" onBackPress={() => router.back()} />
                 <View style={styles.subContainer}>
                     <ErrorState
                         message={error || 'Quarto não encontrado'}
@@ -145,16 +129,7 @@ const InfoQuarto: React.FC = () => {
     return (
         <View style={styles.container}>
             {/* ✅ REQUISITO 9: Breadcrumb/indicador de navegação */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.push("/screens/Quarto/ListagemQuarto")} style={styles.backButton}>
-                    <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
-                </TouchableOpacity>
-                <View style={styles.breadcrumb}>
-                    <Text style={styles.breadcrumbText}>Quartos</Text>
-                    <Ionicons name="chevron-forward" size={16} color="#E0F2FE" />
-                    <Text style={styles.breadcrumbTextActive}>Detalhes</Text>
-                </View>
-            </View>
+            <InfoHeader entity="Quartos" onBackPress={() => router.back()} />
 
             {/* Container branco com informações */}
             <View style={styles.subContainer}>
@@ -181,45 +156,31 @@ const InfoQuarto: React.FC = () => {
                         <View style={styles.titleSeparator} />
                     </View>
 
-                    {/* ✅ REQUISITO 7 e 8: Informações formatadas com placeholders */}
-                    <View style={styles.infoRow}>
-                        <Ionicons name="bed-outline" size={20} color="#0162B3" />
-                        <View style={styles.infoTextContainer}>
-                            <Text style={styles.infoLabel}>TIPO DE QUARTO</Text>
-                            <Text style={styles.infoValue}>
-                                {withPlaceholder(quarto.tipo, 'Tipo não informado')}
-                            </Text>
-                        </View>
-                    </View>
+                    {/* ✅ REQUISITO 7 e 8: Formatação e tratamento de valores vazios */}
+                    <InfoRow
+                        icon="bed-outline"
+                        label="TIPO DE QUARTO"
+                        value={withPlaceholder(quarto.tipo, 'Tipo não informado')}
+                    />
 
-                    <View style={styles.infoRow}>
-                        <Ionicons name="people-outline" size={20} color="#0162B3" />
-                        <View style={styles.infoTextContainer}>
-                            <Text style={styles.infoLabel}>CAPACIDADE DO QUARTO</Text>
-                            <Text style={styles.infoValue}>
-                                {quarto.capacidade} {quarto.capacidade === 1 ? 'pessoa' : 'pessoas'}
-                            </Text>
-                        </View>
-                    </View>
+                    <InfoRow
+                        icon="people-outline"
+                        label="CAPACIDADE DO QUARTO"
+                        value={`${quarto.capacidade} ${quarto.capacidade === 1 ? 'pessoa' : 'pessoas'}`}
+                    />
 
-                    <View style={styles.infoRow}>
-                        <Ionicons name="cash-outline" size={20} color="#0162B3" />
-                        <View style={styles.infoTextContainer}>
-                            <Text style={styles.infoLabel}>PREÇO DO QUARTO</Text>
-                            <Text style={styles.infoValue}>{formatCurrency(quarto.preco)}</Text>
-                        </View>
-                    </View>
+                    <InfoRow
+                        icon="cash-outline"
+                        label="PREÇO DO QUARTO"
+                        value={formatCurrency(quarto.preco)}
+                    />
 
                     {quarto.descricao && (
-                        <View style={styles.infoRow}>
-                            <Ionicons name="document-text-outline" size={20} color="#0162B3" />
-                            <View style={styles.infoTextContainer}>
-                                <Text style={styles.infoLabel}>DESCRIÇÃO</Text>
-                                <Text style={styles.infoValue}>
-                                    {withPlaceholder(quarto.descricao, 'Sem descrição')}
-                                </Text>
-                            </View>
-                        </View>
+                        <InfoRow
+                            icon="document-text-outline"
+                            label="DESCRIÇÃO"
+                            value={withPlaceholder(quarto.descricao, 'Sem descrição')}
+                        />
                     )}
                 </ScrollView>
 
@@ -229,22 +190,25 @@ const InfoQuarto: React.FC = () => {
                 {/* Botões de ação */}
                 <View style={styles.options}>
                     {/* ✅ REQUISITO 4: Botão editar com ID correto */}
-                    <TouchableOpacity
-                        style={styles.buttonPrimary}
+                    <ActionButton
+                        variant="primary"
+                        icon="create-outline"
                         onPress={() => router.push({
                             pathname: "/screens/Quarto/EdicaoQuarto",
                             params: { id: quarto.id }
                         })}
                     >
-                        <Ionicons name="create-outline" size={20} color="#FFFFFF" style={styles.buttonIcon} />
-                        <Text style={styles.buttonPrimaryText}>Editar Quarto</Text>
-                    </TouchableOpacity>
+                        Editar Quarto
+                    </ActionButton>
 
                     {/* ✅ REQUISITO 5: Modal de confirmação implementado */}
-                    <TouchableOpacity style={styles.buttonDanger} onPress={handleDelete}>
-                        <Ionicons name="trash-outline" size={20} color="#EF4444" style={styles.buttonIcon} />
-                        <Text style={styles.buttonDangerText}>Excluir</Text>
-                    </TouchableOpacity>
+                    <ActionButton
+                        variant="danger"
+                        icon="trash-outline"
+                        onPress={handleDelete}
+                    >
+                        Excluir
+                    </ActionButton>
                 </View>
             </View>
         </View>
@@ -256,33 +220,6 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#132F3B',
-    },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingTop: 50,
-        paddingBottom: 16,
-        paddingHorizontal: 16,
-        backgroundColor: '#132F3B',
-    },
-    backButton: {
-        marginRight: 16,
-    },
-    breadcrumb: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-        flex: 1,
-    },
-    breadcrumbText: {
-        fontSize: 14,
-        color: '#E0F2FE',
-        opacity: 0.7,
-    },
-    breadcrumbTextActive: {
-        fontSize: 14,
-        color: '#FFE157',
-        fontWeight: '600',
     },
     subContainer: {
         flex: 1,
@@ -346,73 +283,11 @@ const styles = StyleSheet.create({
         backgroundColor: '#E2E8F0',
         marginBottom: 20,
     },
-    infoRow: {
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        marginBottom: 20,
-        paddingVertical: 8,
-    },
-    infoTextContainer: {
-        marginLeft: 12,
-        flex: 1,
-    },
-    infoLabel: {
-        fontSize: 16,
-        color: '#64748B',
-        fontWeight: '600',
-        textTransform: 'uppercase',
-        marginBottom: 4,
-        letterSpacing: 0.5,
-    },
-    infoValue: {
-        fontSize: 18,
-        color: '#1E293B',
-        fontWeight: '500',
-        lineHeight: 24,
-    },
     options: {
         width: '100%',
         gap: 12,
         paddingTop: 16,
         paddingBottom: 8,
-    },
-    buttonPrimary: {
-        width: '100%',
-        height: 48,
-        backgroundColor: '#0162B3',
-        borderRadius: 12,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 3,
-    },
-    buttonPrimaryText: {
-        color: '#FFFFFF',
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    buttonDanger: {
-        width: '100%',
-        height: 48,
-        backgroundColor: 'transparent',
-        borderRadius: 12,
-        borderWidth: 1.5,
-        borderColor: '#EF4444',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    buttonDangerText: {
-        color: '#EF4444',
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    buttonIcon: {
-        marginRight: 8,
     },
 })
 

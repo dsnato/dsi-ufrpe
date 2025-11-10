@@ -1,12 +1,14 @@
 import { ErrorState } from '@/src/components/ErrorState';
+import { InfoHeader } from '@/src/components/InfoHeader';
+import { InfoRow } from '@/src/components/InfoRow';
+import { ActionButton } from '@/src/components/ActionButton';
 import { Loading } from '@/src/components/Loading';
 import { AtividadeService } from '@/src/services/AtividadeService';
 import { Atividade } from '@/src/types/atividade';
 import { formatDate, formatTime, withPlaceholder } from '@/src/utils/formatters';
-import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 const InfoAtividade: React.FC = () => {
     const router = useRouter();
@@ -97,16 +99,7 @@ const InfoAtividade: React.FC = () => {
     if (loading) {
         return (
             <View style={styles.container}>
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.push("/screens/Atividade/ListagemAtividade")} style={styles.backButton}>
-                        <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
-                    </TouchableOpacity>
-                    <View style={styles.breadcrumb}>
-                        <Text style={styles.breadcrumbText}>Atividades</Text>
-                        <Ionicons name="chevron-forward" size={16} color="#E0F2FE" />
-                        <Text style={styles.breadcrumbTextActive}>Detalhes</Text>
-                    </View>
-                </View>
+                <InfoHeader entity="Atividades" onBackPress={() => router.back()} />
                 <View style={styles.subContainer}>
                     <Loading message="Carregando atividade..." />
                 </View>
@@ -120,16 +113,7 @@ const InfoAtividade: React.FC = () => {
     if (error || !atividade) {
         return (
             <View style={styles.container}>
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                        <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
-                    </TouchableOpacity>
-                    <View style={styles.breadcrumb}>
-                        <Text style={styles.breadcrumbText}>Atividades</Text>
-                        <Ionicons name="chevron-forward" size={16} color="#E0F2FE" />
-                        <Text style={styles.breadcrumbTextActive}>Detalhes</Text>
-                    </View>
-                </View>
+                <InfoHeader entity="Atividades" onBackPress={() => router.back()} />
                 <View style={styles.subContainer}>
                     <ErrorState
                         message={error || 'Atividade não encontrada'}
@@ -144,16 +128,7 @@ const InfoAtividade: React.FC = () => {
     return (
         <View style={styles.container}>
             {/* ✅ REQUISITO 9: Breadcrumb/indicador de navegação */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.push("/screens/Atividade/ListagemAtividade")} style={styles.backButton}>
-                    <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
-                </TouchableOpacity>
-                <View style={styles.breadcrumb}>
-                    <Text style={styles.breadcrumbText}>Atividades</Text>
-                    <Ionicons name="chevron-forward" size={16} color="#E0F2FE" />
-                    <Text style={styles.breadcrumbTextActive}>Detalhes</Text>
-                </View>
-            </View>
+            <InfoHeader entity="Atividades" onBackPress={() => router.back()} />
 
             {/* Container branco com informações */}
             <View style={styles.subContainer}>
@@ -180,47 +155,30 @@ const InfoAtividade: React.FC = () => {
                         <View style={styles.titleSeparator} />
                     </View>
 
-
                     {/* ✅ REQUISITO 7 e 8: Informações formatadas com placeholders */}
-                    <View style={styles.infoRow}>
-                        <Ionicons name="document-text-outline" size={20} color="#0162B3" />
-                        <View style={styles.infoTextContainer}>
-                            <Text style={styles.infoLabel}>DESCRIÇÃO</Text>
-                            <Text style={styles.infoValue}>
-                                {withPlaceholder(atividade.descricao, 'Sem descrição')}
-                            </Text>
-                        </View>
-                    </View>
+                    <InfoRow
+                        icon="document-text-outline"
+                        label="DESCRIÇÃO"
+                        value={withPlaceholder(atividade.descricao, 'Sem descrição')}
+                    />
 
-                    <View style={styles.infoRow}>
-                        <Ionicons name="calendar-outline" size={20} color="#0162B3" />
-                        <View style={styles.infoTextContainer}>
-                            <Text style={styles.infoLabel}>DATA DA ATIVIDADE</Text>
-                            <Text style={styles.infoValue}>
-                                {formatDate(atividade.data_atividade)}
-                            </Text>
-                        </View>
-                    </View>
+                    <InfoRow
+                        icon="calendar-outline"
+                        label="DATA DA ATIVIDADE"
+                        value={formatDate(atividade.data_atividade)}
+                    />
 
-                    <View style={styles.infoRow}>
-                        <Ionicons name="time-outline" size={20} color="#0162B3" />
-                        <View style={styles.infoTextContainer}>
-                            <Text style={styles.infoLabel}>HORÁRIO</Text>
-                            <Text style={styles.infoValue}>
-                                {formatTime(atividade.horario)}
-                            </Text>
-                        </View>
-                    </View>
+                    <InfoRow
+                        icon="time-outline"
+                        label="HORÁRIO"
+                        value={formatTime(atividade.horario)}
+                    />
 
-                    <View style={styles.infoRow}>
-                        <Ionicons name="location-outline" size={20} color="#0162B3" />
-                        <View style={styles.infoTextContainer}>
-                            <Text style={styles.infoLabel}>LOCAL</Text>
-                            <Text style={styles.infoValue}>
-                                {withPlaceholder(atividade.local, 'Local não informado')}
-                            </Text>
-                        </View>
-                    </View>
+                    <InfoRow
+                        icon="location-outline"
+                        label="LOCAL"
+                        value={withPlaceholder(atividade.local, 'Local não informado')}
+                    />
                 </ScrollView>
 
                 {/* Botões de ação */}
@@ -230,22 +188,25 @@ const InfoAtividade: React.FC = () => {
                     <View style={styles.separator} />
 
                     {/* ✅ REQUISITO 4: Botão editar com ID correto */}
-                    <TouchableOpacity
-                        style={styles.buttonPrimary}
+                    <ActionButton
+                        variant="primary"
+                        icon="create-outline"
                         onPress={() => router.push({
                             pathname: "/screens/Atividade/EdicaoAtividade",
                             params: { id: atividade.id }
                         })}
                     >
-                        <Ionicons name="create-outline" size={20} color="#FFFFFF" style={styles.buttonIcon} />
-                        <Text style={styles.buttonPrimaryText}>Editar Atividade</Text>
-                    </TouchableOpacity>
+                        Editar Atividade
+                    </ActionButton>
 
                     {/* ✅ REQUISITO 5: Modal de confirmação implementado */}
-                    <TouchableOpacity style={styles.buttonDanger} onPress={handleDelete}>
-                        <Ionicons name="trash-outline" size={20} color="#EF4444" style={styles.buttonIcon} />
-                        <Text style={styles.buttonDangerText}>Excluir</Text>
-                    </TouchableOpacity>
+                    <ActionButton
+                        variant="danger"
+                        icon="trash-outline"
+                        onPress={handleDelete}
+                    >
+                        Excluir
+                    </ActionButton>
                 </View>
             </View>
         </View>
