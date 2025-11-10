@@ -1,12 +1,14 @@
+import { ActionButton } from '@/src/components/ActionButton';
 import { ErrorState } from '@/src/components/ErrorState';
+import { InfoHeader } from '@/src/components/InfoHeader';
+import { InfoRow } from '@/src/components/InfoRow';
 import { Loading } from '@/src/components/Loading';
 import { FuncionarioService } from '@/src/services/FuncionarioService';
 import { Funcionario } from '@/src/types/funcionario';
 import { formatCPF, formatPhone, withPlaceholder } from '@/src/utils/formatters';
-import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 
 const InfoFuncionario: React.FC = () => {
@@ -98,16 +100,7 @@ const InfoFuncionario: React.FC = () => {
     if (loading) {
         return (
             <View style={styles.container}>
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.push("/screens/Funcionario/ListagemFuncionario")} style={styles.backButton}>
-                        <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
-                    </TouchableOpacity>
-                    <View style={styles.breadcrumb}>
-                        <Text style={styles.breadcrumbText}>Funcionários</Text>
-                        <Ionicons name="chevron-forward" size={16} color="#E0F2FE" />
-                        <Text style={styles.breadcrumbTextActive}>Detalhes</Text>
-                    </View>
-                </View>
+                <InfoHeader entity="Funcionários" onBackPress={() => router.back()} />
                 <View style={styles.subContainer}>
                     <Loading message="Carregando funcionário..." />
                 </View>
@@ -121,16 +114,7 @@ const InfoFuncionario: React.FC = () => {
     if (error || !funcionario) {
         return (
             <View style={styles.container}>
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                        <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
-                    </TouchableOpacity>
-                    <View style={styles.breadcrumb}>
-                        <Text style={styles.breadcrumbText}>Funcionários</Text>
-                        <Ionicons name="chevron-forward" size={16} color="#E0F2FE" />
-                        <Text style={styles.breadcrumbTextActive}>Detalhes</Text>
-                    </View>
-                </View>
+                <InfoHeader entity="Funcionários" onBackPress={() => router.back()} />
                 <View style={styles.subContainer}>
                     <ErrorState
                         message={error || 'Funcionário não encontrado'}
@@ -145,16 +129,7 @@ const InfoFuncionario: React.FC = () => {
     return (
         <View style={styles.container}>
             {/* ✅ REQUISITO 9: Breadcrumb/indicador de navegação */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.push("/screens/Funcionario/ListagemFuncionario")} style={styles.backButton}>
-                    <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
-                </TouchableOpacity>
-                <View style={styles.breadcrumb}>
-                    <Text style={styles.breadcrumbText}>Funcionários</Text>
-                    <Ionicons name="chevron-forward" size={16} color="#E0F2FE" />
-                    <Text style={styles.breadcrumbTextActive}>Detalhes</Text>
-                </View>
-            </View>
+            <InfoHeader entity="Funcionários" onBackPress={() => router.back()} />
 
             {/* Seção de foto e nome no fundo azul */}
             <View style={styles.profileSection}>
@@ -179,31 +154,23 @@ const InfoFuncionario: React.FC = () => {
                 <View style={styles.separator} />
                 <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
                     {/* ✅ REQUISITO 7 e 8: Informações formatadas com placeholders */}
-                    <View style={styles.infoRow}>
-                        <Ionicons name="card-outline" size={20} color="#0162B3" />
-                        <View style={styles.infoTextContainer}>
-                            <Text style={styles.infoLabel}>CPF</Text>
-                            <Text style={styles.infoValue}>{formatCPF(funcionario.cpf)}</Text>
-                        </View>
-                    </View>
+                    <InfoRow
+                        icon="card-outline"
+                        label="CPF"
+                        value={formatCPF(funcionario.cpf)}
+                    />
 
-                    <View style={styles.infoRow}>
-                        <Ionicons name="call-outline" size={20} color="#0162B3" />
-                        <View style={styles.infoTextContainer}>
-                            <Text style={styles.infoLabel}>CELULAR</Text>
-                            <Text style={styles.infoValue}>{formatPhone(funcionario.phone)}</Text>
-                        </View>
-                    </View>
+                    <InfoRow
+                        icon="call-outline"
+                        label="CELULAR"
+                        value={formatPhone(funcionario.phone)}
+                    />
 
-                    <View style={styles.infoRow}>
-                        <Ionicons name="mail-outline" size={20} color="#0162B3" />
-                        <View style={styles.infoTextContainer}>
-                            <Text style={styles.infoLabel}>E-MAIL</Text>
-                            <Text style={styles.infoValue}>
-                                {withPlaceholder(funcionario.email, 'Email não informado')}
-                            </Text>
-                        </View>
-                    </View>
+                    <InfoRow
+                        icon="mail-outline"
+                        label="E-MAIL"
+                        value={withPlaceholder(funcionario.email, 'Email não informado')}
+                    />
                 </ScrollView>
 
                 {/* Linha divisória */}
@@ -212,22 +179,25 @@ const InfoFuncionario: React.FC = () => {
                 {/* Botões de ação */}
                 <View style={styles.options}>
                     {/* ✅ REQUISITO 4: Botão editar com ID correto */}
-                    <TouchableOpacity
-                        style={styles.buttonPrimary}
+                    <ActionButton
+                        variant="primary"
+                        icon="create-outline"
                         onPress={() => router.push({
                             pathname: "/screens/Funcionario/EdicaoFuncionario",
                             params: { id: funcionario.id }
                         })}
                     >
-                        <Ionicons name="create-outline" size={20} color="#FFFFFF" style={styles.buttonIcon} />
-                        <Text style={styles.buttonPrimaryText}>Editar Funcionário</Text>
-                    </TouchableOpacity>
+                        Editar Funcionário
+                    </ActionButton>
 
                     {/* ✅ REQUISITO 5: Modal de confirmação implementado */}
-                    <TouchableOpacity style={styles.buttonDanger} onPress={handleDelete}>
-                        <Ionicons name="trash-outline" size={20} color="#EF4444" style={styles.buttonIcon} />
-                        <Text style={styles.buttonDangerText}>Excluir</Text>
-                    </TouchableOpacity>
+                    <ActionButton
+                        variant="danger"
+                        icon="trash-outline"
+                        onPress={handleDelete}
+                    >
+                        Excluir
+                    </ActionButton>
                 </View>
             </View>
         </View>
