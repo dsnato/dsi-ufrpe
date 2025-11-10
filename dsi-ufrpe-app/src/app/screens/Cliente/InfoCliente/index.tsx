@@ -1,12 +1,14 @@
+import { ActionButton } from '@/src/components/ActionButton';
 import { ErrorState } from '@/src/components/ErrorState';
+import { InfoHeader } from '@/src/components/InfoHeader';
+import { InfoRow } from '@/src/components/InfoRow';
 import { Loading } from '@/src/components/Loading';
 import { ClienteService } from '@/src/services/ClienteService';
 import { Cliente } from '@/src/types/cliente';
 import { formatCPF, formatPhone, withPlaceholder } from '@/src/utils/formatters';
-import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, Image, ScrollView, StyleSheet, Text, View } from "react-native";
 
 export default function InfoCliente() {
     const router = useRouter();
@@ -97,16 +99,7 @@ export default function InfoCliente() {
     if (loading) {
         return (
             <View style={styles.container}>
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.push("/screens/Cliente/ListagemCliente")} style={styles.backButton}>
-                        <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
-                    </TouchableOpacity>
-                    <View style={styles.breadcrumb}>
-                        <Text style={styles.breadcrumbText}>Clientes</Text>
-                        <Ionicons name="chevron-forward" size={16} color="#E0F2FE" />
-                        <Text style={styles.breadcrumbTextActive}>Detalhes</Text>
-                    </View>
-                </View>
+                <InfoHeader entity="Clientes" onBackPress={() => router.back()} />
                 <View style={styles.subContainer}>
                     <Loading message="Carregando cliente..." />
                 </View>
@@ -120,16 +113,7 @@ export default function InfoCliente() {
     if (error || !cliente) {
         return (
             <View style={styles.container}>
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                        <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
-                    </TouchableOpacity>
-                    <View style={styles.breadcrumb}>
-                        <Text style={styles.breadcrumbText}>Clientes</Text>
-                        <Ionicons name="chevron-forward" size={16} color="#E0F2FE" />
-                        <Text style={styles.breadcrumbTextActive}>Detalhes</Text>
-                    </View>
-                </View>
+                <InfoHeader entity="Clientes" onBackPress={() => router.back()} />
                 <View style={styles.subContainer}>
                     <ErrorState
                         message={error || 'Cliente não encontrado'}
@@ -144,16 +128,7 @@ export default function InfoCliente() {
     return (
         <View style={styles.container}>
             {/* ✅ REQUISITO 9: Breadcrumb/indicador de navegação */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.push("/screens/Cliente/ListagemCliente")} style={styles.backButton}>
-                    <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
-                </TouchableOpacity>
-                <View style={styles.breadcrumb}>
-                    <Text style={styles.breadcrumbText}>Clientes</Text>
-                    <Ionicons name="chevron-forward" size={16} color="#E0F2FE" />
-                    <Text style={styles.breadcrumbTextActive}>Detalhes</Text>
-                </View>
-            </View>
+            <InfoHeader entity="Clientes" onBackPress={() => router.back()} />
 
             {/* Seção de foto e nome no fundo azul */}
             <View style={styles.profileSection}>
@@ -176,44 +151,32 @@ export default function InfoCliente() {
                 <View style={styles.separator} />
                 <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
-                    {/* ✅ REQUISITO 7 e 8: Informações formatadas com placeholders */}
-                    <View style={styles.infoRow}>
-                        <Ionicons name="card-outline" size={20} color="#0162B3" />
-                        <View style={styles.infoTextContainer}>
-                            <Text style={styles.infoLabel}>CPF</Text>
-                            <Text style={styles.infoValue}>{formatCPF(cliente.cpf)}</Text>
-                        </View>
-                    </View>
+                    {/* ✅ REQUISITO 7 e 8: Dados formatados com placeholders */}
+                    <InfoRow
+                        icon="person-outline"
+                        label="CPF"
+                        value={formatCPF(cliente.cpf)}
+                    />
 
-                    <View style={styles.infoRow}>
-                        <Ionicons name="location-outline" size={20} color="#0162B3" />
-                        <View style={styles.infoTextContainer}>
-                            <Text style={styles.infoLabel}>ENDEREÇO</Text>
-                            <Text style={styles.infoValue}>
-                                {cliente.street && cliente.number
-                                    ? `${cliente.street}, ${cliente.number}, ${cliente.neighborhood}, ${cliente.city} - ${cliente.state}, CEP: ${cliente.zipCode}`
-                                    : 'Endereço não informado'}
-                            </Text>
-                        </View>
-                    </View>
+                    <InfoRow
+                        icon="location-outline"
+                        label="ENDEREÇO"
+                        value={cliente.street && cliente.number
+                            ? `${cliente.street}, ${cliente.number}, ${cliente.neighborhood}, ${cliente.city} - ${cliente.state}, CEP: ${cliente.zipCode}`
+                            : 'Endereço não informado'}
+                    />
 
-                    <View style={styles.infoRow}>
-                        <Ionicons name="call-outline" size={20} color="#0162B3" />
-                        <View style={styles.infoTextContainer}>
-                            <Text style={styles.infoLabel}>CELULAR</Text>
-                            <Text style={styles.infoValue}>{formatPhone(cliente.phone)}</Text>
-                        </View>
-                    </View>
+                    <InfoRow
+                        icon="call-outline"
+                        label="CELULAR"
+                        value={formatPhone(cliente.phone)}
+                    />
 
-                    <View style={styles.infoRow}>
-                        <Ionicons name="mail-outline" size={20} color="#0162B3" />
-                        <View style={styles.infoTextContainer}>
-                            <Text style={styles.infoLabel}>EMAIL</Text>
-                            <Text style={styles.infoValue}>
-                                {withPlaceholder(cliente.email, 'Email não informado')}
-                            </Text>
-                        </View>
-                    </View>
+                    <InfoRow
+                        icon="mail-outline"
+                        label="EMAIL"
+                        value={withPlaceholder(cliente.email, 'Email não informado')}
+                    />
                 </ScrollView>
 
                 {/* Linha divisória */}
@@ -222,22 +185,25 @@ export default function InfoCliente() {
                 {/* Botões de ação */}
                 <View style={styles.options}>
                     {/* ✅ REQUISITO 4: Botão editar com ID correto */}
-                    <TouchableOpacity
-                        style={styles.buttonPrimary}
+                    <ActionButton
+                        variant="primary"
+                        icon="create-outline"
                         onPress={() => router.push({
                             pathname: "/screens/Cliente/EdicaoCliente",
                             params: { id: cliente.id }
                         })}
                     >
-                        <Ionicons name="create-outline" size={20} color="#FFFFFF" style={styles.buttonIcon} />
-                        <Text style={styles.buttonPrimaryText}>Editar Cliente</Text>
-                    </TouchableOpacity>
+                        Editar Cliente
+                    </ActionButton>
 
                     {/* ✅ REQUISITO 5: Modal de confirmação implementado */}
-                    <TouchableOpacity style={styles.buttonDanger} onPress={handleDelete}>
-                        <Ionicons name="trash-outline" size={20} color="#EF4444" style={styles.buttonIcon} />
-                        <Text style={styles.buttonDangerText}>Excluir</Text>
-                    </TouchableOpacity>
+                    <ActionButton
+                        variant="danger"
+                        icon="trash-outline"
+                        onPress={handleDelete}
+                    >
+                        Excluir
+                    </ActionButton>
                 </View>
             </View>
         </View>
@@ -249,33 +215,6 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#132F3B',
-    },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingTop: 50,
-        paddingBottom: 16,
-        paddingHorizontal: 16,
-        backgroundColor: '#132F3B',
-    },
-    backButton: {
-        marginRight: 16,
-    },
-    breadcrumb: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-        flex: 1,
-    },
-    breadcrumbText: {
-        fontSize: 14,
-        color: '#E0F2FE',
-        opacity: 0.7,
-    },
-    breadcrumbTextActive: {
-        fontSize: 14,
-        color: '#FFE157',
-        fontWeight: '600',
     },
     profileSection: {
         alignItems: 'center',
@@ -340,72 +279,10 @@ const styles = StyleSheet.create({
         backgroundColor: '#E2E8F0',
         marginBottom: 20,
     },
-    infoRow: {
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        marginBottom: 20,
-        paddingVertical: 8,
-    },
-    infoTextContainer: {
-        marginLeft: 12,
-        flex: 1,
-    },
-    infoLabel: {
-        fontSize: 16,
-        color: '#64748B',
-        fontWeight: '600',
-        textTransform: 'uppercase',
-        marginBottom: 4,
-        letterSpacing: 0.5,
-    },
-    infoValue: {
-        fontSize: 18,
-        color: '#1E293B',
-        fontWeight: '500',
-        lineHeight: 24,
-    },
     options: {
         width: '100%',
         gap: 12,
         paddingTop: 16,
         paddingBottom: 8,
-    },
-    buttonPrimary: {
-        width: '100%',
-        height: 48,
-        backgroundColor: '#0162B3',
-        borderRadius: 12,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 3,
-    },
-    buttonPrimaryText: {
-        color: '#FFFFFF',
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    buttonDanger: {
-        width: '100%',
-        height: 48,
-        backgroundColor: 'transparent',
-        borderRadius: 12,
-        borderWidth: 1.5,
-        borderColor: '#EF4444',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    buttonDangerText: {
-        color: '#EF4444',
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    buttonIcon: {
-        marginRight: 8,
     },
 });
