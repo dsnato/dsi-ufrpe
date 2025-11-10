@@ -1,90 +1,109 @@
+/*src/app/screens/(tabs)/index*/
 import { supabase } from "@/lib/supabase";
 import HeaderName from "@/src/components/HeaderName";
 import InfoCard from "@/src/components/InfoCard";
 import RoomInfoCard from "@/src/components/RoomInfoCard";
 import { Session } from "@supabase/supabase-js";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Alert } from "react-native";
+import { Alert, ActivityIndicator } from "react-native";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
-export default function Home({ session }: { session: Session }) {
-    const [loading, setLoading] = useState(true)
-    const [username, setUsername] = useState('')
-    const [website, setWebsite] = useState('')
-    const [avatarUrl, setAvatarUrl] = useState('')
-    useEffect(() => {
-        if (session) getProfile()
-    }, [session])
-
-    async function getProfile() {
-        try {
-        setLoading(true)
-        if (!session?.user) throw new Error('No user on the session!') 
-        const { data, error, status } = await supabase
-            .from('profiles')
-            .select(`username, website, avatar_url`)
-            .eq('id', session?.user.id)
-            .single()
-        if (error && status !== 406) {
-            throw error
-        }
-        if (data) {
-            setUsername(data.username)
-            setWebsite(data.website)
-            setAvatarUrl(data.avatar_url)
-        }
-        } catch (error) {
-        if (error instanceof Error) {
-            Alert.alert(error.message)
-        }
-        } finally {
-        setLoading(false)
-        }
-    }
-    
+export default function Home() {
+    const params = useLocalSearchParams<{ session?: string }>();
+    const [loading, setLoading] = useState(true);
+    const [username, setUsername] = useState('Usuário');
+    const [session, setSession] = useState<Session | null>(null);
     const router = useRouter();
 
-    function handleClients() {
-        router.push({
-            pathname: "/screens/Cliente/ListagemCliente"
-        });
+    useEffect(() => {
+        getSession();
+    }, []);
+
+    async function getSession() {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            console.log('Session obtida no Home:', session?.user?.id);
+            setSession(session);
+            if (session) {
+                await getProfile(session);
+            } else {
+                setUsername('Visitante');
+                setLoading(false);
+            }
+        } catch (error) {
+            console.error('Erro ao obter sessão:', error);
+            setLoading(false);
+        }
     }
 
-    function handleReservations() {
-        router.push({
-            pathname: "/screens/Reserva/ListagemReserva",
-        });
+    async function getProfile(currentSession: Session) {
+        try {
+            setLoading(true);
+
+            console.log('🔍 Buscando perfil para ID:', currentSession.user.id);
+
+            const { data, error, status } = await supabase
+                .from('profiles')
+                .select('username')
+                .eq('id', currentSession.user.id)
+                .single();
+
+            console.log('Dados retornados:', data);
+            console.log('Erro:', error);
+            console.log('Status:', status);
+
+            if (error && status !== 406) {
+                throw error;
+            }
+
+            if (data && data.username) {
+                console.log('Username encontrado:', data.username);
+                setUsername(data.username);
+            } else {
+                console.log('Username não encontrado, usando email');
+                setUsername(currentSession.user.email?.split('@')[0] || 'Usuário');
+            }
+        } catch (error) {
+            console.error('Erro ao carregar perfil:', error);
+            if (error instanceof Error) {
+                Alert.alert('Erro ao carregar perfil', error.message);
+            }
+            setUsername(currentSession?.user?.email?.split('@')[0] || 'Usuário');
+        } finally {
+            setLoading(false);
+        }
     }
 
-    function handleEmployees() {
-        router.push({
-            pathname: "/screens/Funcionario/ListagemFuncionario",
-        });
-    }
+    const navigateTo = (path: string) => {
+        router.push(path as any);
+    };
 
-    function handleRooms() {
-        router.push({
-            pathname: "/screens/Quarto/ListagemQuarto",
-        });
-    }
-
-    function handleActivities() {
-        router.push({
-            pathname: "/screens/Atividade/ListagemAtividade",
-        });
+    if (loading) {
+        return (
+            <SafeAreaProvider>
+                <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#132F3B' }}>
+                    <ActivityIndicator size="large" color="#FFE157" />
+                    <Text style={{ color: '#FFE157', marginTop: 10 }}>Carregando perfil...</Text>
+                </SafeAreaView>
+            </SafeAreaProvider>
+        );
     }
 
     return (
         <SafeAreaProvider>
-            <SafeAreaView style={{flex: 1, backgroundColor: "#000"}}>
+            <SafeAreaView style={{ flex: 1, backgroundColor: "#000" }}>
                 <View style={styles.whiteContainer}>
                     <View style={styles.headerSection}>
-                        <HeaderName title="Renato Samico" iconNameLeft="person-circle" iconNameRight="exit"/>
+                        <HeaderName 
+                            title={username} 
+                            iconNameLeft="person-circle" 
+                            iconNameRight="exit"
+                        />
                         <View style={styles.welcomeSection}>
                             <Text style={styles.welcomeText}>
-                                Bem-vindo, Renato Samico!
+                                Bem-vindo, {username}!
                             </Text>
                         </View>
                     </View>
@@ -98,17 +117,42 @@ export default function Home({ session }: { session: Session }) {
                             
                             <View style={styles.cardsSection}>
                                 <View style={styles.cardsRow}>
-                                    <InfoCard iconName="calendar" subtitle="9 planejadas" title="Reservas" onPress={()=> handleReservations()}/>
-                                    <InfoCard iconName="person" subtitle="32 clientes" title="Cliente" onPress={()=> handleClients()}/>
+                                    <InfoCard 
+                                        iconName="calendar" 
+                                        subtitle="9 planejadas" 
+                                        title="Reservas" 
+                                        onPress={() => navigateTo("/screens/Reserva/ListagemReserva")}
+                                    />
+                                    <InfoCard 
+                                        iconName="person" 
+                                        subtitle="32 clientes" 
+                                        title="Cliente" 
+                                        onPress={() => navigateTo("/screens/Cliente/ListagemCliente")}
+                                    />
                                 </View>
                                 
                                 <View style={styles.cardsRow}>
-                                    <InfoCard iconName="people" subtitle="7 contratados" title="Funcionarios" onPress={() => handleEmployees()}/>
-                                    <InfoCard iconName="bed" subtitle="12 disponível" title="Quartos" onPress={() => handleRooms()}/>
+                                    <InfoCard 
+                                        iconName="people" 
+                                        subtitle="7 contratados" 
+                                        title="Funcionarios" 
+                                        onPress={() => navigateTo("/screens/Funcionario/ListagemFuncionario")}
+                                    />
+                                    <InfoCard 
+                                        iconName="bed" 
+                                        subtitle="12 disponível" 
+                                        title="Quartos" 
+                                        onPress={() => navigateTo("/screens/Quarto/ListagemQuarto")}
+                                    />
                                 </View>
                                 
                                 <View style={styles.cardsRow}>
-                                    <InfoCard iconName="happy" subtitle="5 agendadas" title="Atividades" onPress={() => handleActivities()}/>
+                                    <InfoCard 
+                                        iconName="happy" 
+                                        subtitle="5 agendadas" 
+                                        title="Atividades" 
+                                        onPress={() => navigateTo("/screens/Atividade/ListagemAtividade")}
+                                    />
                                 </View>
                             </View>
 
@@ -123,7 +167,7 @@ export default function Home({ session }: { session: Session }) {
                 </View>
             </SafeAreaView>
         </SafeAreaProvider>
-    )
+    );
 }
 
 const styles = StyleSheet.create({
@@ -131,73 +175,54 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: "#132F3B",
     },
-
     headerSection: {
-        flex: 0.2, // 20% da tela para o header e welcome
+        flex: 0.2,
         justifyContent: 'space-between',
     },
-
     welcomeSection: {
         justifyContent: 'center',
         alignItems: 'flex-start',
         paddingHorizontal: 20,
         flex: 1,
     },
-
     midContainer: {
-        flex: 0.8, // 80% da tela
+        flex: 0.8,
         backgroundColor: "#F2F2F2",
         borderTopEndRadius: 20,
         borderTopStartRadius: 20,
         paddingTop: 10,
     },
-
     scrollContent: {
         paddingHorizontal: 20,
         paddingBottom: 20,
     },
-
     textVariant: {
         fontSize: 20,
         color: "#4BBAED",
         fontWeight: '900',
-        marginBottom: 10, // Espaçamento consistente
+        marginBottom: 10,
     },
-
     cardsSection: {
-        marginBottom: 0, // Espaçamento consistente entre seções
+        marginBottom: 0,
     },
-
     cardsRow: {
         flexDirection: "row",
         justifyContent: "center",
         alignItems: "flex-start",
-        marginBottom: 16, // Espaçamento consistente entre linhas
+        marginBottom: 16,
         paddingHorizontal: 8,
-        gap: 20, // Espaçamento consistente entre cards
+        gap: 20,
     },
-
     roomInfoContainer: {
         flexDirection: "row",
-        gap: 20, // Espaçamento consistente entre cards
+        gap: 20,
         justifyContent: "center",
     },
-
     welcomeText: {
         fontSize: 18,
         fontWeight: "bold",
         color: "#FFE157",
         textAlign: 'center',
         alignSelf: 'flex-start',
-    },
-
-    // Estilos não utilizados removidos para limpeza
-    text: {
-        fontSize: 18,
-        color: "#314EA6",
-        fontWeight: "bold"
-    },
-    icon: {
-    marginBottom: 4,
     },
 });
