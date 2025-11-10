@@ -6,48 +6,62 @@ export default function AppLayout() {
     <ToastProvider>
       <Stack
         screenOptions={{
-          headerShown: false
+          headerShown: false,
+          animation: 'slide_from_right', // Transição suave
         }}
       >
-      <Stack.Screen name="screens/Login/index" options={{ headerShown: false }} />
-      <Stack.Screen name="screens/register/index" options={{ headerShown: false }} />
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        {/* Auth Screens */}
+        <Stack.Screen 
+          name="screens/Login/index" 
+          options={{ 
+            animation: 'fade' // Login com fade
+          }} 
+        />
+        <Stack.Screen 
+          name="screens/register/index" 
+          options={{ 
+            animation: 'fade' 
+          }} 
+        />
 
-      {/* Atividade */}
-      <Stack.Screen name="screens/Atividade/CriacaoAtividade/index" options={{ headerShown: false }} />
-      <Stack.Screen name="screens/Atividade/EdicaoAtividade/index" options={{ headerShown: false }} />
-      <Stack.Screen name="screens/Atividade/InfoAtividade/index" options={{ headerShown: false }} />
-      <Stack.Screen name="screens/Atividade/ListagemAtividade/index" options={{ headerShown: false }} />
+        {/* Tabs Navigation */}
+        <Stack.Screen 
+          name="(tabs)" 
+          options={{ 
+            headerShown: false 
+          }} 
+        />
 
-      {/* Cliente */}
-      <Stack.Screen name="screens/Cliente/CriacaoCliente/index" options={{ headerShown: false }} />
-      <Stack.Screen name="screens/Cliente/EdicaoCliente/index" options={{ headerShown: false }} />
-      <Stack.Screen name="screens/Cliente/InfoCliente/index" options={{ headerShown: false }} />
-      <Stack.Screen name="screens/Cliente/ListagemCliente/index" options={{ headerShown: false }} />
+        {/* Atividade Screens */}
+        <Stack.Screen name="screens/Atividade/CriacaoAtividade/index" />
+        <Stack.Screen name="screens/Atividade/EdicaoAtividade/index" />
+        <Stack.Screen name="screens/Atividade/InfoAtividade/index" />
+        <Stack.Screen name="screens/Atividade/ListagemAtividade/index" />
 
-      {/* Funcionario */}
-      <Stack.Screen name="screens/Funcionario/CriacaoFuncionario/index" options={{ headerShown: false }} />
-      <Stack.Screen name="screens/Funcionario/EdicaoFuncionario/index" options={{ headerShown: false }} />
-      <Stack.Screen name="screens/Funcionario/InfoFuncionario/index" options={{ headerShown: false }} />
-      <Stack.Screen name="screens/Funcionario/ListagemFuncionario/index" options={{ headerShown: false }} />
+        {/* Cliente Screens */}
+        <Stack.Screen name="screens/Cliente/CriacaoCliente/index" />
+        <Stack.Screen name="screens/Cliente/EdicaoCliente/index" />
+        <Stack.Screen name="screens/Cliente/InfoCliente/index" />
+        <Stack.Screen name="screens/Cliente/ListagemCliente/index" />
 
-      {/* Quarto */}
-      <Stack.Screen name="screens/Quarto/CriacaoQuarto/index" options={{ headerShown: false }} />
-      <Stack.Screen name="screens/Quarto/EdicaoQuarto/index" options={{ headerShown: false }} />
-      <Stack.Screen name="screens/Quarto/InfoQuarto/index" options={{ headerShown: false }} />
-      <Stack.Screen name="screens/Quarto/ListagemQuarto/index" options={{ headerShown: false }} />
+        {/* Funcionario Screens */}
+        <Stack.Screen name="screens/Funcionario/CriacaoFuncionario/index" />
+        <Stack.Screen name="screens/Funcionario/EdicaoFuncionario/index" />
+        <Stack.Screen name="screens/Funcionario/InfoFuncionario/index" />
+        <Stack.Screen name="screens/Funcionario/ListagemFuncionario/index" />
 
-      {/* Reserva */}
-      <Stack.Screen name="screens/Reserva/CriacaoReserva/index" options={{ headerShown: false }} />
-      <Stack.Screen name="screens/Reserva/EdicaoReserva/index" options={{ headerShown: false }} />
-      <Stack.Screen name="screens/Reserva/InfoReserva/index" options={{ headerShown: false }} />
-      <Stack.Screen name="screens/Reserva/ListagemReserva/index" options={{ headerShown: false }} />
+        {/* Quarto Screens */}
+        <Stack.Screen name="screens/Quarto/CriacaoQuarto/index" />
+        <Stack.Screen name="screens/Quarto/EdicaoQuarto/index" />
+        <Stack.Screen name="screens/Quarto/InfoQuarto/index" />
+        <Stack.Screen name="screens/Quarto/ListagemQuarto/index" />
 
-      {/* (tabs) */}
-      <Stack.Screen name="screens/(tabs)/index" options={{ headerShown: false }} />
-      <Stack.Screen name="screens/(tabs)/cliente" options={{ headerShown: false }} />
-      <Stack.Screen name="screens/(tabs)/reservas" options={{ headerShown: false }} />
-    </Stack>
+        {/* Reserva Screens */}
+        <Stack.Screen name="screens/Reserva/CriacaoReserva/index" />
+        <Stack.Screen name="screens/Reserva/EdicaoReserva/index" />
+        <Stack.Screen name="screens/Reserva/InfoReserva/index" />
+        <Stack.Screen name="screens/Reserva/ListagemReserva/index" />
+      </Stack>
     </ToastProvider>
   );
 }
