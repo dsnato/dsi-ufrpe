@@ -1,110 +1,421 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import InfoText from '@/src/components/InfoText';
-import InfoCard from '@/src/components/InfoCard';
-import { useRouter } from 'expo-router';
+import { ActionButton } from '@/src/components/ActionButton';
+import { ErrorState } from '@/src/components/ErrorState';
+import { InfoHeader } from '@/src/components/InfoHeader';
+import { InfoRow } from '@/src/components/InfoRow';
+import { Loading } from '@/src/components/Loading';
+import { StatusBadge } from '@/src/components/StatusBadge';
+import { TitleSection } from '@/src/components/TitleSection';
+import { ReservationService } from '@/src/services/ReservationService';
+import { Reservation } from '@/src/types/reservation';
+import { formatCurrency, formatDate, withPlaceholder } from '@/src/utils/formatters';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 
-const InfoAtividade: React.FC = () => {
+const InfoReserva: React.FC = () => {
     const router = useRouter();
+    const { id } = useLocalSearchParams<{ id: string }>();
 
-    function handleEditReservation() {
-        router.push({
-            pathname: "/screens/Reserva/EdicaoReserva",
-            // params: { id: item.id }
-        });
+    // Estados
+    const [reserva, setReserva] = useState<Reservation | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    /**
+     * ✅ REQUISITO 1: Carregamento dos dados usando ID da URL
+     * ✅ REQUISITO 6: Atualização automática após retornar da edição (useFocusEffect)
+     */
+    const loadReserva = useCallback(async () => {
+        if (!id) {
+            setError('ID da reserva não fornecido');
+            setLoading(false);
+            return;
+        }
+
+        setLoading(true);
+        setError(null);
+
+        const data = await ReservationService.getById(id);
+
+        if (!data) {
+            setError('Reserva não encontrada');
+            setLoading(false);
+            return;
+        }
+
+        setReserva(data);
+        setLoading(false);
+    }, [id]);
+
+    // Recarrega os dados sempre que a tela receber foco
+    useFocusEffect(
+        useCallback(() => {
+            loadReserva();
+        }, [loadReserva])
+    );
+
+    /**
+     * ✅ REQUISITO 5: Modal de confirmação antes de excluir
+     */
+    const handleDelete = () => {
+        Alert.alert(
+            "Confirmar Exclusão",
+            "Tem certeza que deseja excluir esta reserva? Esta ação não pode ser desfeita.",
+            [
+                {
+                    text: "Cancelar",
+                    style: "cancel"
+                },
+                {
+                    text: "Excluir",
+                    style: "destructive",
+                    onPress: async () => {
+                        const success = await ReservationService.delete(id);
+
+                        if (success) {
+                            Alert.alert(
+                                "Sucesso",
+                                "Reserva excluída com sucesso!",
+                                [
+                                    {
+                                        text: "OK",
+                                        onPress: () => router.push("/screens/Reserva/ListagemReserva")
+                                    }
+                                ]
+                            );
+                        } else {
+                            Alert.alert(
+                                "Erro",
+                                "Não foi possível excluir a reserva. Tente novamente."
+                            );
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
+    /**
+     * ✅ REQUISITO 2: Exibição de loading durante busca
+     */
+    if (loading) {
+        return (
+            <View style={styles.container}>
+                <InfoHeader entity="Reservas" onBackPress={() => router.back()} />
+                <View style={styles.subContainer}>
+                    <Loading message="Carregando reserva..." />
+                </View>
+            </View>
+        );
     }
+
+    /**
+     * ✅ REQUISITO 3: Mensagem de erro amigável se não encontrada
+     */
+    if (error || !reserva) {
+        return (
+            <View style={styles.container}>
+                <InfoHeader entity="Reservas" onBackPress={() => router.back()} />
+                <View style={styles.subContainer}>
+                    <ErrorState
+                        message={error || 'Reserva não encontrada'}
+                        onRetry={loadReserva}
+                        onGoBack={() => router.push("/screens/Reserva/ListagemReserva")}
+                    />
+                </View>
+            </View>
+        );
+    }
+
+    // Mapear cores do status
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'Confirmada': return '#FFE157';
+            case 'Ativa': return '#10B981';
+            case 'Finalizada': return '#6B7280';
+            case 'Cancelada': return '#EF4444';
+            default: return '#6B7280';
+        }
+    };
 
     return (
         <View style={styles.container}>
-            <TouchableOpacity onPress={() => { }} style={styles.img}>
-                <Image source={require("@/assets/images/callback-vector.png")}></Image>
-            </TouchableOpacity>
-            <View style={styles.headContainer}>
-                <Text style={styles.textAt}>Reserva 0001</Text>
-            </View>
+            {/* ✅ REQUISITO 9: Breadcrumb/indicador de navegação */}
+            <InfoHeader entity="Reservas" onBackPress={() => router.back()} />
+
+            {/* Container branco com informações */}
             <View style={styles.subContainer}>
-                <View style={styles.subSubContainer}>
-                    <View style={{ width: '100%', marginBottom: 20 }}>
-                        <InfoText text='10/10/2025' title='Data de check-in'></InfoText>
-                        <InfoText text='20/10/2025' title='Data de check-out'></InfoText>
-                        <InfoText text='Casal' title='Tipo de quarto'></InfoText>
-                        <InfoText text='R$ 1200,00' title='Valor'></InfoText>
-                        <InfoText text='Confirmada' title='Status da reserva'></InfoText>
-                    </View>
-                </View>
+                <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
+                    {/* Título da reserva com badge de status */}
+                    <TitleSection
+                        title={`Reserva ${withPlaceholder(reserva.id, 'S/N')}`}
+                        subtitle="Número da reserva"
+                        badge={
+                            <StatusBadge
+                                text={reserva.status}
+                                color={getStatusColor(reserva.status)}
+                            />
+                        }
+                    />
+
+                    {/* ✅ REQUISITO 7 e 8: Informações formatadas com placeholders */}
+                    <InfoRow
+                        icon="calendar-outline"
+                        label="DATA DE CHECK-IN"
+                        value={formatDate(reserva.check_in_date)}
+                    />
+
+                    <InfoRow
+                        icon="calendar-outline"
+                        label="DATA DE CHECK-OUT"
+                        value={formatDate(reserva.check_out_date)}
+                    />
+
+                    <InfoRow
+                        icon="bed-outline"
+                        label="QUARTO"
+                        value={withPlaceholder(reserva.room_id, 'Não informado')}
+                    />
+
+                    <InfoRow
+                        icon="cash-outline"
+                        label="VALOR TOTAL"
+                        value={formatCurrency(reserva.total_amount)}
+                    />
+
+                    {reserva.pending_amount > 0 && (
+                        <InfoRow
+                            icon="alert-circle-outline"
+                            label="VALOR PENDENTE"
+                            value={formatCurrency(reserva.pending_amount)}
+                            iconColor="#F59E0B"
+                        />
+                    )}
+
+                    {reserva.actual_check_in && (
+                        <InfoRow
+                            icon="checkmark-circle-outline"
+                            label="CHECK-IN REALIZADO"
+                            value={formatDate(reserva.actual_check_in)}
+                            iconColor="#10B981"
+                        />
+                    )}
+
+                    {reserva.actual_check_out && (
+                        <InfoRow
+                            icon="checkmark-circle-outline"
+                            label="CHECK-OUT REALIZADO"
+                            value={formatDate(reserva.actual_check_out)}
+                            iconColor="#6B7280"
+                        />
+                    )}
+                </ScrollView>
+
+                {/* Botões de ação */}
                 <View style={styles.options}>
-                    <InfoCard title='Confirmar Check-in' textColor='#4BB002'></InfoCard>
-                    <InfoCard title='Confirmar Check-out' textColor='#DE3E3E'></InfoCard>
-                </View>
-                <View style={styles.options}>
-                    <InfoCard title='Editar Informação' onPress={() => {handleEditReservation()}}></InfoCard>
-                    <InfoCard title='Excluir' textColor='#DE3E3E'></InfoCard>
+                    {/* Botões de Check-in/Check-out */}
+                    {reserva.status === 'Confirmada' && (
+                        <ActionButton
+                            variant="success"
+                            icon="log-in-outline"
+                        >
+                            Confirmar Check-in
+                        </ActionButton>
+                    )}
+
+                    {reserva.status === 'Ativa' && (
+                        <ActionButton
+                            variant="warning"
+                            icon="log-out-outline"
+                        >
+                            Confirmar Check-out
+                        </ActionButton>
+                    )}
+
+                    {/* ✅ REQUISITO 4: Botão editar com ID correto */}
+                    <ActionButton
+                        variant="primary"
+                        icon="create-outline"
+                        onPress={() => router.push({
+                            pathname: "/screens/Reserva/EdicaoReserva",
+                            params: { id: reserva.id }
+                        })}
+                    >
+                        Editar Reserva
+                    </ActionButton>
+
+                    {/* ✅ REQUISITO 5: Modal de confirmação implementado */}
+                    <ActionButton
+                        variant="danger"
+                        icon="trash-outline"
+                        onPress={handleDelete}
+                    >
+                        Excluir
+                    </ActionButton>
                 </View>
             </View>
-
-
         </View>
     )
 }
 
 
 const styles = StyleSheet.create({
-    headContainer: {
-        width: '100%',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    textAt: {
-        fontSize: 20,
-        color: '#FFE157',
-        marginTop: 60,
-        marginBottom: 20,
-        fontWeight: 'bold',
-    },
-    img: {
-        position: 'absolute',
-        top: 40,
-        left: 20,
-        zIndex: 1,
-    },
     container: {
         flex: 1,
         backgroundColor: '#132F3B',
+    },
+    header: {
+        flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
+        paddingTop: 50,
+        paddingBottom: 16,
+        paddingHorizontal: 16,
+        backgroundColor: '#132F3B',
+    },
+    backButton: {
+        marginRight: 16,
+    },
+    breadcrumb: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        flex: 1,
+    },
+    breadcrumbText: {
+        fontSize: 14,
+        color: '#E0F2FE',
+        opacity: 0.7,
+    },
+    breadcrumbTextActive: {
+        fontSize: 14,
+        color: '#FFE157',
+        fontWeight: '600',
     },
     subContainer: {
-        flex: 1,                   // ocupa todo o espaço disponível
-        width: '100%',             // vai de ponta a ponta
-        backgroundColor: '#EFEFF0',// cor do retângulo
-        borderTopLeftRadius: 20,   // arredonda só em cima
+        flex: 1,
+        width: '100%',
+        backgroundColor: '#FFFFFF',
+        borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         paddingVertical: 24,
         paddingHorizontal: 20,
-        alignItems: 'center',
-        justifyContent: 'center',
-        // sombra para parecer "cartão"
         elevation: 4,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: -2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
-        // marginTop: 100,
+        marginTop: 20,
     },
-    subSubContainer: {
-        flex: 1,
-        width: '100%',
+    scrollContent: {
+        flexGrow: 0,
+    },
+    infoRow: {
+        flexDirection: 'row',
         alignItems: 'flex-start',
-        justifyContent: 'flex-start',
         marginBottom: 20,
+        paddingVertical: 8,
+    },
+    infoTextContainer: {
+        marginLeft: 12,
+        flex: 1,
+    },
+    infoLabel: {
+        fontSize: 16,
+        color: '#64748B',
+        fontWeight: '600',
+        textTransform: 'uppercase',
+        marginBottom: 4,
+        letterSpacing: 0.5,
+    },
+    infoValue: {
+        fontSize: 18,
+        color: '#1E293B',
+        fontWeight: '500',
+        lineHeight: 24,
     },
     options: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        paddingHorizontal: 20,
         width: '100%',
-    }
+        gap: 12,
+        paddingTop: 16,
+        paddingBottom: 8,
+    },
+    buttonSuccess: {
+        width: '100%',
+        height: 48,
+        backgroundColor: '#10B981',
+        borderRadius: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 3,
+    },
+    buttonSuccessText: {
+        color: '#FFFFFF',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    buttonWarning: {
+        width: '100%',
+        height: 48,
+        backgroundColor: '#F59E0B',
+        borderRadius: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 3,
+    },
+    buttonWarningText: {
+        color: '#FFFFFF',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    buttonPrimary: {
+        width: '100%',
+        height: 48,
+        backgroundColor: '#0162B3',
+        borderRadius: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 3,
+    },
+    buttonPrimaryText: {
+        color: '#FFFFFF',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    buttonDanger: {
+        width: '100%',
+        height: 48,
+        backgroundColor: 'transparent',
+        borderRadius: 12,
+        borderWidth: 1.5,
+        borderColor: '#EF4444',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    buttonDangerText: {
+        color: '#EF4444',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    buttonIcon: {
+        marginRight: 8,
+    },
 })
 
 
-export default InfoAtividade;
+export default InfoReserva;

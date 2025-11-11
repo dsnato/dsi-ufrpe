@@ -1,99 +1,244 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import InfoText from '@/src/components/InfoText';
-import InfoCard from '@/src/components/InfoCard';
+import { ActionButton } from '@/src/components/ActionButton';
+import { ErrorState } from '@/src/components/ErrorState';
+import { InfoHeader } from '@/src/components/InfoHeader';
+import { InfoRow } from '@/src/components/InfoRow';
+import { Loading } from '@/src/components/Loading';
+import { Separator } from '@/src/components/Separator';
+import { StatusBadge } from '@/src/components/StatusBadge';
+import { TitleSection } from '@/src/components/TitleSection';
+import { QuartoService } from '@/src/services/QuartoService';
+import { Quarto } from '@/src/types/quarto';
+import { formatCurrency, withPlaceholder } from '@/src/utils/formatters';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 
 
-const InfoAtividade: React.FC = () => {
+const InfoQuarto: React.FC = () => {
+    const router = useRouter();
+    const { id } = useLocalSearchParams<{ id: string }>();
 
+    // Estados
+    const [quarto, setQuarto] = useState<Quarto | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    /**
+     * ✅ REQUISITO 1: Carregamento dos dados usando ID da URL
+     * ✅ REQUISITO 6: Atualização automática após retornar da edição (useFocusEffect)
+     */
+    const loadQuarto = useCallback(async () => {
+        if (!id) {
+            setError('ID do quarto não fornecido');
+            setLoading(false);
+            return;
+        }
+
+        setLoading(true);
+        setError(null);
+
+        const data = await QuartoService.getById(id);
+
+        if (!data) {
+            setError('Quarto não encontrado');
+            setLoading(false);
+            return;
+        }
+
+        setQuarto(data);
+        setLoading(false);
+    }, [id]);
+
+    // Recarrega os dados sempre que a tela receber foco
+    useFocusEffect(
+        useCallback(() => {
+            loadQuarto();
+        }, [loadQuarto])
+    );
+
+    /**
+     * ✅ REQUISITO 5: Modal de confirmação antes de excluir
+     */
+    const handleDelete = () => {
+        Alert.alert(
+            "Confirmar Exclusão",
+            "Tem certeza que deseja excluir este quarto? Esta ação não pode ser desfeita.",
+            [
+                {
+                    text: "Cancelar",
+                    style: "cancel"
+                },
+                {
+                    text: "Excluir",
+                    style: "destructive",
+                    onPress: async () => {
+                        const success = await QuartoService.delete(id);
+
+                        if (success) {
+                            Alert.alert(
+                                "Sucesso",
+                                "Quarto excluído com sucesso!",
+                                [
+                                    {
+                                        text: "OK",
+                                        onPress: () => router.push("/screens/Quarto/ListagemQuarto")
+                                    }
+                                ]
+                            );
+                        } else {
+                            Alert.alert(
+                                "Erro",
+                                "Não foi possível excluir o quarto. Tente novamente."
+                            );
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
+    /**
+     * ✅ REQUISITO 2: Exibição de loading durante busca
+     */
+    if (loading) {
+        return (
+            <View style={styles.container}>
+                <InfoHeader entity="Quartos" onBackPress={() => router.back()} />
+                <View style={styles.subContainer}>
+                    <Loading message="Carregando quarto..." />
+                </View>
+            </View>
+        );
+    }
+
+    /**
+     * ✅ REQUISITO 3: Mensagem de erro amigável se não encontrado
+     */
+    if (error || !quarto) {
+        return (
+            <View style={styles.container}>
+                <InfoHeader entity="Quartos" onBackPress={() => router.back()} />
+                <View style={styles.subContainer}>
+                    <ErrorState
+                        message={error || 'Quarto não encontrado'}
+                        onRetry={loadQuarto}
+                        onGoBack={() => router.push("/screens/Quarto/ListagemQuarto")}
+                    />
+                </View>
+            </View>
+        );
+    }
 
     return (
         <View style={styles.container}>
-            <TouchableOpacity onPress={() => { }} style={styles.img}>
-                <Image source={require("@/assets/images/callback-vector.png")}></Image>
-            </TouchableOpacity>
-            <View style={styles.headContainer}>
-                <Text style={styles.textAt}>Nome da Atividade</Text>
-            </View>
+            {/* ✅ REQUISITO 9: Breadcrumb/indicador de navegação */}
+            <InfoHeader entity="Quartos" onBackPress={() => router.back()} />
+
+            {/* Container branco com informações */}
             <View style={styles.subContainer}>
-                <View style={styles.subSubContainer}>
-                    <View style={{ width: '100%', marginBottom: 20 }}>
-                        <InfoText text='Número do quarto' title='110'></InfoText>
-                        <InfoText text='Tipo de quarto' title='Solteiro'></InfoText>
-                        <InfoText text='Capacidade do quarto' title='2 pessoas'></InfoText>
-                        <InfoText text='Preço do quarto' title='R$150,00'></InfoText>
-                    </View>
-                </View>
+                <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
+                    {/* Título do quarto com badge de disponibilidade */}
+                    <TitleSection
+                        title={`Quarto ${withPlaceholder(quarto.numero, 'S/N')}`}
+                        subtitle="Número do quarto"
+                        badge={
+                            <StatusBadge
+                                text={quarto.disponivel ? 'Disponível' : 'Ocupado'}
+                                color={quarto.disponivel ? '#10B981' : '#EF4444'}
+                            />
+                        }
+                    />
+
+                    {/* ✅ REQUISITO 7 e 8: Formatação e tratamento de valores vazios */}
+                    <InfoRow
+                        icon="bed-outline"
+                        label="TIPO DE QUARTO"
+                        value={withPlaceholder(quarto.tipo, 'Tipo não informado')}
+                    />
+
+                    <InfoRow
+                        icon="people-outline"
+                        label="CAPACIDADE DO QUARTO"
+                        value={`${quarto.capacidade} ${quarto.capacidade === 1 ? 'pessoa' : 'pessoas'}`}
+                    />
+
+                    <InfoRow
+                        icon="cash-outline"
+                        label="PREÇO DO QUARTO"
+                        value={formatCurrency(quarto.preco)}
+                    />
+
+                    {quarto.descricao && (
+                        <InfoRow
+                            icon="document-text-outline"
+                            label="DESCRIÇÃO"
+                            value={withPlaceholder(quarto.descricao, 'Sem descrição')}
+                        />
+                    )}
+                </ScrollView>
+
+                {/* Linha divisória */}
+                <Separator />
+
+                {/* Botões de ação */}
                 <View style={styles.options}>
-                    <InfoCard title='Editar Informação'></InfoCard>
-                    <InfoCard title='Excluir'/>
+                    {/* ✅ REQUISITO 4: Botão editar com ID correto */}
+                    <ActionButton
+                        variant="primary"
+                        icon="create-outline"
+                        onPress={() => router.push({
+                            pathname: "/screens/Quarto/EdicaoQuarto",
+                            params: { id: quarto.id }
+                        })}
+                    >
+                        Editar Quarto
+                    </ActionButton>
+
+                    {/* ✅ REQUISITO 5: Modal de confirmação implementado */}
+                    <ActionButton
+                        variant="danger"
+                        icon="trash-outline"
+                        onPress={handleDelete}
+                    >
+                        Excluir
+                    </ActionButton>
                 </View>
             </View>
-
-
         </View>
     )
 }
 
 
 const styles = StyleSheet.create({
-    headContainer: {
-        width: '100%',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    textAt: {
-        fontSize: 20,
-        color: '#FFE157',
-        marginTop: 60,
-        marginBottom: 20,
-        fontWeight: 'bold',
-    },
-    img: {
-        position: 'absolute',
-        top: 40,
-        left: 20,
-        zIndex: 1,
-    },
     container: {
         flex: 1,
         backgroundColor: '#132F3B',
-        alignItems: 'center',
-        justifyContent: 'center',
     },
     subContainer: {
-        flex: 1,                   // ocupa todo o espaço disponível
-        width: '100%',             // vai de ponta a ponta
-        backgroundColor: '#EFEFF0',// cor do retângulo
-        borderTopLeftRadius: 20,   // arredonda só em cima
+        flex: 1,
+        width: '100%',
+        backgroundColor: '#FFFFFF',
+        borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         paddingVertical: 24,
         paddingHorizontal: 20,
-        alignItems: 'center',
-        justifyContent: 'center',
-        // sombra para parecer "cartão"
         elevation: 4,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: -2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
-        // marginTop: 100,
+        marginTop: 20,
     },
-    subSubContainer: {
-        flex: 1,
-        width: '100%',
-        alignItems: 'flex-start',
-        justifyContent: 'flex-start',
-        marginBottom: 20,
+    scrollContent: {
+        flexGrow: 0,
     },
     options: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        paddingHorizontal: 20,
         width: '100%',
-        columnGap: 10
-    }
+        gap: 12,
+        paddingTop: 16,
+        paddingBottom: 8,
+    },
 })
 
 
-export default InfoAtividade;
+export default InfoQuarto;

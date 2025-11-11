@@ -1,94 +1,251 @@
-import clientes from "@/src/data/clientes.json";
-import { Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { ActionButton } from '@/src/components/ActionButton';
+import { ErrorState } from '@/src/components/ErrorState';
+import { InfoHeader } from '@/src/components/InfoHeader';
+import { InfoRow } from '@/src/components/InfoRow';
+import { Loading } from '@/src/components/Loading';
+import { ProfileSection } from '@/src/components/ProfileSection';
+import { Separator } from '@/src/components/Separator';
+import { ClienteService } from '@/src/services/ClienteService';
+import { Cliente } from '@/src/types/cliente';
+import { formatCPF, formatPhone, withPlaceholder } from '@/src/utils/formatters';
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import React, { useCallback, useState } from 'react';
+import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
 
-function InfoDetail({ title, label }: { title: any; label: any }) {
+export default function InfoCliente() {
+    const router = useRouter();
+    const { id } = useLocalSearchParams<{ id: string }>();
+
+    // Estados
+    const [cliente, setCliente] = useState<Cliente | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    /**
+     * ✅ REQUISITO 1: Carregamento dos dados usando ID da URL
+     * ✅ REQUISITO 6: Atualização automática após retornar da edição (useFocusEffect)
+     */
+    const loadCliente = useCallback(async () => {
+        if (!id) {
+            setError('ID do cliente não fornecido');
+            setLoading(false);
+            return;
+        }
+
+        setLoading(true);
+        setError(null);
+
+        const data = await ClienteService.getById(id);
+
+        if (!data) {
+            setError('Cliente não encontrado');
+            setLoading(false);
+            return;
+        }
+
+        setCliente(data);
+        setLoading(false);
+    }, [id]);
+
+    // Recarrega os dados sempre que a tela receber foco
+    useFocusEffect(
+        useCallback(() => {
+            loadCliente();
+        }, [loadCliente])
+    );
+
+    /**
+     * ✅ REQUISITO 5: Modal de confirmação antes de excluir
+     */
+    const handleDelete = () => {
+        Alert.alert(
+            "Confirmar Exclusão",
+            "Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita.",
+            [
+                {
+                    text: "Cancelar",
+                    style: "cancel"
+                },
+                {
+                    text: "Excluir",
+                    style: "destructive",
+                    onPress: async () => {
+                        const success = await ClienteService.delete(id);
+
+                        if (success) {
+                            Alert.alert(
+                                "Sucesso",
+                                "Cliente excluído com sucesso!",
+                                [
+                                    {
+                                        text: "OK",
+                                        onPress: () => router.push("/screens/Cliente/ListagemCliente")
+                                    }
+                                ]
+                            );
+                        } else {
+                            Alert.alert(
+                                "Erro",
+                                "Não foi possível excluir o cliente. Tente novamente."
+                            );
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
+    /**
+     * ✅ REQUISITO 2: Exibição de loading durante busca
+     */
+    if (loading) {
         return (
-            <View style={styles.InfoDetailContainer}>
-                <Text style={{fontWeight: 'bold', fontSize: 20, color: "#4BBAED"}}>{title}</Text>
-                <Text style={{fontSize: 18, color: "#666666"}}>{label}</Text>
+            <View style={styles.container}>
+                <InfoHeader entity="Clientes" onBackPress={() => router.back()} />
+                <View style={styles.subContainer}>
+                    <Loading message="Carregando cliente..." />
+                </View>
             </View>
         );
     }
 
-export default function InfoCard() {
-    const router = useRouter();
-    const { id } = useLocalSearchParams();
-    const user = clientes.find((c) => c.id === id);
-    
-
+    /**
+     * ✅ REQUISITO 3: Mensagem de erro amigável se não encontrado
+     */
+    if (error || !cliente) {
+        return (
+            <View style={styles.container}>
+                <InfoHeader entity="Clientes" onBackPress={() => router.back()} />
+                <View style={styles.subContainer}>
+                    <ErrorState
+                        message={error || 'Cliente não encontrado'}
+                        onRetry={loadCliente}
+                        onGoBack={() => router.push("/screens/Cliente/ListagemCliente")}
+                    />
+                </View>
+            </View>
+        );
+    }
 
     return (
-        <SafeAreaProvider style={{flex: 1, backgroundColor: "black"}}>
-            <SafeAreaView style={{flex: 1, backgroundColor: "black"}}>
-                <View style={styles.mainContainer}>
-                    <View style={styles.imageContainer}>
-                        <TouchableOpacity style={{position: 'absolute', padding: 5, top: 30, left: 20}} onPress={() => {router.dismiss(1)}}>
-                            <Ionicons name="chevron-back-sharp" size={30} color="#7A7A7A"/>
-                        </TouchableOpacity>
-                        <Image
-                            style={styles.image}
-                            source={require("../../../../../assets/images/photo-model.png")}
-                            placeholder={ "Imagem de Perfil" }
-                            contentFit="cover"
-                        />
-                        <Text style={{fontSize: 24, fontWeight: 'bold', marginTop: 20, color: '#FFE157'}}>{user?.name}</Text>
-                    </View>
-                    <ScrollView style={styles.InfoContainer}>
-                        <InfoDetail title="Cadastro de Pessoa Física (CPF)" label={user?.cpf}/>
-                        <InfoDetail title="Endereço" label={`${user?.street}, ${user?.number}, ${user?.neighborhood}, ${user?.city} - ${user?.state}, CEP: ${user?.zipCode}`}/>
-                        <InfoDetail title="Celular" label={user?.phone}/>
-                        <InfoDetail title="Email" label={user?.email}/>
-                        <View style={{height: 100, width: '100%', marginTop: 20, marginBottom: 50, flexDirection: 'row', justifyContent: 'space-around'}}>
-                            <TouchableOpacity style={{justifyContent: 'center', backgroundColor: '#fafafa', paddingHorizontal: 48, height: 80, borderRadius: 20, elevation: 5}}>
-                                <Text style={{fontSize: 20, fontWeight: 'bold', color: "#4BBAED"}}>Editar</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={{justifyContent: 'center', backgroundColor: '#fafafa', paddingHorizontal: 48, height: 80, borderRadius: 20, elevation: 5}}>
-                                <Text style={{fontSize: 20, fontWeight: 'bold', color: "#DE3E3E"}}>Excluir</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </ScrollView>
+        <View style={styles.container}>
+            {/* ✅ REQUISITO 9: Breadcrumb/indicador de navegação */}
+            <InfoHeader entity="Clientes" onBackPress={() => router.back()} />
+
+            {/* Seção de foto e nome no fundo azul */}
+            <ProfileSection
+                name={withPlaceholder(cliente.name, 'Nome não informado')}
+                subtitle="Cliente"
+            />
+
+            {/* Container branco com informações */}
+            <View style={styles.subContainer}>
+                <View style={styles.clientTitleContainer}>
+                    <Text style={styles.clientTitle}>Informações Pessoais</Text>
                 </View>
-            </SafeAreaView>
-        </SafeAreaProvider>
+                <Separator />
+                <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
+
+                    {/* ✅ REQUISITO 7 e 8: Dados formatados com placeholders */}
+                    <InfoRow
+                        icon="person-outline"
+                        label="CPF"
+                        value={formatCPF(cliente.cpf)}
+                    />
+
+                    <InfoRow
+                        icon="location-outline"
+                        label="ENDEREÇO"
+                        value={cliente.street && cliente.number
+                            ? `${cliente.street}, ${cliente.number}, ${cliente.neighborhood}, ${cliente.city} - ${cliente.state}, CEP: ${cliente.zipCode}`
+                            : 'Endereço não informado'}
+                    />
+
+                    <InfoRow
+                        icon="call-outline"
+                        label="CELULAR"
+                        value={formatPhone(cliente.phone)}
+                    />
+
+                    <InfoRow
+                        icon="mail-outline"
+                        label="EMAIL"
+                        value={withPlaceholder(cliente.email, 'Email não informado')}
+                    />
+                </ScrollView>
+
+                {/* Linha divisória */}
+                <Separator />
+
+                {/* Botões de ação */}
+                <View style={styles.options}>
+                    {/* ✅ REQUISITO 4: Botão editar com ID correto */}
+                    <ActionButton
+                        variant="primary"
+                        icon="create-outline"
+                        onPress={() => router.push({
+                            pathname: "/screens/Cliente/EdicaoCliente",
+                            params: { id: cliente.id }
+                        })}
+                    >
+                        Editar Cliente
+                    </ActionButton>
+
+                    {/* ✅ REQUISITO 5: Modal de confirmação implementado */}
+                    <ActionButton
+                        variant="danger"
+                        icon="trash-outline"
+                        onPress={handleDelete}
+                    >
+                        Excluir
+                    </ActionButton>
+                </View>
+            </View>
+        </View>
     )
 }
 
+
 const styles = StyleSheet.create({
-    mainContainer: {
+    container: {
         flex: 1,
-        width: "100%",
-        backgroundColor: "#132F3B",
-        justifyContent: 'center',
-        alignItems: 'center',
+        backgroundColor: '#132F3B',
     },
-    image: {
-        width: 150,
-        height: 150,
-        borderRadius: 100,
-        backgroundColor: '#0553',
-    },
-    imageContainer: {
-        justifyContent: 'center',
-        alignItems: 'center',
-        width: '100%',
-        paddingVertical: 30,
-    },
-    InfoContainer: {
+    subContainer: {
         flex: 1,
         width: '100%',
-        padding: 40,
-        backgroundColor: "#EFEFF0",
-        borderTopLeftRadius: 30,
-        borderTopRightRadius: 30,
-        gap: 40,
+        backgroundColor: '#FFFFFF',
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        paddingVertical: 24,
+        paddingHorizontal: 20,
+        elevation: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        marginTop: 20,
     },
-    InfoDetailContainer: {
+    scrollContent: {
+        flexGrow: 0,
+    },
+    clientTitleContainer: {
+        marginBottom: 16,
+    },
+    clientTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#1E293B',
+    },
+    clientSubtitle: {
+        fontSize: 16,
+        color: '#64748B',
+        textTransform: 'uppercase',
+    },
+    options: {
         width: '100%',
-        gap: 3,
-        marginBottom: 20,
-    }
+        gap: 12,
+        paddingTop: 16,
+        paddingBottom: 8,
+    },
 });
