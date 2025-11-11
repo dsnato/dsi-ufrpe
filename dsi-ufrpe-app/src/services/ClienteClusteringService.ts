@@ -252,11 +252,16 @@ export class ClienteClusteringService {
     /**
      * Determina o nível de visualização baseado no zoom
      * @returns 'individual' | 'city' | 'state'
+     * 
+     * THRESHOLDS DE ZOOM (latitudeDelta):
+     * - < 0.1  = Clientes individuais (AJUSTE AQUI)
+     * - < 1.5  = Cidades (AJUSTE AQUI)  
+     * - >= 1.5 = Estados
      */
     static getVisualizationLevel(latitudeDelta: number): 'individual' | 'city' | 'state' {
-        if (latitudeDelta < 0.05) {
+        if (latitudeDelta < 0.50) {  // Era 0.05 - Aumente para facilitar ver clientes individuais
             return 'individual'; // Zoom muito próximo - mostra clientes individuais
-        } else if (latitudeDelta < 1.0) {
+        } else if (latitudeDelta < 5) {  // Era 1.0 - Aumente para manter cidades por mais tempo
             return 'city'; // Zoom intermediário - mostra cidades
         } else {
             return 'state'; // Zoom afastado - mostra estados

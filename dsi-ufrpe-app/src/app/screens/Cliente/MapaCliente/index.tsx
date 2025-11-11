@@ -80,6 +80,7 @@ export default function MapaCliente() {
     };
 
     const handleRegionChange = (newRegion: Region) => {
+        console.log('📍 latitudeDelta:', newRegion.latitudeDelta);
         setRegion(newRegion);
         // Determinar nível de visualização baseado no zoom
         const level = ClienteClusteringService.getVisualizationLevel(newRegion.latitudeDelta);
@@ -542,8 +543,8 @@ const styles = StyleSheet.create({
         elevation: 5,
     },
     markerContainer: {
-        width: 50,
-        height: 50,
+        width: 30,
+        height: 30,
         borderRadius: 25,
         justifyContent: 'center',
         alignItems: 'center',
