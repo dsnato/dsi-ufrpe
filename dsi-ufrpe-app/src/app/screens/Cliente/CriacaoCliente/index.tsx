@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import { useRouter } from 'expo-router';
+import InputText from '@/src/components/input';
+import ButtonPoint from '@/src/components/button';
 import { criarCliente } from '@/src/services/clientesService';
 import type { Cliente } from '@/src/services/clientesService';
-import TextButton from '@/src/components/TextButton';
 import { useToast } from '@/src/components/ToastContext';
 
 export default function CriacaoCliente() {
     const router = useRouter();
     const { showSuccess, showError } = useToast();
+    const [loading, setLoading] = useState(false);
 
     const [nomeCompleto, setNomeCompleto] = useState('');
     const [cpf, setCpf] = useState('');
@@ -21,23 +22,21 @@ export default function CriacaoCliente() {
     const [pais, setPais] = useState('');
     const [dataNascimento, setDataNascimento] = useState('');
 
-    const [salvando, setSalvando] = useState(false);
-
     const validarCampos = (): boolean => {
         if (!nomeCompleto.trim()) {
-            Alert.alert('Erro', 'Nome completo é obrigatório');
+            showError('Nome completo é obrigatório');
             return false;
         }
         if (!cpf.trim()) {
-            Alert.alert('Erro', 'CPF é obrigatório');
+            showError('CPF é obrigatório');
             return false;
         }
         if (!email.trim()) {
-            Alert.alert('Erro', 'Email é obrigatório');
+            showError('Email é obrigatório');
             return false;
         }
         if (!telefone.trim()) {
-            Alert.alert('Erro', 'Telefone é obrigatório');
+            showError('Telefone é obrigatório');
             return false;
         }
         return true;
@@ -52,7 +51,7 @@ export default function CriacaoCliente() {
         }
 
         try {
-            setSalvando(true);
+            setLoading(true);
 
             const novoCliente: Omit<Cliente, 'id' | 'created_at' | 'updated_at'> = {
                 nome_completo: nomeCompleto.trim(),
@@ -79,99 +78,107 @@ export default function CriacaoCliente() {
             console.error('❌ [CriacaoCliente] Detalhes do erro:', JSON.stringify(error, null, 2));
             showError('Não foi possível criar o cliente');
         } finally {
-            setSalvando(false);
+            setLoading(false);
             console.log('🔵 [CriacaoCliente] handleCriar finalizado');
         }
     };
 
     return (
         <View style={styles.container}>
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
-                </TouchableOpacity>
-                <Text style={styles.title}>Novo Cliente</Text>
-            </View>
-
-            <View style={styles.formContainer}>
-                <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-                    <TextButton
-                        labelText="Nome Completo"
-                        placeholder="Digite o nome completo"
+            <Text style={styles.title}>Novo Cliente</Text>
+            
+            <View style={styles.form}>
+                <View style={styles.inputsContainer}>
+                    <InputText 
+                        label='Nome Completo'
+                        leftIcon={<Image source={require("@/assets/images/edit-name.png")} style={{ marginRight: 10 }} />}
                         value={nomeCompleto}
                         onChangeText={setNomeCompleto}
-                        required
+                        editable={!loading}
                     />
-                    <TextButton
-                        labelText="CPF"
-                        placeholder="Digite o CPF"
+
+                    <InputText 
+                        label='CPF'
+                        leftIcon={<Image source={require("@/assets/images/id-cnpj.png")} style={{ marginRight: 10 }} />}
                         value={cpf}
                         onChangeText={setCpf}
                         keyboardType="numeric"
-                        required
+                        editable={!loading}
                     />
-                    <TextButton
-                        labelText="Email"
-                        placeholder="Digite o email"
+
+                    <InputText 
+                        label='E-mail'
+                        leftIcon={<Image source={require("@/assets/images/at-email.png")} style={{ marginRight: 10 }} />}
                         value={email}
                         onChangeText={setEmail}
                         keyboardType="email-address"
-                        required
+                        autoCapitalize="none"
+                        editable={!loading}
                     />
-                    <TextButton
-                        labelText="Telefone"
-                        placeholder="Digite o telefone"
+
+                    <InputText 
+                        label='Telefone'
+                        leftIcon={<Image source={require("@/assets/images/callback-vector.png")} style={{ marginRight: 10 }} />}
                         value={telefone}
                         onChangeText={setTelefone}
                         keyboardType="phone-pad"
-                        required
+                        editable={!loading}
                     />
-                    <TextButton
-                        labelText="Endereço"
-                        placeholder="Digite o endereço"
+
+                    <InputText 
+                        label='Endereço'
+                        leftIcon={<Image source={require("@/assets/images/edit-name.png")} style={{ marginRight: 10 }} />}
                         value={endereco}
                         onChangeText={setEndereco}
+                        editable={!loading}
                     />
-                    <TextButton
-                        labelText="Cidade"
-                        placeholder="Digite a cidade"
+
+                    <InputText 
+                        label='Cidade'
+                        leftIcon={<Image source={require("@/assets/images/edit-name.png")} style={{ marginRight: 10 }} />}
                         value={cidade}
                         onChangeText={setCidade}
+                        editable={!loading}
                     />
-                    <TextButton
-                        labelText="Estado"
-                        placeholder="Digite o estado (ex: PE)"
+
+                    <InputText 
+                        label='Estado (ex: PE)'
+                        leftIcon={<Image source={require("@/assets/images/edit-name.png")} style={{ marginRight: 10 }} />}
                         value={estado}
                         onChangeText={setEstado}
+                        editable={!loading}
                     />
-                    <TextButton
-                        labelText="País"
-                        placeholder="Digite o país (ex: Brasil)"
+
+                    <InputText 
+                        label='País (ex: Brasil)'
+                        leftIcon={<Image source={require("@/assets/images/edit-name.png")} style={{ marginRight: 10 }} />}
                         value={pais}
                         onChangeText={setPais}
+                        editable={!loading}
                     />
-                    <TextButton
-                        labelText="Data de Nascimento"
-                        placeholder="YYYY-MM-DD"
+
+                    <InputText 
+                        label='Data de Nascimento (YYYY-MM-DD)'
+                        leftIcon={<Image source={require("@/assets/images/edit-name.png")} style={{ marginRight: 10 }} />}
                         value={dataNascimento}
                         onChangeText={setDataNascimento}
+                        editable={!loading}
                     />
-                </ScrollView>
+                </View>
 
-                <TouchableOpacity
-                    style={[styles.saveButton, salvando && styles.saveButtonDisabled]}
-                    onPress={handleCriar}
-                    disabled={salvando}
-                >
-                    {salvando ? (
-                        <ActivityIndicator size="small" color="#FFFFFF" />
-                    ) : (
-                        <>
-                            <Ionicons name="add-circle-outline" size={20} color="#FFFFFF" />
-                            <Text style={styles.saveButtonText}>Criar Cliente</Text>
-                        </>
-                    )}
-                </TouchableOpacity>
+                <View style={styles.buttonContainer}>
+                    <ButtonPoint 
+                        label={loading ? "Criando..." : "Criar Cliente"}
+                        disabled={loading}
+                        onPress={handleCriar} 
+                    />
+                    <View style={styles.separator} />
+                    <Text style={styles.footerText}>
+                        <Text style={styles.footerLink} onPress={() => router.back()}>
+                            Voltar
+                        </Text>
+                    </Text>
+                </View>
             </View>
         </View>
     );
@@ -180,50 +187,54 @@ export default function CriacaoCliente() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#132F3B',
-    },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingTop: 50,
-        paddingBottom: 20,
-        paddingHorizontal: 16,
-    },
-    backButton: {
-        marginRight: 16,
+        backgroundColor: '#132f3b',
     },
     title: {
-        fontSize: 20,
+        color: '#ffe157',
+        fontSize: 24,
         fontWeight: 'bold',
-        color: '#FFFFFF',
+        textAlign: 'center',
+        marginTop: 60,
+        marginBottom: 20,
     },
-    formContainer: {
+    form: {
         flex: 1,
-        backgroundColor: '#FFFFFF',
+        width: '100%',
+        backgroundColor: '#efeff0',
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
-        paddingVertical: 24,
-        paddingHorizontal: 20,
+        paddingVertical: 30,
+        paddingHorizontal: 24,
+        paddingBottom: 20,
+        elevation: 6,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 6,
+        marginTop: 20,
     },
-    scrollView: {
-        flex: 1,
+    inputsContainer: {
+        width: '100%',
+        gap: 12,
     },
-    saveButton: {
-        flexDirection: 'row',
+    buttonContainer: {
+        width: '100%',
+        marginTop: 20,
         alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#0162B3',
-        paddingVertical: 16,
-        borderRadius: 12,
-        marginTop: 16,
-        gap: 8,
     },
-    saveButtonDisabled: {
-        opacity: 0.6,
+    separator: {
+        width: '80%',
+        height: 1,
+        backgroundColor: '#ccc',
+        marginVertical: 20,
     },
-    saveButtonText: {
-        color: '#FFFFFF',
-        fontSize: 16,
-        fontWeight: '600',
+    footerText: {
+        color: '#666',
+        fontSize: 14,
+        textAlign: 'center',
+    },
+    footerLink: {
+        color: '#0162b3',
+        fontWeight: 'bold',
     },
 });
