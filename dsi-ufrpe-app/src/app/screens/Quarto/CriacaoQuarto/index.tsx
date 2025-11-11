@@ -40,7 +40,10 @@ export default function CriacaoQuarto() {
   };
 
   const handleCriar = async () => {
+    console.log('🔵 [CriacaoQuarto] handleCriar iniciado');
+    
     if (!validarCampos()) {
+      console.log('❌ [CriacaoQuarto] Validação falhou');
       return;
     }
 
@@ -49,21 +52,26 @@ export default function CriacaoQuarto() {
       const novoQuarto = {
         numero_quarto: numeroQuarto,
         tipo,
-        capacidade: parseInt(capacidade),
+        capacidade_pessoas: parseInt(capacidade),
         preco_diario: parseFloat(precoDiaria),
         status,
-        descricao: descricao || null
+        descricao: descricao || undefined
       };
+
+      console.log('📤 [CriacaoQuarto] Enviando dados:', JSON.stringify(novoQuarto, null, 2));
 
       await criarQuarto(novoQuarto);
       
+      console.log('✅ [CriacaoQuarto] Quarto criado com sucesso');
       showSuccess('Quarto criado com sucesso!');
       router.push('/screens/Quarto/ListagemQuarto');
     } catch (error) {
-      console.error('Erro ao criar quarto:', error);
+      console.error('❌ [CriacaoQuarto] Erro ao criar quarto:', error);
+      console.error('❌ [CriacaoQuarto] Detalhes do erro:', JSON.stringify(error, null, 2));
       showError('Não foi possível criar o quarto. Tente novamente.');
     } finally {
       setLoading(false);
+      console.log('🔵 [CriacaoQuarto] handleCriar finalizado');
     }
   };
 

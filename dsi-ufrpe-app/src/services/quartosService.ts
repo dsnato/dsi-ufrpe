@@ -4,9 +4,10 @@ export interface Quarto {
   id?: string;
   numero_quarto: string;
   tipo: string;
-  capacidade: number;
+  capacidade_pessoas: number;
   preco_diario: number;
   status?: string;
+  descricao?: string;
   foto_quarto?: string;
   created_at?: string;
   updated_at?: string;
@@ -51,20 +52,29 @@ export const buscarQuartoPorId = async (id: string): Promise<Quarto | null> => {
  * Criar novo quarto
  */
 export const criarQuarto = async (quarto: Omit<Quarto, 'id' | 'created_at' | 'updated_at'>): Promise<Quarto> => {
+  console.log('🟢 [quartosService] criarQuarto chamado');
+  console.log('🟢 [quartosService] Dados recebidos:', JSON.stringify(quarto, null, 2));
+  
+  const dadosParaInserir = {
+    ...quarto,
+    status: quarto.status || 'Disponível'
+  };
+  
+  console.log('🟢 [quartosService] Dados para inserir:', JSON.stringify(dadosParaInserir, null, 2));
+  
   const { data, error } = await supabase
     .from('quartos')
-    .insert([{
-      ...quarto,
-      status: quarto.status || 'Disponível'
-    }])
+    .insert([dadosParaInserir])
     .select()
     .single();
 
   if (error) {
-    console.error('Erro ao criar quarto:', error);
+    console.error('🔴 [quartosService] Erro Supabase:', error);
+    console.error('🔴 [quartosService] Detalhes:', JSON.stringify(error, null, 2));
     throw new Error(error.message);
   }
 
+  console.log('✅ [quartosService] Quarto criado com sucesso:', JSON.stringify(data, null, 2));
   return data;
 };
 

@@ -36,7 +36,7 @@ const EditarQuarto: React.FC = () => {
             if (dados) {
                 setNumero(dados.numero_quarto);
                 setTipo(dados.tipo);
-                setCapacidade(dados.capacidade.toString());
+                setCapacidade(dados.capacidade_pessoas.toString());
                 setPreco(dados.preco_diario.toString());
             } else {
                 Alert.alert('Erro', 'Quarto não encontrado');
@@ -78,7 +78,7 @@ const EditarQuarto: React.FC = () => {
             await atualizarQuarto(id, {
                 numero_quarto: numero,
                 tipo,
-                capacidade: parseInt(capacidade),
+                capacidade_pessoas: parseInt(capacidade),
                 preco_diario: parseFloat(preco)
             });
             
