@@ -51,6 +51,10 @@ const LoginScreen: React.FC = () => {
     router.navigate("/screens/register");
   };
 
+  const recoverPasswordTransition = () => {
+    router.navigate("/screens/RecuperacaoSenha");
+  };
+
   return (
     <View style={styles.container}>
 
@@ -90,7 +94,7 @@ const LoginScreen: React.FC = () => {
             Não tem uma conta? <Text style={styles.registerLink} onPress={registerTransition}>Cadastre-se</Text>
           </Text>
           <Text style={styles.registerText}>
-            Esqueceu a senha? <Text style={styles.registerLink} onPress={registerTransition}>Recuperar</Text>
+            Esqueceu a senha? <Text style={styles.registerLink} onPress={recoverPasswordTransition}>Recuperar</Text>
           </Text>
         </View>
       </View>

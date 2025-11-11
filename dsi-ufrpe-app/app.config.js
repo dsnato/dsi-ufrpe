@@ -12,6 +12,7 @@ module.exports = {
       supportsTablet: true
     },
     android: {
+      package: "com.weslleysantiago.dsiufrpeapp",
       adaptiveIcon: {
         foregroundImage: "./assets/images/adaptive-icon.png",
         backgroundColor: "#ffffff"
@@ -41,6 +42,9 @@ module.exports = {
     extra: {
       supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
       supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
+      eas: {
+        projectId: "70099c3d-c294-4177-9176-7c4804f869dc"
+      }
     }
   }
 };

@@ -2,6 +2,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { Animated, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { supabase } from "@/lib/supabase";
+import { useToast } from "@/src/components/ToastContext";
 
 
 interface InfoCardProps {
@@ -16,6 +18,7 @@ export default function HeaderName({ iconNameLeft, iconNameRight, title, subtitl
   const [titleAnim] = useState(new Animated.Value(0));
   const [iconAnim] = useState(new Animated.Value(0));
   const [subtitleAnim] = useState(new Animated.Value(0));
+  const { showError } = useToast();
 
   const handlePressIn = () => {
     Animated.parallel([
@@ -68,7 +71,18 @@ export default function HeaderName({ iconNameLeft, iconNameRight, title, subtitl
   };
 
   async function logoutAccount() {
-    router.replace("/screens/Login");
+    try {
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        showError('Erro ao fazer logout: ' + error.message);
+      } else {
+        // Redirecionar para tela de login após logout bem-sucedido
+        router.replace("/screens/Login");
+      }
+    } catch (err) {
+      showError('Ocorreu um erro ao tentar fazer logout');
+    }
   }
 
   const iconColor = iconAnim.interpolate({
