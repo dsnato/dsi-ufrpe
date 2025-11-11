@@ -40,7 +40,11 @@ const filteredItems = items.filter(i => i.name.toLowerCase().includes(search.toL
                             <Text style={{fontSize: 24, fontWeight: 'bold', alignSelf: 'flex-start', marginHorizontal: 50, marginTop: 15, color: '#FFE157'}}>Funcionalidades</Text>
                             <View style={styles.gridContainer}>
                                 <InfoCard title="Adicionar" elevate={false} />
-                                <InfoCard title="Mapa de funcionário" elevate={false} />
+                                <InfoCard 
+                                    title="Mapa de cliente" 
+                                    elevate={false} 
+                                    onPress={() => router.push("/screens/Cliente/MapaCliente")}
+                                />
                             </View>
                         </View>
                         <TextInputRounded value={search} onChangeText={setSearch} />
