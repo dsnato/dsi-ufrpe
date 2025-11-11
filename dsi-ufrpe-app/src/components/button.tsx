@@ -7,7 +7,6 @@ export type ButtonStatus = 'idle' | 'loading' | 'success' | 'error';
 
 type Props = TouchableOpacityProps & {
   label: string;
-  loading?: boolean;
   variant?: ButtonVariant;
   status?: ButtonStatus;
   disabled?: boolean;
