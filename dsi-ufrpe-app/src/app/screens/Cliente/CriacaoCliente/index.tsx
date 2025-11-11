@@ -44,7 +44,12 @@ export default function CriacaoCliente() {
     };
 
     const handleCriar = async () => {
-        if (!validarCampos()) return;
+        console.log('🔵 [CriacaoCliente] handleCriar iniciado');
+        
+        if (!validarCampos()) {
+            console.log('❌ [CriacaoCliente] Validação falhou');
+            return;
+        }
 
         try {
             setSalvando(true);
@@ -61,15 +66,21 @@ export default function CriacaoCliente() {
                 data_nascimento: dataNascimento || undefined,
             };
 
-            await criarCliente(novoCliente);
+            console.log('📤 [CriacaoCliente] Enviando dados:', JSON.stringify(novoCliente, null, 2));
+            
+            const resultado = await criarCliente(novoCliente);
+            
+            console.log('✅ [CriacaoCliente] Cliente criado com sucesso:', resultado);
 
             showSuccess('Cliente criado com sucesso!');
             router.push('/screens/Cliente/ListagemCliente');
         } catch (error) {
-            console.error('Erro ao criar cliente:', error);
+            console.error('❌ [CriacaoCliente] Erro ao criar cliente:', error);
+            console.error('❌ [CriacaoCliente] Detalhes do erro:', JSON.stringify(error, null, 2));
             showError('Não foi possível criar o cliente');
         } finally {
             setSalvando(false);
+            console.log('🔵 [CriacaoCliente] handleCriar finalizado');
         }
     };
 

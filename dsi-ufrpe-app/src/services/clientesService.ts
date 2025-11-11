@@ -54,20 +54,29 @@ export const buscarClientePorId = async (id: string): Promise<Cliente | null> =>
  * Criar novo cliente
  */
 export const criarCliente = async (cliente: Omit<Cliente, 'id' | 'created_at' | 'updated_at'>): Promise<Cliente> => {
+  console.log('🟢 [clientesService] criarCliente chamado');
+  console.log('🟢 [clientesService] Dados recebidos:', JSON.stringify(cliente, null, 2));
+  
+  const dadosParaInserir = {
+    ...cliente,
+    pais: cliente.pais || 'Brasil'
+  };
+  
+  console.log('🟢 [clientesService] Dados para inserir:', JSON.stringify(dadosParaInserir, null, 2));
+  
   const { data, error } = await supabase
     .from('clientes')
-    .insert([{
-      ...cliente,
-      pais: cliente.pais || 'Brasil'
-    }])
+    .insert([dadosParaInserir])
     .select()
     .single();
 
   if (error) {
-    console.error('Erro ao criar cliente:', error);
+    console.error('🔴 [clientesService] Erro ao criar cliente:', error);
+    console.error('🔴 [clientesService] Detalhes:', JSON.stringify(error, null, 2));
     throw new Error(error.message);
   }
 
+  console.log('✅ [clientesService] Cliente criado:', JSON.stringify(data, null, 2));
   return data;
 };
 
