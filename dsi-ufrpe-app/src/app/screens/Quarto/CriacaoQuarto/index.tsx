@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import { useRouter } from 'expo-router';
-import ScreenWrapper from '@/src/components/ScreenWrapper';
-import TextInputRounded from '@/src/components/TextInputRounded';
-import Button from '@/src/components/button';
+import InputText from '@/src/components/input';
+import ButtonPoint from '@/src/components/button';
 import { criarQuarto } from '@/src/services/quartosService';
 import { useToast } from '@/src/components/ToastContext';
 
@@ -22,19 +21,19 @@ export default function CriacaoQuarto() {
 
   const validarCampos = (): boolean => {
     if (!numeroQuarto.trim()) {
-      Alert.alert('Erro de Validação', 'Número do quarto é obrigatório');
+      showError('Número do quarto é obrigatório');
       return false;
     }
     if (!tipo.trim()) {
-      Alert.alert('Erro de Validação', 'Tipo é obrigatório');
+      showError('Tipo é obrigatório');
       return false;
     }
     if (!capacidade.trim()) {
-      Alert.alert('Erro de Validação', 'Capacidade é obrigatória');
+      showError('Capacidade é obrigatória');
       return false;
     }
     if (!precoDiaria.trim()) {
-      Alert.alert('Erro de Validação', 'Preço da diária é obrigatório');
+      showError('Preço da diária é obrigatório');
       return false;
     }
     return true;
@@ -69,95 +68,132 @@ export default function CriacaoQuarto() {
   };
 
   return (
-    <ScreenWrapper>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        <Text style={styles.title}>Criar Novo Quarto</Text>
-
-        <View style={styles.formContainer}>
-          <TextInputRounded
-            placeholder="Número do Quarto"
+    <View style={styles.container}>
+      <Text style={styles.title}>Novo Quarto</Text>
+      
+      <View style={styles.form}>
+        <View style={styles.inputsContainer}>
+          <InputText 
+            label='Número do Quarto'
+            leftIcon={<Image source={require("@/assets/images/edit-name.png")} style={{ marginRight: 10 }} />}
             value={numeroQuarto}
             onChangeText={setNumeroQuarto}
             editable={!loading}
           />
 
-          <TextInputRounded
-            placeholder="Tipo (ex: Single, Double, Suite)"
+          <InputText 
+            label='Tipo (ex: Single, Double, Suite)'
+            leftIcon={<Image source={require("@/assets/images/edit-name.png")} style={{ marginRight: 10 }} />}
             value={tipo}
             onChangeText={setTipo}
             editable={!loading}
           />
 
-          <TextInputRounded
-            placeholder="Capacidade"
+          <InputText 
+            label='Capacidade'
+            leftIcon={<Image source={require("@/assets/images/edit-name.png")} style={{ marginRight: 10 }} />}
             value={capacidade}
             onChangeText={setCapacidade}
             keyboardType="numeric"
             editable={!loading}
           />
 
-          <TextInputRounded
-            placeholder="Preço da Diária"
+          <InputText 
+            label='Preço da Diária'
+            leftIcon={<Image source={require("@/assets/images/edit-name.png")} style={{ marginRight: 10 }} />}
             value={precoDiaria}
             onChangeText={setPrecoDiaria}
             keyboardType="decimal-pad"
             editable={!loading}
           />
 
-          <TextInputRounded
-            placeholder="Status (disponível/ocupado/manutenção)"
+          <InputText 
+            label='Status (disponível/ocupado/manutenção)'
+            leftIcon={<Image source={require("@/assets/images/edit-name.png")} style={{ marginRight: 10 }} />}
             value={status}
             onChangeText={setStatus}
             editable={!loading}
           />
 
-          <TextInputRounded
-            placeholder="Descrição (opcional)"
+          <InputText 
+            label='Descrição (opcional)'
+            leftIcon={<Image source={require("@/assets/images/edit-name.png")} style={{ marginRight: 10 }} />}
             value={descricao}
             onChangeText={setDescricao}
             multiline
-            numberOfLines={4}
             editable={!loading}
           />
-
-          <View style={styles.buttonContainer}>
-            {loading ? (
-              <ActivityIndicator size="large" color="#007AFF" />
-            ) : (
-              <>
-                <Button
-                  label="Criar Quarto"
-                  onPress={handleCriar}
-                />
-                <Button
-                  label="Cancelar"
-                  onPress={() => router.back()}
-                />
-              </>
-            )}
-          </View>
         </View>
-      </ScrollView>
-    </ScreenWrapper>
+
+        <View style={styles.buttonContainer}>
+          <ButtonPoint 
+            label={loading ? "Criando..." : "Criar Quarto"}
+            disabled={loading}
+            onPress={handleCriar} 
+          />
+          <View style={styles.separator} />
+          <Text style={styles.footerText}>
+            <Text style={styles.footerLink} onPress={() => router.back()}>
+              Voltar
+            </Text>
+          </Text>
+        </View>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    backgroundColor: '#132f3b',
   },
   title: {
+    color: '#ffe157',
     fontSize: 24,
     fontWeight: 'bold',
+    textAlign: 'center',
+    marginTop: 60,
     marginBottom: 20,
-    color: '#333',
   },
-  formContainer: {
-    gap: 15,
+  form: {
+    flex: 1,
+    width: '100%',
+    backgroundColor: '#efeff0',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingVertical: 30,
+    paddingHorizontal: 24,
+    paddingBottom: 20,
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    marginTop: 20,
+  },
+  inputsContainer: {
+    width: '100%',
+    gap: 12,
   },
   buttonContainer: {
+    width: '100%',
     marginTop: 20,
-    gap: 10,
+    alignItems: 'center',
+  },
+  separator: {
+    width: '80%',
+    height: 1,
+    backgroundColor: '#ccc',
+    marginVertical: 20,
+  },
+  footerText: {
+    color: '#666',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  footerLink: {
+    color: '#0162b3',
+    fontWeight: 'bold',
   },
 });

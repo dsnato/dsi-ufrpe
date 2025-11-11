@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import { useRouter } from 'expo-router';
-import ScreenWrapper from '@/src/components/ScreenWrapper';
-import TextInputRounded from '@/src/components/TextInputRounded';
-import Button from '@/src/components/button';
+import InputText from '@/src/components/input';
+import ButtonPoint from '@/src/components/button';
 import { criarReserva } from '@/src/services/reservasService';
 import { useToast } from '@/src/components/ToastContext';
 
@@ -24,27 +23,27 @@ export default function CriacaoReserva() {
 
   const validarCampos = (): boolean => {
     if (!clienteId.trim()) {
-      Alert.alert('Erro de Validação', 'ID do cliente é obrigatório');
+      showError('ID do cliente é obrigatório');
       return false;
     }
     if (!quartoId.trim()) {
-      Alert.alert('Erro de Validação', 'ID do quarto é obrigatório');
+      showError('ID do quarto é obrigatório');
       return false;
     }
     if (!dataCheckin.trim()) {
-      Alert.alert('Erro de Validação', 'Data de check-in é obrigatória');
+      showError('Data de check-in é obrigatória');
       return false;
     }
     if (!dataCheckout.trim()) {
-      Alert.alert('Erro de Validação', 'Data de check-out é obrigatória');
+      showError('Data de check-out é obrigatória');
       return false;
     }
     if (!numeroHospedes.trim()) {
-      Alert.alert('Erro de Validação', 'Número de hóspedes é obrigatório');
+      showError('Número de hóspedes é obrigatório');
       return false;
     }
     if (!valorTotal.trim()) {
-      Alert.alert('Erro de Validação', 'Valor total é obrigatório');
+      showError('Valor total é obrigatório');
       return false;
     }
     return true;
@@ -81,109 +80,148 @@ export default function CriacaoReserva() {
   };
 
   return (
-    <ScreenWrapper>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        <Text style={styles.title}>Criar Nova Reserva</Text>
-
-        <View style={styles.formContainer}>
-          <TextInputRounded
-            placeholder="ID do Cliente"
+    <View style={styles.container}>
+      <Text style={styles.title}>Nova Reserva</Text>
+      
+      <View style={styles.form}>
+        <View style={styles.inputsContainer}>
+          <InputText 
+            label='ID do Cliente'
+            leftIcon={<Image source={require("@/assets/images/edit-name.png")} style={{ marginRight: 10 }} />}
             value={clienteId}
             onChangeText={setClienteId}
             editable={!loading}
           />
 
-          <TextInputRounded
-            placeholder="ID do Quarto"
+          <InputText 
+            label='ID do Quarto'
+            leftIcon={<Image source={require("@/assets/images/edit-name.png")} style={{ marginRight: 10 }} />}
             value={quartoId}
             onChangeText={setQuartoId}
             editable={!loading}
           />
 
-          <TextInputRounded
-            placeholder="Data de Check-in (YYYY-MM-DD)"
+          <InputText 
+            label='Data de Check-in (YYYY-MM-DD)'
+            leftIcon={<Image source={require("@/assets/images/edit-name.png")} style={{ marginRight: 10 }} />}
             value={dataCheckin}
             onChangeText={setDataCheckin}
             editable={!loading}
           />
 
-          <TextInputRounded
-            placeholder="Data de Check-out (YYYY-MM-DD)"
+          <InputText 
+            label='Data de Check-out (YYYY-MM-DD)'
+            leftIcon={<Image source={require("@/assets/images/edit-name.png")} style={{ marginRight: 10 }} />}
             value={dataCheckout}
             onChangeText={setDataCheckout}
             editable={!loading}
           />
 
-          <TextInputRounded
-            placeholder="Número de Hóspedes"
+          <InputText 
+            label='Número de Hóspedes'
+            leftIcon={<Image source={require("@/assets/images/edit-name.png")} style={{ marginRight: 10 }} />}
             value={numeroHospedes}
             onChangeText={setNumeroHospedes}
             keyboardType="numeric"
             editable={!loading}
           />
 
-          <TextInputRounded
-            placeholder="Valor Total"
+          <InputText 
+            label='Valor Total'
+            leftIcon={<Image source={require("@/assets/images/edit-name.png")} style={{ marginRight: 10 }} />}
             value={valorTotal}
             onChangeText={setValorTotal}
             keyboardType="decimal-pad"
             editable={!loading}
           />
 
-          <TextInputRounded
-            placeholder="Status (confirmada/cancelada/concluída)"
+          <InputText 
+            label='Status (confirmada/cancelada/concluída)'
+            leftIcon={<Image source={require("@/assets/images/edit-name.png")} style={{ marginRight: 10 }} />}
             value={status}
             onChangeText={setStatus}
             editable={!loading}
           />
 
-          <TextInputRounded
-            placeholder="Observações (opcional)"
+          <InputText 
+            label='Observações (opcional)'
+            leftIcon={<Image source={require("@/assets/images/edit-name.png")} style={{ marginRight: 10 }} />}
             value={observacoes}
             onChangeText={setObservacoes}
             multiline
-            numberOfLines={4}
             editable={!loading}
           />
-
-          <View style={styles.buttonContainer}>
-            {loading ? (
-              <ActivityIndicator size="large" color="#007AFF" />
-            ) : (
-              <>
-                <Button
-                  label="Criar Reserva"
-                  onPress={handleCriar}
-                />
-                <Button
-                  label="Cancelar"
-                  onPress={() => router.back()}
-                />
-              </>
-            )}
-          </View>
         </View>
-      </ScrollView>
-    </ScreenWrapper>
+
+        <View style={styles.buttonContainer}>
+          <ButtonPoint 
+            label={loading ? "Criando..." : "Criar Reserva"}
+            disabled={loading}
+            onPress={handleCriar} 
+          />
+          <View style={styles.separator} />
+          <Text style={styles.footerText}>
+            <Text style={styles.footerLink} onPress={() => router.back()}>
+              Voltar
+            </Text>
+          </Text>
+        </View>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    backgroundColor: '#132f3b',
   },
   title: {
+    color: '#ffe157',
     fontSize: 24,
     fontWeight: 'bold',
+    textAlign: 'center',
+    marginTop: 60,
     marginBottom: 20,
-    color: '#333',
   },
-  formContainer: {
-    gap: 15,
+  form: {
+    flex: 1,
+    width: '100%',
+    backgroundColor: '#efeff0',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingVertical: 30,
+    paddingHorizontal: 24,
+    paddingBottom: 20,
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    marginTop: 20,
+  },
+  inputsContainer: {
+    width: '100%',
+    gap: 12,
   },
   buttonContainer: {
+    width: '100%',
     marginTop: 20,
-    gap: 10,
+    alignItems: 'center',
+  },
+  separator: {
+    width: '80%',
+    height: 1,
+    backgroundColor: '#ccc',
+    marginVertical: 20,
+  },
+  footerText: {
+    color: '#666',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  footerLink: {
+    color: '#0162b3',
+    fontWeight: 'bold',
   },
 });

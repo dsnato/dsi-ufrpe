@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import { useRouter } from 'expo-router';
-import ScreenWrapper from '@/src/components/ScreenWrapper';
-import TextInputRounded from '@/src/components/TextInputRounded';
-import Button from '@/src/components/button';
+import InputText from '@/src/components/input';
+import ButtonPoint from '@/src/components/button';
 import { criarAtividade } from '@/src/services/atividadesService';
 import { useToast } from '@/src/components/ToastContext';
 
@@ -24,31 +23,31 @@ export default function CriacaoAtividade() {
 
   const validarCampos = (): boolean => {
     if (!nome.trim()) {
-      Alert.alert('Erro de Validação', 'Nome é obrigatório');
+      showError('Nome é obrigatório');
       return false;
     }
     if (!descricao.trim()) {
-      Alert.alert('Erro de Validação', 'Descrição é obrigatória');
+      showError('Descrição é obrigatória');
       return false;
     }
     if (!dataHora.trim()) {
-      Alert.alert('Erro de Validação', 'Data e hora são obrigatórias');
+      showError('Data e hora são obrigatórias');
       return false;
     }
     if (!local.trim()) {
-      Alert.alert('Erro de Validação', 'Local é obrigatório');
+      showError('Local é obrigatório');
       return false;
     }
     if (!capacidadeMaxima.trim()) {
-      Alert.alert('Erro de Validação', 'Capacidade máxima é obrigatória');
+      showError('Capacidade máxima é obrigatória');
       return false;
     }
     if (!vagasDisponiveis.trim()) {
-      Alert.alert('Erro de Validação', 'Vagas disponíveis são obrigatórias');
+      showError('Vagas disponíveis são obrigatórias');
       return false;
     }
     if (!responsavelId.trim()) {
-      Alert.alert('Erro de Validação', 'ID do responsável é obrigatório');
+      showError('ID do responsável é obrigatório');
       return false;
     }
     return true;
@@ -85,109 +84,148 @@ export default function CriacaoAtividade() {
   };
 
   return (
-    <ScreenWrapper>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        <Text style={styles.title}>Criar Nova Atividade</Text>
-
-        <View style={styles.formContainer}>
-          <TextInputRounded
-            placeholder="Nome da Atividade"
+    <View style={styles.container}>
+      <Text style={styles.title}>Nova Atividade</Text>
+      
+      <View style={styles.form}>
+        <View style={styles.inputsContainer}>
+          <InputText 
+            label='Nome da Atividade'
+            leftIcon={<Image source={require("@/assets/images/edit-name.png")} style={{ marginRight: 10 }} />}
             value={nome}
             onChangeText={setNome}
             editable={!loading}
           />
 
-          <TextInputRounded
-            placeholder="Descrição"
+          <InputText 
+            label='Descrição'
+            leftIcon={<Image source={require("@/assets/images/edit-name.png")} style={{ marginRight: 10 }} />}
             value={descricao}
             onChangeText={setDescricao}
             multiline
-            numberOfLines={3}
             editable={!loading}
           />
 
-          <TextInputRounded
-            placeholder="Data e Hora (YYYY-MM-DD HH:MM:SS)"
+          <InputText 
+            label='Data e Hora (YYYY-MM-DD HH:MM:SS)'
+            leftIcon={<Image source={require("@/assets/images/edit-name.png")} style={{ marginRight: 10 }} />}
             value={dataHora}
             onChangeText={setDataHora}
             editable={!loading}
           />
 
-          <TextInputRounded
-            placeholder="Local"
+          <InputText 
+            label='Local'
+            leftIcon={<Image source={require("@/assets/images/edit-name.png")} style={{ marginRight: 10 }} />}
             value={local}
             onChangeText={setLocal}
             editable={!loading}
           />
 
-          <TextInputRounded
-            placeholder="Capacidade Máxima"
+          <InputText 
+            label='Capacidade Máxima'
+            leftIcon={<Image source={require("@/assets/images/edit-name.png")} style={{ marginRight: 10 }} />}
             value={capacidadeMaxima}
             onChangeText={setCapacidadeMaxima}
             keyboardType="numeric"
             editable={!loading}
           />
 
-          <TextInputRounded
-            placeholder="Vagas Disponíveis"
+          <InputText 
+            label='Vagas Disponíveis'
+            leftIcon={<Image source={require("@/assets/images/edit-name.png")} style={{ marginRight: 10 }} />}
             value={vagasDisponiveis}
             onChangeText={setVagasDisponiveis}
             keyboardType="numeric"
             editable={!loading}
           />
 
-          <TextInputRounded
-            placeholder="ID do Responsável"
+          <InputText 
+            label='ID do Responsável'
+            leftIcon={<Image source={require("@/assets/images/edit-name.png")} style={{ marginRight: 10 }} />}
             value={responsavelId}
             onChangeText={setResponsavelId}
             editable={!loading}
           />
 
-          <TextInputRounded
-            placeholder="Status (aberta/encerrada/cancelada)"
+          <InputText 
+            label='Status (aberta/encerrada/cancelada)'
+            leftIcon={<Image source={require("@/assets/images/edit-name.png")} style={{ marginRight: 10 }} />}
             value={status}
             onChangeText={setStatus}
             editable={!loading}
           />
-
-          <View style={styles.buttonContainer}>
-            {loading ? (
-              <ActivityIndicator size="large" color="#007AFF" />
-            ) : (
-              <>
-                <Button
-                  label="Criar Atividade"
-                  onPress={handleCriar}
-                />
-                <Button
-                  label="Cancelar"
-                  onPress={() => router.back()}
-                />
-              </>
-            )}
-          </View>
         </View>
-      </ScrollView>
-    </ScreenWrapper>
+
+        <View style={styles.buttonContainer}>
+          <ButtonPoint 
+            label={loading ? "Criando..." : "Criar Atividade"}
+            disabled={loading}
+            onPress={handleCriar} 
+          />
+          <View style={styles.separator} />
+          <Text style={styles.footerText}>
+            <Text style={styles.footerLink} onPress={() => router.back()}>
+              Voltar
+            </Text>
+          </Text>
+        </View>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    backgroundColor: '#132f3b',
   },
   title: {
+    color: '#ffe157',
     fontSize: 24,
     fontWeight: 'bold',
+    textAlign: 'center',
+    marginTop: 60,
     marginBottom: 20,
-    color: '#333',
   },
-  formContainer: {
-    gap: 15,
+  form: {
+    flex: 1,
+    width: '100%',
+    backgroundColor: '#efeff0',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingVertical: 30,
+    paddingHorizontal: 24,
+    paddingBottom: 20,
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    marginTop: 20,
+  },
+  inputsContainer: {
+    width: '100%',
+    gap: 12,
   },
   buttonContainer: {
+    width: '100%',
     marginTop: 20,
-    gap: 10,
+    alignItems: 'center',
+  },
+  separator: {
+    width: '80%',
+    height: 1,
+    backgroundColor: '#ccc',
+    marginVertical: 20,
+  },
+  footerText: {
+    color: '#666',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  footerLink: {
+    color: '#0162b3',
+    fontWeight: 'bold',
   },
 });
