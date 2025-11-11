@@ -55,7 +55,11 @@ export default function ListagemReserva() {
                         <View style={{alignItems: 'center', marginBottom: 20}}>
                             <Text style={{fontSize: 24, fontWeight: 'bold', alignSelf: 'flex-start', marginHorizontal: 50, marginTop: 15, color: '#FFE157'}}>Funcionalidades</Text>
                             <View style={styles.gridContainer}>
-                                <InfoCard title="Adicionar" elevate={false} onPress={() => {router.push('/screens/Reserva/CriacaoReserva')}}/>                            
+                                <InfoCard 
+                                    title="Adicionar" 
+                                    elevate={false}
+                                    onPress={() => router.push('/screens/Reserva/CriacaoReserva')}
+                                />
                             </View>
                         </View>
                         <TextInputRounded value={search} onChangeText={setSearch} />

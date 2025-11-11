@@ -5,10 +5,12 @@ import ButtonPoint from '@/src/components/button';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { buscarQuartoPorId, atualizarQuarto } from '@/src/services/quartosService';
 import type { Quarto } from '@/src/services/quartosService';
+import { useToast } from '@/src/components/ToastContext';
 
 const EditarQuarto: React.FC = () => {
     const router = useRouter();
     const { id } = useLocalSearchParams<{ id: string }>();
+    const { showSuccess, showError } = useToast();
     
     const [numero, setNumero] = useState('');
     const [tipo, setTipo] = useState('');
@@ -80,14 +82,11 @@ const EditarQuarto: React.FC = () => {
                 preco_diario: parseFloat(preco)
             });
             
-            Alert.alert(
-                'Sucesso', 
-                'Quarto atualizado com sucesso!',
-                [{ text: 'OK', onPress: () => router.back() }]
-            );
+            showSuccess('Quarto atualizado com sucesso!');
+            router.back();
         } catch (error) {
             const mensagem = error instanceof Error ? error.message : 'Erro ao atualizar quarto';
-            Alert.alert('Erro', mensagem);
+            showError(mensagem);
         } finally {
             setSalvando(false);
         }

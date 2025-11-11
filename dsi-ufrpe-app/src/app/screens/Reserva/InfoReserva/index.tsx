@@ -1,59 +1,81 @@
-import { ErrorState } from '@/src/components/ErrorState';
-import { Loading } from '@/src/components/Loading';
-import { ReservationService } from '@/src/services/ReservationService';
-import { Reservation } from '@/src/types/reservation';
-import { formatCurrency, formatDate, withPlaceholder } from '@/src/utils/formatters';
-import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from "react-native";
+import { buscarReservaPorId, excluirReserva, realizarCheckin, realizarCheckout } from '@/src/services/reservasService';
+import type { Reserva } from '@/src/services/reservasService';
+import { useToast } from '@/src/components/ToastContext';
 
-const InfoReserva: React.FC = () => {
+export default function InfoReserva() {
     const router = useRouter();
     const { id } = useLocalSearchParams<{ id: string }>();
+    const { showSuccess, showError } = useToast();
 
-    // Estados
-    const [reserva, setReserva] = useState<Reservation | null>(null);
+    const [reserva, setReserva] = useState<Reserva | null>(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const [processando, setProcessando] = useState(false);
 
-    /**
-     * ✅ REQUISITO 1: Carregamento dos dados usando ID da URL
-     * ✅ REQUISITO 6: Atualização automática após retornar da edição (useFocusEffect)
-     */
-    const loadReserva = useCallback(async () => {
+    const carregarReserva = useCallback(async () => {
         if (!id) {
-            setError('ID da reserva não fornecido');
-            setLoading(false);
+            Alert.alert('Erro', 'ID da reserva não fornecido');
+            router.back();
             return;
         }
 
-        setLoading(true);
-        setError(null);
+        try {
+            setLoading(true);
+            const data = await buscarReservaPorId(id);
+            
+            if (!data) {
+                Alert.alert('Erro', 'Reserva não encontrada');
+                router.back();
+                return;
+            }
 
-        const data = await ReservationService.getById(id);
-
-        if (!data) {
-            setError('Reserva não encontrada');
+            setReserva(data);
+        } catch (error) {
+            console.error('Erro ao carregar reserva:', error);
+            Alert.alert('Erro', 'Não foi possível carregar os dados da reserva');
+        } finally {
             setLoading(false);
-            return;
         }
+    }, [id, router]);
 
-        setReserva(data);
-        setLoading(false);
-    }, [id]);
-
-    // Recarrega os dados sempre que a tela receber foco
     useFocusEffect(
         useCallback(() => {
-            loadReserva();
-        }, [loadReserva])
+            carregarReserva();
+        }, [carregarReserva])
     );
 
-    /**
-     * ✅ REQUISITO 5: Modal de confirmação antes de excluir
-     */
-    const handleDelete = () => {
+    const handleCheckin = async () => {
+        try {
+            setProcessando(true);
+            await realizarCheckin(id);
+            Alert.alert('Sucesso', 'Check-in realizado com sucesso!');
+            carregarReserva();
+        } catch (error) {
+            console.error('Erro ao realizar check-in:', error);
+            Alert.alert('Erro', 'Não foi possível realizar o check-in');
+        } finally {
+            setProcessando(false);
+        }
+    };
+
+    const handleCheckout = async () => {
+        try {
+            setProcessando(true);
+            await realizarCheckout(id);
+            Alert.alert('Sucesso', 'Check-out realizado com sucesso!');
+            carregarReserva();
+        } catch (error) {
+            console.error('Erro ao realizar check-out:', error);
+            Alert.alert('Erro', 'Não foi possível realizar o check-out');
+        } finally {
+            setProcessando(false);
+        }
+    };
+
+    const handleExcluir = () => {
         Alert.alert(
             "Confirmar Exclusão",
             "Tem certeza que deseja excluir esta reserva? Esta ação não pode ser desfeita.",
@@ -66,24 +88,13 @@ const InfoReserva: React.FC = () => {
                     text: "Excluir",
                     style: "destructive",
                     onPress: async () => {
-                        const success = await ReservationService.delete(id);
-
-                        if (success) {
-                            Alert.alert(
-                                "Sucesso",
-                                "Reserva excluída com sucesso!",
-                                [
-                                    {
-                                        text: "OK",
-                                        onPress: () => router.push("/screens/Reserva/ListagemReserva")
-                                    }
-                                ]
-                            );
-                        } else {
-                            Alert.alert(
-                                "Erro",
-                                "Não foi possível excluir a reserva. Tente novamente."
-                            );
+                        try {
+                            await excluirReserva(id);
+                            showSuccess('Reserva excluída com sucesso!');
+                            router.push("/screens/Reserva/ListagemReserva");
+                        } catch (error) {
+                            console.error('Erro ao excluir reserva:', error);
+                            showError('Não foi possível excluir a reserva');
                         }
                     }
                 }
@@ -91,33 +102,7 @@ const InfoReserva: React.FC = () => {
         );
     };
 
-    /**
-     * ✅ REQUISITO 2: Exibição de loading durante busca
-     */
     if (loading) {
-        return (
-            <View style={styles.container}>
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.push("/screens/Reserva/ListagemReserva")} style={styles.backButton}>
-                        <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
-                    </TouchableOpacity>
-                    <View style={styles.breadcrumb}>
-                        <Text style={styles.breadcrumbText}>Reservas</Text>
-                        <Ionicons name="chevron-forward" size={16} color="#E0F2FE" />
-                        <Text style={styles.breadcrumbTextActive}>Detalhes</Text>
-                    </View>
-                </View>
-                <View style={styles.subContainer}>
-                    <Loading message="Carregando reserva..." />
-                </View>
-            </View>
-        );
-    }
-
-    /**
-     * ✅ REQUISITO 3: Mensagem de erro amigável se não encontrada
-     */
-    if (error || !reserva) {
         return (
             <View style={styles.container}>
                 <View style={styles.header}>
@@ -130,33 +115,53 @@ const InfoReserva: React.FC = () => {
                         <Text style={styles.breadcrumbTextActive}>Detalhes</Text>
                     </View>
                 </View>
-                <View style={styles.subContainer}>
-                    <ErrorState
-                        message={error || 'Reserva não encontrada'}
-                        onRetry={loadReserva}
-                        onGoBack={() => router.push("/screens/Reserva/ListagemReserva")}
-                    />
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#0162B3" />
+                    <Text style={styles.loadingText}>Carregando...</Text>
                 </View>
             </View>
         );
     }
 
-    // Mapear cores do status
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'Confirmada': return '#FFE157';
-            case 'Ativa': return '#10B981';
-            case 'Finalizada': return '#6B7280';
-            case 'Cancelada': return '#EF4444';
-            default: return '#6B7280';
+    if (!reserva) {
+        return (
+            <View style={styles.container}>
+                <View style={styles.header}>
+                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                        <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
+                    </TouchableOpacity>
+                    <View style={styles.breadcrumb}>
+                        <Text style={styles.breadcrumbText}>Reservas</Text>
+                        <Ionicons name="chevron-forward" size={16} color="#E0F2FE" />
+                        <Text style={styles.breadcrumbTextActive}>Detalhes</Text>
+                    </View>
+                </View>
+                <View style={styles.errorContainer}>
+                    <Ionicons name="alert-circle-outline" size={64} color="#DC2626" />
+                    <Text style={styles.errorText}>Reserva não encontrada</Text>
+                </View>
+            </View>
+        );
+    }
+
+    const formatarData = (data: string) => {
+        if (!data) return '-';
+        try {
+            const d = new Date(data);
+            return d.toLocaleDateString('pt-BR');
+        } catch {
+            return data;
         }
+    };
+
+    const formatarValor = (valor: number) => {
+        return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     };
 
     return (
         <View style={styles.container}>
-            {/* ✅ REQUISITO 9: Breadcrumb/indicador de navegação */}
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.push("/screens/Reserva/ListagemReserva")} style={styles.backButton}>
+                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                     <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
                 </TouchableOpacity>
                 <View style={styles.breadcrumb}>
@@ -166,138 +171,98 @@ const InfoReserva: React.FC = () => {
                 </View>
             </View>
 
-            {/* Container branco com informações */}
-            <View style={styles.subContainer}>
-                <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
-                    {/* Título da reserva com badge de status */}
-                    <View style={styles.reservaTitleContainer}>
-                        <View style={styles.titleRow}>
-                            {/* ✅ REQUISITO 7 e 8: Formatação e tratamento de valores vazios */}
-                            <Text style={styles.reservaTitle}>
-                                Reserva {withPlaceholder(reserva.id, 'S/N')}
-                            </Text>
-                            <View style={[
-                                styles.statusBadge,
-                                { backgroundColor: getStatusColor(reserva.status) }
-                            ]}>
-                                <Text style={styles.statusText}>{reserva.status}</Text>
-                            </View>
-                        </View>
-                        <Text style={styles.reservaSubtitle}>Número da reserva</Text>
-
-                        {/* Linha divisória entre título e informações */}
-                        <View style={styles.titleSeparator} />
+            <ScrollView style={styles.content}>
+                <View style={styles.card}>
+                    <View style={styles.cardHeader}>
+                        <Ionicons name="information-circle" size={24} color="#0162B3" />
+                        <Text style={styles.cardTitle}>Informações da Reserva</Text>
                     </View>
 
-                    {/* ✅ REQUISITO 7 e 8: Informações formatadas com placeholders */}
                     <View style={styles.infoRow}>
-                        <Ionicons name="calendar-outline" size={20} color="#0162B3" />
-                        <View style={styles.infoTextContainer}>
-                            <Text style={styles.infoLabel}>DATA DE CHECK-IN</Text>
-                            <Text style={styles.infoValue}>{formatDate(reserva.check_in_date)}</Text>
+                        <Text style={styles.label}>Status:</Text>
+                        <View style={[styles.statusBadge, styles[`status${reserva.status}`]]}>
+                            <Text style={styles.statusText}>{reserva.status}</Text>
                         </View>
                     </View>
 
                     <View style={styles.infoRow}>
-                        <Ionicons name="calendar-outline" size={20} color="#0162B3" />
-                        <View style={styles.infoTextContainer}>
-                            <Text style={styles.infoLabel}>DATA DE CHECK-OUT</Text>
-                            <Text style={styles.infoValue}>{formatDate(reserva.check_out_date)}</Text>
-                        </View>
+                        <Text style={styles.label}>Check-in:</Text>
+                        <Text style={styles.value}>{formatarData(reserva.data_checkin)}</Text>
                     </View>
 
                     <View style={styles.infoRow}>
-                        <Ionicons name="bed-outline" size={20} color="#0162B3" />
-                        <View style={styles.infoTextContainer}>
-                            <Text style={styles.infoLabel}>QUARTO</Text>
-                            <Text style={styles.infoValue}>
-                                {withPlaceholder(reserva.room_id, 'Não informado')}
-                            </Text>
-                        </View>
+                        <Text style={styles.label}>Check-out:</Text>
+                        <Text style={styles.value}>{formatarData(reserva.data_checkout)}</Text>
                     </View>
 
                     <View style={styles.infoRow}>
-                        <Ionicons name="cash-outline" size={20} color="#0162B3" />
-                        <View style={styles.infoTextContainer}>
-                            <Text style={styles.infoLabel}>VALOR TOTAL</Text>
-                            <Text style={styles.infoValue}>{formatCurrency(reserva.total_amount)}</Text>
-                        </View>
+                        <Text style={styles.label}>Valor Total:</Text>
+                        <Text style={styles.valueHighlight}>{formatarValor(reserva.valor_total)}</Text>
                     </View>
 
-                    {reserva.pending_amount > 0 && (
-                        <View style={styles.infoRow}>
-                            <Ionicons name="alert-circle-outline" size={20} color="#F59E0B" />
-                            <View style={styles.infoTextContainer}>
-                                <Text style={styles.infoLabel}>VALOR PENDENTE</Text>
-                                <Text style={[styles.infoValue, { color: '#F59E0B' }]}>
-                                    {formatCurrency(reserva.pending_amount)}
-                                </Text>
-                            </View>
-                        </View>
-                    )}
+                    <View style={styles.infoRow}>
+                        <Text style={styles.label}>Observações:</Text>
+                        <Text style={styles.value}>{reserva.observacoes || '-'}</Text>
+                    </View>
+                </View>
 
-                    {reserva.actual_check_in && (
-                        <View style={styles.infoRow}>
-                            <Ionicons name="checkmark-circle-outline" size={20} color="#10B981" />
-                            <View style={styles.infoTextContainer}>
-                                <Text style={styles.infoLabel}>CHECK-IN REALIZADO</Text>
-                                <Text style={styles.infoValue}>{formatDate(reserva.actual_check_in)}</Text>
-                            </View>
-                        </View>
-                    )}
+                <View style={styles.actionsCard}>
+                    <Text style={styles.actionsSectionTitle}>Ações</Text>
 
-                    {reserva.actual_check_out && (
-                        <View style={styles.infoRow}>
-                            <Ionicons name="checkmark-circle-outline" size={20} color="#6B7280" />
-                            <View style={styles.infoTextContainer}>
-                                <Text style={styles.infoLabel}>CHECK-OUT REALIZADO</Text>
-                                <Text style={styles.infoValue}>{formatDate(reserva.actual_check_out)}</Text>
-                            </View>
-                        </View>
-                    )}
-                </ScrollView>
-                <View style={styles.titleSeparator} />
-
-                {/* Botões de ação */}
-                <View style={styles.options}>
-                    {/* Botões de Check-in/Check-out */}
-                    {reserva.status === 'Confirmada' && (
-                        <TouchableOpacity style={styles.buttonSuccess}>
-                            <Ionicons name="log-in-outline" size={20} color="#FFFFFF" style={styles.buttonIcon} />
-                            <Text style={styles.buttonSuccessText}>Confirmar Check-in</Text>
+                    {reserva.status === 'confirmada' && (
+                        <TouchableOpacity
+                            style={[styles.actionButton, styles.checkinButton]}
+                            onPress={handleCheckin}
+                            disabled={processando}
+                        >
+                            {processando ? (
+                                <ActivityIndicator size="small" color="#FFFFFF" />
+                            ) : (
+                                <>
+                                    <Ionicons name="log-in-outline" size={20} color="#FFFFFF" />
+                                    <Text style={styles.actionButtonText}>Realizar Check-in</Text>
+                                </>
+                            )}
                         </TouchableOpacity>
                     )}
 
-                    {reserva.status === 'Ativa' && (
-                        <TouchableOpacity style={styles.buttonWarning}>
-                            <Ionicons name="log-out-outline" size={20} color="#FFFFFF" style={styles.buttonIcon} />
-                            <Text style={styles.buttonWarningText}>Confirmar Check-out</Text>
+                    {reserva.status === 'checkin_realizado' && (
+                        <TouchableOpacity
+                            style={[styles.actionButton, styles.checkoutButton]}
+                            onPress={handleCheckout}
+                            disabled={processando}
+                        >
+                            {processando ? (
+                                <ActivityIndicator size="small" color="#FFFFFF" />
+                            ) : (
+                                <>
+                                    <Ionicons name="log-out-outline" size={20} color="#FFFFFF" />
+                                    <Text style={styles.actionButtonText}>Realizar Check-out</Text>
+                                </>
+                            )}
                         </TouchableOpacity>
                     )}
 
-                    {/* ✅ REQUISITO 4: Botão editar com ID correto */}
                     <TouchableOpacity
-                        style={styles.buttonPrimary}
-                        onPress={() => router.push({
-                            pathname: "/screens/Reserva/EdicaoReserva",
-                            params: { id: reserva.id }
-                        })}
+                        style={[styles.actionButton, styles.editButton]}
+                        onPress={() => router.push(`/screens/Reserva/EdicaoReserva?id=${id}`)}
                     >
-                        <Ionicons name="create-outline" size={20} color="#FFFFFF" style={styles.buttonIcon} />
-                        <Text style={styles.buttonPrimaryText}>Editar Reserva</Text>
+                        <Ionicons name="create-outline" size={20} color="#FFFFFF" />
+                        <Text style={styles.actionButtonText}>Editar Reserva</Text>
                     </TouchableOpacity>
 
-                    {/* ✅ REQUISITO 5: Modal de confirmação implementado */}
-                    <TouchableOpacity style={styles.buttonDanger} onPress={handleDelete}>
-                        <Ionicons name="trash-outline" size={20} color="#EF4444" style={styles.buttonIcon} />
-                        <Text style={styles.buttonDangerText}>Excluir</Text>
+                    <TouchableOpacity
+                        style={[styles.actionButton, styles.deleteButton]}
+                        onPress={handleExcluir}
+                    >
+                        <Ionicons name="trash-outline" size={20} color="#FFFFFF" />
+                        <Text style={styles.actionButtonText}>Excluir Reserva</Text>
                     </TouchableOpacity>
                 </View>
-            </View>
+            </ScrollView>
         </View>
-    )
+    );
 }
-
 
 const styles = StyleSheet.create({
     container: {
@@ -308,9 +273,8 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         paddingTop: 50,
-        paddingBottom: 16,
+        paddingBottom: 20,
         paddingHorizontal: 16,
-        backgroundColor: '#132F3B',
     },
     backButton: {
         marginRight: 16,
@@ -319,187 +283,155 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 8,
-        flex: 1,
     },
     breadcrumbText: {
         fontSize: 14,
         color: '#E0F2FE',
-        opacity: 0.7,
     },
     breadcrumbTextActive: {
         fontSize: 14,
-        color: '#FFE157',
+        color: '#FFFFFF',
         fontWeight: '600',
     },
-    subContainer: {
+    loadingContainer: {
         flex: 1,
-        width: '100%',
+        alignItems: 'center',
+        justifyContent: 'center',
         backgroundColor: '#FFFFFF',
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
-        paddingVertical: 24,
-        paddingHorizontal: 20,
-        elevation: 4,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        marginTop: 20,
     },
-    scrollContent: {
-        flex: 1,
-    },
-    reservaTitleContainer: {
-        marginBottom: 24,
-    },
-    titleRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: 8,
-    },
-    reservaTitle: {
-        fontSize: 30,
-        fontWeight: 'bold',
-        color: '#1E293B',
-        flex: 1,
-    },
-    statusBadge: {
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 12,
-        marginLeft: 12,
-    },
-    statusText: {
-        color: '#FFFFFF',
-        fontSize: 12,
-        fontWeight: '600',
-        textTransform: 'uppercase',
-    },
-    reservaSubtitle: {
+    loadingText: {
+        marginTop: 12,
         fontSize: 16,
         color: '#64748B',
-        textTransform: 'uppercase',
     },
-    titleSeparator: {
-        width: '100%',
-        height: 1,
-        backgroundColor: '#E2E8F0',
-        marginTop: 20,
+    errorContainer: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#FFFFFF',
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        padding: 20,
     },
-    separator: {
-        width: '100%',
-        height: 1,
-        backgroundColor: '#E2E8F0',
-        marginBottom: 20,
+    errorText: {
+        marginTop: 16,
+        fontSize: 18,
+        color: '#DC2626',
+        fontWeight: '600',
+    },
+    content: {
+        flex: 1,
+        backgroundColor: '#FFFFFF',
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+    },
+    card: {
+        margin: 16,
+        padding: 16,
+        backgroundColor: '#F8FAFC',
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#E2E8F0',
+    },
+    cardHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 16,
+        gap: 8,
+    },
+    cardTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#1E293B',
     },
     infoRow: {
         flexDirection: 'row',
-        alignItems: 'flex-start',
-        marginBottom: 20,
-        paddingVertical: 8,
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: '#E2E8F0',
     },
-    infoTextContainer: {
-        marginLeft: 12,
-        flex: 1,
-    },
-    infoLabel: {
-        fontSize: 16,
+    label: {
+        fontSize: 14,
         color: '#64748B',
-        fontWeight: '600',
-        textTransform: 'uppercase',
-        marginBottom: 4,
-        letterSpacing: 0.5,
-    },
-    infoValue: {
-        fontSize: 18,
-        color: '#1E293B',
         fontWeight: '500',
-        lineHeight: 24,
     },
-    options: {
-        width: '100%',
-        gap: 12,
-        paddingTop: 16,
-        paddingBottom: 8,
+    value: {
+        fontSize: 14,
+        color: '#1E293B',
+        fontWeight: '600',
     },
-    buttonSuccess: {
-        width: '100%',
-        height: 48,
+    valueHighlight: {
+        fontSize: 16,
+        color: '#0162B3',
+        fontWeight: '700',
+    },
+    statusBadge: {
+        paddingHorizontal: 12,
+        paddingVertical: 4,
+        borderRadius: 12,
+    },
+    statusconfirmada: {
+        backgroundColor: '#DBEAFE',
+    },
+    statuscheckin_realizado: {
+        backgroundColor: '#D1FAE5',
+    },
+    statuscheckout_realizado: {
+        backgroundColor: '#E0E7FF',
+    },
+    statuscancelada: {
+        backgroundColor: '#FEE2E2',
+    },
+    statusText: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#1E293B',
+        textTransform: 'capitalize',
+    },
+    actionsCard: {
+        margin: 16,
+        marginTop: 0,
+        padding: 16,
+        backgroundColor: '#F8FAFC',
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#E2E8F0',
+    },
+    actionsSectionTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#1E293B',
+        marginBottom: 12,
+    },
+    actionButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+        marginBottom: 12,
+        gap: 8,
+    },
+    checkinButton: {
         backgroundColor: '#10B981',
-        borderRadius: 12,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 3,
     },
-    buttonSuccessText: {
-        color: '#FFFFFF',
-        fontSize: 16,
-        fontWeight: '600',
+    checkoutButton: {
+        backgroundColor: '#6366F1',
     },
-    buttonWarning: {
-        width: '100%',
-        height: 48,
-        backgroundColor: '#F59E0B',
-        borderRadius: 12,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 3,
-    },
-    buttonWarningText: {
-        color: '#FFFFFF',
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    buttonPrimary: {
-        width: '100%',
-        height: 48,
+    editButton: {
         backgroundColor: '#0162B3',
-        borderRadius: 12,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 3,
     },
-    buttonPrimaryText: {
+    deleteButton: {
+        backgroundColor: '#DC2626',
+    },
+    actionButtonText: {
         color: '#FFFFFF',
-        fontSize: 16,
+        fontSize: 14,
         fontWeight: '600',
     },
-    buttonDanger: {
-        width: '100%',
-        height: 48,
-        backgroundColor: 'transparent',
-        borderRadius: 12,
-        borderWidth: 1.5,
-        borderColor: '#EF4444',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    buttonDangerText: {
-        color: '#EF4444',
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    buttonIcon: {
-        marginRight: 8,
-    },
-})
-
-
-export default InfoReserva;
+});

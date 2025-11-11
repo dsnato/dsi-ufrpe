@@ -57,7 +57,11 @@ export default function ListagemQuarto() {
                         <View style={{alignItems: 'center', marginBottom: 20}}>
                             <Text style={{fontSize: 24, fontWeight: 'bold', alignSelf: 'flex-start', marginHorizontal: 50, marginTop: 15, color: '#FFE157'}}>Funcionalidades</Text>
                             <View style={styles.gridContainer}>
-                                <InfoCard title="Adicionar Quarto" elevate={false} />
+                                <InfoCard 
+                                    title="Adicionar Quarto" 
+                                    elevate={false}
+                                    onPress={() => router.push('/screens/Quarto/CriacaoQuarto')}
+                                />
                             </View>
                         </View>
                         <TextInputRounded value={search} onChangeText={setSearch} />

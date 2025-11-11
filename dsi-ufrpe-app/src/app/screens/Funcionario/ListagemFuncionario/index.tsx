@@ -55,7 +55,11 @@ export default function ListagemFuncionario() {
                         <View style={{alignItems: 'center', marginBottom: 20}}>
                             <Text style={{fontSize: 24, fontWeight: 'bold', alignSelf: 'flex-start', marginHorizontal: 50, marginTop: 15, color: '#FFE157'}}>Funcionalidades</Text>
                             <View style={styles.gridContainer}>
-                                <InfoCard title="Adicionar Funcionário" elevate={false} />
+                                <InfoCard 
+                                    title="Adicionar Funcionário" 
+                                    elevate={false}
+                                    onPress={() => router.push('/screens/Funcionario/CriacaoFuncionario')}
+                                />
                             </View>
                         </View>
                         <TextInputRounded value={search} onChangeText={setSearch} />

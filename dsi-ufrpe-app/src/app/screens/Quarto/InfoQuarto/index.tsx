@@ -4,11 +4,13 @@ import React, { useCallback, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { buscarQuartoPorId, excluirQuarto } from '@/src/services/quartosService';
 import type { Quarto } from '@/src/services/quartosService';
+import { useToast } from '@/src/components/ToastContext';
 
 
 const InfoQuarto: React.FC = () => {
     const router = useRouter();
     const { id } = useLocalSearchParams<{ id: string }>();
+    const { showSuccess, showError } = useToast();
 
     // Estados
     const [quarto, setQuarto] = useState<Quarto | null>(null);
@@ -71,21 +73,10 @@ const InfoQuarto: React.FC = () => {
                     onPress: async () => {
                         try {
                             await excluirQuarto(id);
-                            Alert.alert(
-                                "Sucesso",
-                                "Quarto excluído com sucesso!",
-                                [
-                                    {
-                                        text: "OK",
-                                        onPress: () => router.push("/screens/Quarto/ListagemQuarto")
-                                    }
-                                ]
-                            );
+                            showSuccess('Quarto excluído com sucesso!');
+                            router.push("/screens/Quarto/ListagemQuarto");
                         } catch (error) {
-                            Alert.alert(
-                                "Erro",
-                                error instanceof Error ? error.message : "Não foi possível excluir o quarto."
-                            );
+                            showError(error instanceof Error ? error.message : "Não foi possível excluir o quarto.");
                         }
                     }
                 }

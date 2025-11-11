@@ -1,91 +1,194 @@
-import React from 'react';
-import { View, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import InputWithText from '@/src/components/TextButton';
-import ButtonPoint from '@/src/components/button';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { useRouter } from 'expo-router';
+import ScreenWrapper from '@/src/components/ScreenWrapper';
+import TextInputRounded from '@/src/components/TextInputRounded';
+import Button from '@/src/components/button';
+import { criarFuncionario } from '@/src/services/funcionariosService';
+import { useToast } from '@/src/components/ToastContext';
 
-const CriarFuncionario: React.FC = () => {
+export default function CriacaoFuncionario() {
+  const router = useRouter();
+  const { showSuccess, showError } = useToast();
+  const [loading, setLoading] = useState(false);
+  
+  // Estados para cada campo
+  const [nomeCompleto, setNomeCompleto] = useState('');
+  const [cpf, setCpf] = useState('');
+  const [email, setEmail] = useState('');
+  const [telefone, setTelefone] = useState('');
+  const [cargo, setCargo] = useState('');
+  const [salario, setSalario] = useState('');
+  const [dataAdmissao, setDataAdmissao] = useState('');
+  const [status, setStatus] = useState('ativo');
 
-    return (
-        <View style={styles.container}>
-            <TouchableOpacity onPress={() => { }} style={styles.backButton}>
-              <Image source={require("@/assets/images/callback-vector.png")} />
-            </TouchableOpacity>
-            
-            <View style={{ alignItems: 'center', marginTop: 40 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Image
-                  source={require("@/assets/images/person-photo.png")}
-                  style={{ width: 100, height: 100, borderRadius: 50 }}
-                  />
-                  <TouchableOpacity onPress={() => { }} style={{
-                      position: 'absolute',
-                      right: -1, // ajuste para fora ou dentro do círculo
-                      bottom: -1, // ajuste para fora ou dentro do círculo
-                      backgroundColor: '#fff',
-                      borderRadius: 50,
-                      padding: 1,
-                      elevation: 1,
-                  }}>
-                  <Image
-                      source={require("@/assets/images/edit-pencil.png")}
-                      style={{ width: 28, height: 28 }}
-                  />
-                  </TouchableOpacity>
-              </View>
-            </View>
+  const validarCampos = (): boolean => {
+    if (!nomeCompleto.trim()) {
+      Alert.alert('Erro de Validação', 'Nome completo é obrigatório');
+      return false;
+    }
+    if (!cpf.trim()) {
+      Alert.alert('Erro de Validação', 'CPF é obrigatório');
+      return false;
+    }
+    if (!email.trim()) {
+      Alert.alert('Erro de Validação', 'E-mail é obrigatório');
+      return false;
+    }
+    if (!telefone.trim()) {
+      Alert.alert('Erro de Validação', 'Telefone é obrigatório');
+      return false;
+    }
+    if (!cargo.trim()) {
+      Alert.alert('Erro de Validação', 'Cargo é obrigatório');
+      return false;
+    }
+    if (!salario.trim()) {
+      Alert.alert('Erro de Validação', 'Salário é obrigatório');
+      return false;
+    }
+    if (!dataAdmissao.trim()) {
+      Alert.alert('Erro de Validação', 'Data de admissão é obrigatória');
+      return false;
+    }
+    return true;
+  };
 
-            <View style={styles.form}>
-                <View style={styles.inputsContainer}>
-                    <InputWithText labelText="Nome" placeholder="Digite o nome do funcionário" required={true}/>
-                    <InputWithText labelText="CPF" placeholder="Digite o CPF do funcionário" />
-                    <InputWithText labelText="Celular" placeholder="Digite o celular do funcionário" required={true}/>
-                    <InputWithText labelText="E-mail" placeholder="Digite o e-mail do funcionário" required={true}/>
-                </View>
-                <ButtonPoint label='Registrar'></ButtonPoint>
-            </View>
+  const handleCriar = async () => {
+    if (!validarCampos()) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const novoFuncionario = {
+        nome_completo: nomeCompleto,
+        cpf,
+        email,
+        telefone,
+        cargo,
+        salario: parseFloat(salario),
+        data_admissao: dataAdmissao,
+        status
+      };
+
+      await criarFuncionario(novoFuncionario);
+      
+      showSuccess('Funcionário criado com sucesso!');
+      router.push('/screens/Funcionario/ListagemFuncionario');
+    } catch (error) {
+      console.error('Erro ao criar funcionário:', error);
+      showError('Não foi possível criar o funcionário. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <ScreenWrapper>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        <Text style={styles.title}>Criar Novo Funcionário</Text>
+
+        <View style={styles.formContainer}>
+          <TextInputRounded
+            placeholder="Nome Completo"
+            value={nomeCompleto}
+            onChangeText={setNomeCompleto}
+            editable={!loading}
+          />
+
+          <TextInputRounded
+            placeholder="CPF"
+            value={cpf}
+            onChangeText={setCpf}
+            keyboardType="numeric"
+            editable={!loading}
+          />
+
+          <TextInputRounded
+            placeholder="E-mail"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            editable={!loading}
+          />
+
+          <TextInputRounded
+            placeholder="Telefone"
+            value={telefone}
+            onChangeText={setTelefone}
+            keyboardType="phone-pad"
+            editable={!loading}
+          />
+
+          <TextInputRounded
+            placeholder="Cargo"
+            value={cargo}
+            onChangeText={setCargo}
+            editable={!loading}
+          />
+
+          <TextInputRounded
+            placeholder="Salário"
+            value={salario}
+            onChangeText={setSalario}
+            keyboardType="decimal-pad"
+            editable={!loading}
+          />
+
+          <TextInputRounded
+            placeholder="Data de Admissão (YYYY-MM-DD)"
+            value={dataAdmissao}
+            onChangeText={setDataAdmissao}
+            editable={!loading}
+          />
+
+          <TextInputRounded
+            placeholder="Status (ativo/inativo)"
+            value={status}
+            onChangeText={setStatus}
+            editable={!loading}
+          />
+
+          <View style={styles.buttonContainer}>
+            {loading ? (
+              <ActivityIndicator size="large" color="#007AFF" />
+            ) : (
+              <>
+                <Button
+                  label="Criar Funcionário"
+                  onPress={handleCriar}
+                />
+                <Button
+                  label="Cancelar"
+                  onPress={() => router.back()}
+                />
+              </>
+            )}
+          </View>
         </View>
-
-    );
-
+      </ScrollView>
+    </ScreenWrapper>
+  );
 }
 
-
 const styles = StyleSheet.create({
-    backButton: {
-        position: 'absolute',
-        top: 40,
-        left: 20,
-        zIndex: 1,
-    },
-    container: {
-        flex: 1,
-        backgroundColor: '#132F3B',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    form: {
-        flex: 1,                   // ocupa todo o espaço disponível
-        width: '100%',             // vai de ponta a ponta
-        backgroundColor: '#EFEFF0',// cor do retângulo
-        borderTopLeftRadius: 20,   // arredonda só em cima
-        borderTopRightRadius: 20,
-        paddingVertical: 24,
-        paddingHorizontal: 20,
-        alignItems: 'center',
-        justifyContent: 'flex-start',
-        // sombra para parecer "cartão"
-        elevation: 4,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        marginTop: 40,
-    },
-    inputsContainer: {
-      width: '100%',
-      gap: 12, // diminua esse valor para aproximar os campos
-      marginBottom: 40, 
-    },
-})
-
-export default CriarFuncionario;
+  container: {
+    flex: 1,
+    padding: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    color: '#333',
+  },
+  formContainer: {
+    gap: 15,
+  },
+  buttonContainer: {
+    marginTop: 20,
+    gap: 10,
+  },
+});
