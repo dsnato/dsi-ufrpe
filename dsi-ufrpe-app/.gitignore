@@ -30,9 +30,9 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
+# local env files (mantendo .env commitado para facilitar trabalho da equipe)
 .env*.local
-.env
+# .env
 
 # typescript
 *.tsbuildinfo
