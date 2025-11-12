@@ -12,24 +12,24 @@ export const translateAuthError = (errorMessage: string): string => {
     'Invalid password': 'Senha incorreta. Tente novamente.',
     'Email rate limit exceeded': 'Muitas tentativas. Aguarde alguns minutos antes de tentar novamente.',
     'Invalid token': 'Sessão expirada. Por favor, faça login novamente.',
-    
+
     // Auth Errors - Signup
     'User already registered': 'Este e-mail já está cadastrado. Tente fazer login ou recuperar sua senha.',
     'Password should be at least 6 characters': 'A senha deve ter pelo menos 6 caracteres.',
     'Signup requires a valid password': 'Por favor, informe uma senha válida.',
     'Unable to validate email address: invalid format': 'O formato do e-mail é inválido.',
     'Email address is invalid': 'O e-mail informado é inválido.',
-    
+
     // Network Errors
     'Failed to fetch': 'Não foi possível conectar ao servidor. Verifique sua conexão com a internet.',
     'Network request failed': 'Falha na conexão. Verifique sua internet e tente novamente.',
     'timeout': 'A conexão demorou muito para responder. Tente novamente.',
-    
+
     // Database Errors
     'duplicate key value': 'Este registro já existe no sistema.',
     'violates foreign key constraint': 'Não é possível realizar esta operação devido a dados relacionados.',
     'permission denied': 'Você não tem permissão para realizar esta ação.',
-    
+
     // Generic Errors
     'An error occurred': 'Ocorreu um erro inesperado. Tente novamente.',
     'Something went wrong': 'Algo deu errado. Por favor, tente novamente.',
@@ -83,14 +83,20 @@ export const getValidationMessage = (field: string, type: string): string => {
       'name': 'Por favor, informe seu nome.',
       'phone': 'Por favor, informe seu telefone.',
       'cnpj': 'Por favor, informe o CNPJ.',
+      'cpf': 'Por favor, informe o CPF.',
       'hotel_name': 'Por favor, informe o nome do hotel.',
+      'celular': 'Por favor, informe o celular.',
       'default': 'Este campo é obrigatório.',
     },
     'invalid': {
       'email': 'O e-mail informado não é válido. Verifique e tente novamente.',
       'password': 'A senha deve ter pelo menos 6 caracteres.',
       'phone': 'O telefone informado não é válido.',
+      'celular': 'O celular informado não é válido. Use o formato (00) 00000-0000.',
       'cnpj': 'O CNPJ informado não é válido.',
+      'cpf': 'O CPF informado não é válido. Verifique os números digitados.',
+      'cpf_format': 'CPF inválido. Use o formato 000.000.000-00.',
+      'cpf_digits': 'CPF inválido. Os dígitos verificadores estão incorretos.',
       'default': 'O valor informado não é válido.',
     },
     'mismatch': {
