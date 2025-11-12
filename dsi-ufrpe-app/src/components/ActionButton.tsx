@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, TouchableOpacityProps } from 'react-native';
 
-type ActionButtonVariant = 'primary' | 'danger' | 'success' | 'warning';
+type ActionButtonVariant = 'primary' | 'secondary' | 'danger' | 'success' | 'warning';
 
 type ActionButtonProps = TouchableOpacityProps & {
     variant?: ActionButtonVariant;
@@ -20,6 +20,17 @@ const VARIANT_STYLES = {
             color: '#FFFFFF',
         },
         icon: '#FFFFFF',
+    },
+    secondary: {
+        container: {
+            backgroundColor: 'transparent',
+            borderWidth: 1.5,
+            borderColor: '#0162B3',
+        },
+        text: {
+            color: '#0162B3',
+        },
+        icon: '#0162B3',
     },
     danger: {
         container: {
