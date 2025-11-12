@@ -5,9 +5,198 @@
 **URL do Projeto**: Definido em `.env` como `EXPO_PUBLIC_SUPABASE_URL`  
 **Anon Key**: Definido em `.env` como `EXPO_PUBLIC_SUPABASE_ANON_KEY`
 
+### ⚙️ Configuração do Ambiente
+
+O arquivo `.env` na raiz do projeto `dsi-ufrpe-app` contém as credenciais do Supabase:
+
+```bash
+EXPO_PUBLIC_SUPABASE_URL=https://wafrohyralwfikaktwfr.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+> ⚠️ **Nota**: O arquivo `.env` já está configurado e commitado no repositório para facilitar o trabalho da equipe. Em produção, essas credenciais devem ser mantidas seguras.
+
 ---
 
-## 📋 Estrutura das Tabelas
+## � Interfaces TypeScript e Tipos de Dados
+
+### **1. Interface: Cliente**
+
+```typescript
+interface Cliente {
+  id?: string;                    // UUID - Gerado automaticamente
+  nome_completo: string;          // VARCHAR(255) - Obrigatório
+  cpf: string;                    // VARCHAR(14) - Obrigatório, único, formato: XXX.XXX.XXX-XX
+  email?: string;                 // VARCHAR(255) - Opcional, deve ser email válido
+  telefone?: string;              // VARCHAR(20) - Opcional, formato: (XX) XXXXX-XXXX
+  data_nascimento?: string;       // DATE - Opcional, formato: YYYY-MM-DD
+  endereco?: string;              // TEXT - Opcional
+  cidade?: string;                // VARCHAR(100) - Opcional
+  estado?: string;                // VARCHAR(2) - Opcional, ex: 'PE', 'SP'
+  pais?: string;                  // VARCHAR(100) - Opcional, padrão: 'Brasil'
+  created_at?: string;            // TIMESTAMP - Gerado automaticamente
+  updated_at?: string;            // TIMESTAMP - Atualizado automaticamente
+}
+```
+
+**Campos Obrigatórios para Criação:**
+- `nome_completo` (string)
+- `cpf` (string, 11 dígitos numéricos)
+
+**Campos Opcionais:**
+- `email`, `telefone`, `data_nascimento`, `endereco`, `cidade`, `estado`, `pais`
+
+**Validações:**
+- CPF: Deve ter 11 dígitos numéricos
+- Email: Formato de email válido (quando fornecido)
+- Telefone: 10-11 dígitos numéricos (quando fornecido)
+
+---
+
+### **2. Interface: Quarto**
+
+```typescript
+interface Quarto {
+  id?: string;                    // UUID - Gerado automaticamente
+  numero_quarto: string;          // VARCHAR(10) - Obrigatório, único
+  tipo: string;                   // VARCHAR(50) - Obrigatório, ex: 'Solteiro', 'Casal', 'Suíte'
+  capacidade_pessoas: number;     // INTEGER - Obrigatório, entre 1 e 20
+  preco_diario: number;           // DECIMAL(10,2) - Obrigatório, maior que 0, máx 2 casas decimais
+  status?: string;                // VARCHAR(20) - Opcional, padrão: 'Disponível'
+  descricao?: string;             // TEXT - Opcional
+  foto_quarto?: string;           // TEXT - Opcional (URL da imagem)
+  created_at?: string;            // TIMESTAMP - Gerado automaticamente
+  updated_at?: string;            // TIMESTAMP - Atualizado automaticamente
+}
+```
+
+**Campos Obrigatórios para Criação:**
+- `numero_quarto` (string, ex: '101', '202A')
+- `tipo` (string)
+- `capacidade_pessoas` (number, 1-20)
+- `preco_diario` (number, > 0)
+
+**Campos Opcionais:**
+- `status`, `descricao`, `foto_quarto`
+
+**Validações:**
+- `numero_quarto`: String não vazia
+- `capacidade_pessoas`: Inteiro entre 1 e 20
+- `preco_diario`: Número positivo com máximo 2 casas decimais
+- `status`: Valores: 'Disponível', 'Ocupado', 'Manutenção'
+
+---
+
+### **3. Interface: Funcionario**
+
+```typescript
+interface Funcionario {
+  id?: string;                    // UUID - Gerado automaticamente
+  nome_completo: string;          // VARCHAR(255) - Obrigatório
+  cpf: string;                    // VARCHAR(14) - Obrigatório, único
+  email: string;                  // VARCHAR(255) - Obrigatório, único
+  telefone?: string;              // VARCHAR(20) - Opcional
+  cargo: string;                  // VARCHAR(100) - Obrigatório
+  salario?: number;               // DECIMAL(10,2) - Opcional, >= 0
+  data_admissao: string;          // DATE - Obrigatório, formato: YYYY-MM-DD
+  status?: string;                // VARCHAR(20) - Opcional, padrão: 'Ativo'
+  created_at?: string;            // TIMESTAMP - Gerado automaticamente
+  updated_at?: string;            // TIMESTAMP - Atualizado automaticamente
+}
+```
+
+**Campos Obrigatórios para Criação:**
+- `nome_completo` (string)
+- `cpf` (string, 11 dígitos numéricos)
+- `email` (string, formato de email válido)
+- `cargo` (string)
+- `data_admissao` (string, qualquer formato de data)
+
+**Campos Opcionais:**
+- `telefone`, `salario`, `status`
+
+**Validações:**
+- CPF: Deve ter 11 dígitos numéricos
+- Email: Formato de email válido
+- Telefone: 10-11 dígitos numéricos (quando fornecido)
+- Salário: Número >= 0 (quando fornecido)
+- Status: Valores: 'Ativo', 'Inativo'
+
+---
+
+### **4. Interface: Reserva**
+
+```typescript
+interface Reserva {
+  id?: string;                    // UUID - Gerado automaticamente
+  id_cliente: string;             // UUID - Obrigatório, referência a clientes(id)
+  id_quarto: string;              // UUID - Obrigatório, referência a quartos(id)
+  data_checkin: string;           // DATE - Obrigatório, formato: YYYY-MM-DD
+  data_checkout: string;          // DATE - Obrigatório, formato: YYYY-MM-DD
+  numero_hospedes: number;        // INTEGER - Obrigatório, entre 1 e 20
+  valor_total: number;            // DECIMAL(10,2) - Obrigatório, >= 0
+  status?: string;                // VARCHAR(20) - Opcional, padrão: 'Confirmada'
+  observacoes?: string;           // TEXT - Opcional
+  checkin_realizado_em?: string;  // TIMESTAMP - Opcional
+  checkout_realizado_em?: string; // TIMESTAMP - Opcional
+  created_at?: string;            // TIMESTAMP - Gerado automaticamente
+  updated_at?: string;            // TIMESTAMP - Atualizado automaticamente
+}
+```
+
+**Campos Obrigatórios para Criação:**
+- `id_cliente` (string, UUID válido)
+- `id_quarto` (string, UUID válido)
+- `data_checkin` (string)
+- `data_checkout` (string, deve ser posterior a data_checkin)
+- `numero_hospedes` (number, 1-20)
+- `valor_total` (number, >= 0)
+
+**Campos Opcionais:**
+- `status`, `observacoes`
+
+**Validações:**
+- `id_cliente`, `id_quarto`: Strings não vazias (UUIDs)
+- `numero_hospedes`: Inteiro entre 1 e 20
+- `valor_total`: Número >= 0
+- Período: `data_checkout` deve ser posterior a `data_checkin`
+- Status: Valores: 'Confirmada', 'Ativa', 'Finalizada', 'Cancelada'
+
+---
+
+### **5. Interface: AtividadeRecreativa**
+
+```typescript
+interface AtividadeRecreativa {
+  id?: string;                    // UUID - Gerado automaticamente
+  nome: string;                   // VARCHAR(255) - Obrigatório
+  descricao?: string;             // TEXT - Opcional
+  data_hora: string;              // TIMESTAMP - Obrigatório
+  local?: string;                 // VARCHAR(255) - Opcional
+  capacidade_maxima?: number;     // INTEGER - Opcional, entre 1 e 1000
+  preco?: number;                 // DECIMAL(10,2) - Opcional, >= 0, padrão: 0
+  status?: string;                // VARCHAR(20) - Opcional, padrão: 'Agendada'
+  created_at?: string;            // TIMESTAMP - Gerado automaticamente
+  updated_at?: string;            // TIMESTAMP - Atualizado automaticamente
+}
+```
+
+**Campos Obrigatórios para Criação:**
+- `nome` (string)
+- `data_hora` (string, qualquer formato)
+
+**Campos Opcionais:**
+- `descricao`, `local`, `capacidade_maxima`, `preco`, `status`
+
+**Validações:**
+- `nome`: String não vazia
+- `capacidade_maxima`: Inteiro entre 1 e 1000 (quando fornecido)
+- `preco`: Número >= 0 (quando fornecido)
+- Status: Valores: 'Agendada', 'Em Andamento', 'Concluída', 'Cancelada'
+
+---
+
+## �📋 Estrutura das Tabelas
 
 ### **1. Tabela: `quartos`**
 
@@ -136,7 +325,352 @@ USING (true);
 
 ---
 
-## 🛠️ Endpoints (Operações via Supabase Client)
+## � Resumo dos Services - Métodos e Assinaturas
+
+### **clientesService.ts**
+
+#### `listarClientes()`
+```typescript
+listarClientes(): Promise<Cliente[]>
+```
+**Retorna:** Array de clientes ordenados por nome_completo
+
+---
+
+#### `buscarClientePorId(id: string)`
+```typescript
+buscarClientePorId(id: string): Promise<Cliente | null>
+```
+**Parâmetros:**
+- `id` (string) - UUID do cliente
+
+**Retorna:** Cliente encontrado ou null
+
+---
+
+#### `criarCliente(cliente: Omit<Cliente, 'id' | 'created_at' | 'updated_at'>)`
+```typescript
+criarCliente(cliente: {
+  nome_completo: string;        // Obrigatório
+  cpf: string;                  // Obrigatório, 11 dígitos
+  email?: string;               // Opcional, formato email
+  telefone?: string;            // Opcional, 10-11 dígitos
+  data_nascimento?: string;     // Opcional
+  endereco?: string;            // Opcional
+  cidade?: string;              // Opcional
+  estado?: string;              // Opcional
+  pais?: string;                // Opcional, padrão: 'Brasil'
+}): Promise<Cliente>
+```
+**Retorna:** Cliente criado com id, created_at, updated_at
+
+**Validações:**
+- nome_completo: String não vazia
+- cpf: 11 dígitos numéricos
+- email: Formato válido (se fornecido)
+- telefone: 10-11 dígitos (se fornecido)
+
+---
+
+#### `atualizarCliente(id: string, cliente: Partial<Cliente>)`
+```typescript
+atualizarCliente(id: string, cliente: Partial<Cliente>): Promise<Cliente>
+```
+**Parâmetros:**
+- `id` (string) - UUID do cliente
+- `cliente` (Partial<Cliente>) - Campos a atualizar
+
+**Retorna:** Cliente atualizado
+
+**Validações:** Mesmas validações do criarCliente para campos fornecidos
+
+---
+
+#### `deletarCliente(id: string)`
+```typescript
+deletarCliente(id: string): Promise<void>
+```
+**Parâmetros:**
+- `id` (string) - UUID do cliente
+
+**Retorna:** void (sem retorno em caso de sucesso)
+
+---
+
+### **quartosService.ts**
+
+#### `listarQuartos()`
+```typescript
+listarQuartos(): Promise<Quarto[]>
+```
+**Retorna:** Array de quartos ordenados por numero_quarto
+
+---
+
+#### `buscarQuartoPorId(id: string)`
+```typescript
+buscarQuartoPorId(id: string): Promise<Quarto | null>
+```
+**Parâmetros:**
+- `id` (string) - UUID do quarto
+
+**Retorna:** Quarto encontrado ou null
+
+---
+
+#### `criarQuarto(quarto: Omit<Quarto, 'id' | 'created_at' | 'updated_at'>)`
+```typescript
+criarQuarto(quarto: {
+  numero_quarto: string;        // Obrigatório
+  tipo: string;                 // Obrigatório
+  capacidade_pessoas: number;   // Obrigatório, 1-20
+  preco_diario: number;         // Obrigatório, > 0, máx 2 decimais
+  status?: string;              // Opcional, padrão: 'Disponível'
+  descricao?: string;           // Opcional
+  foto_quarto?: string;         // Opcional
+}): Promise<Quarto>
+```
+**Retorna:** Quarto criado com id, created_at, updated_at
+
+**Validações:**
+- numero_quarto: String não vazia
+- tipo: String não vazia
+- capacidade_pessoas: Inteiro entre 1 e 20
+- preco_diario: Número > 0, máximo 2 casas decimais
+
+---
+
+#### `atualizarQuarto(id: string, quarto: Partial<Quarto>)`
+```typescript
+atualizarQuarto(id: string, quarto: Partial<Quarto>): Promise<Quarto>
+```
+**Parâmetros:**
+- `id` (string) - UUID do quarto
+- `quarto` (Partial<Quarto>) - Campos a atualizar
+
+**Retorna:** Quarto atualizado
+
+---
+
+#### `deletarQuarto(id: string)`
+```typescript
+deletarQuarto(id: string): Promise<void>
+```
+**Parâmetros:**
+- `id` (string) - UUID do quarto
+
+**Retorna:** void
+
+---
+
+### **funcionariosService.ts**
+
+#### `listarFuncionarios()`
+```typescript
+listarFuncionarios(): Promise<Funcionario[]>
+```
+**Retorna:** Array de funcionários ordenados por nome_completo
+
+---
+
+#### `buscarFuncionarioPorId(id: string)`
+```typescript
+buscarFuncionarioPorId(id: string): Promise<Funcionario | null>
+```
+**Parâmetros:**
+- `id` (string) - UUID do funcionário
+
+**Retorna:** Funcionário encontrado ou null
+
+---
+
+#### `criarFuncionario(funcionario: Omit<Funcionario, 'id' | 'created_at' | 'updated_at'>)`
+```typescript
+criarFuncionario(funcionario: {
+  nome_completo: string;        // Obrigatório
+  cpf: string;                  // Obrigatório, 11 dígitos
+  email: string;                // Obrigatório, formato email
+  telefone?: string;            // Opcional, 10-11 dígitos
+  cargo: string;                // Obrigatório
+  salario?: number;             // Opcional, >= 0
+  data_admissao: string;        // Obrigatório
+  status?: string;              // Opcional, padrão: 'Ativo'
+}): Promise<Funcionario>
+```
+**Retorna:** Funcionário criado com id, created_at, updated_at
+
+**Validações:**
+- nome_completo: String não vazia
+- cpf: 11 dígitos numéricos
+- email: Formato válido
+- telefone: 10-11 dígitos (se fornecido)
+- cargo: String não vazia
+- salario: Número >= 0 (se fornecido)
+
+---
+
+#### `atualizarFuncionario(id: string, funcionario: Partial<Funcionario>)`
+```typescript
+atualizarFuncionario(id: string, funcionario: Partial<Funcionario>): Promise<Funcionario>
+```
+**Parâmetros:**
+- `id` (string) - UUID do funcionário
+- `funcionario` (Partial<Funcionario>) - Campos a atualizar
+
+**Retorna:** Funcionário atualizado
+
+---
+
+#### `deletarFuncionario(id: string)`
+```typescript
+deletarFuncionario(id: string): Promise<void>
+```
+**Parâmetros:**
+- `id` (string) - UUID do funcionário
+
+**Retorna:** void
+
+---
+
+### **reservasService.ts**
+
+#### `listarReservas()`
+```typescript
+listarReservas(): Promise<Array<Reserva & {
+  clientes: { id: string; nome_completo: string; cpf: string; telefone?: string; };
+  quartos: { id: string; numero_quarto: string; tipo: string; preco_diario: number; };
+}>>
+```
+**Retorna:** Array de reservas com dados relacionados de clientes e quartos, ordenadas por data_checkin (mais recentes primeiro)
+
+---
+
+#### `buscarReservaPorId(id: string)`
+```typescript
+buscarReservaPorId(id: string): Promise<Reserva & {
+  clientes: Cliente;
+  quartos: Quarto;
+} | null>
+```
+**Parâmetros:**
+- `id` (string) - UUID da reserva
+
+**Retorna:** Reserva com dados completos do cliente e quarto, ou null
+
+---
+
+#### `criarReserva(reserva: Omit<Reserva, 'id' | 'created_at' | 'updated_at'>)`
+```typescript
+criarReserva(reserva: {
+  id_cliente: string;           // Obrigatório, UUID
+  id_quarto: string;            // Obrigatório, UUID
+  data_checkin: string;         // Obrigatório
+  data_checkout: string;        // Obrigatório, > data_checkin
+  numero_hospedes: number;      // Obrigatório, 1-20
+  valor_total: number;          // Obrigatório, >= 0
+  status?: string;              // Opcional, padrão: 'Confirmada'
+  observacoes?: string;         // Opcional
+}): Promise<Reserva>
+```
+**Retorna:** Reserva criada com id, created_at, updated_at
+
+**Validações:**
+- id_cliente, id_quarto: Strings não vazias
+- numero_hospedes: Inteiro entre 1 e 20
+- valor_total: Número >= 0
+- data_checkout deve ser posterior a data_checkin
+
+---
+
+#### `atualizarReserva(id: string, reserva: Partial<Reserva>)`
+```typescript
+atualizarReserva(id: string, reserva: Partial<Reserva>): Promise<Reserva>
+```
+**Parâmetros:**
+- `id` (string) - UUID da reserva
+- `reserva` (Partial<Reserva>) - Campos a atualizar
+
+**Retorna:** Reserva atualizada
+
+---
+
+#### `deletarReserva(id: string)`
+```typescript
+deletarReserva(id: string): Promise<void>
+```
+**Parâmetros:**
+- `id` (string) - UUID da reserva
+
+**Retorna:** void
+
+---
+
+### **atividadesService.ts**
+
+#### `listarAtividades()`
+```typescript
+listarAtividades(): Promise<AtividadeRecreativa[]>
+```
+**Retorna:** Array de atividades ordenadas por data_hora (mais próximas primeiro)
+
+---
+
+#### `buscarAtividadePorId(id: string)`
+```typescript
+buscarAtividadePorId(id: string): Promise<AtividadeRecreativa | null>
+```
+**Parâmetros:**
+- `id` (string) - UUID da atividade
+
+**Retorna:** Atividade encontrada ou null
+
+---
+
+#### `criarAtividade(atividade: Omit<AtividadeRecreativa, 'id' | 'created_at' | 'updated_at'>)`
+```typescript
+criarAtividade(atividade: {
+  nome: string;                 // Obrigatório
+  descricao?: string;           // Opcional
+  data_hora: string;            // Obrigatório
+  local?: string;               // Opcional
+  capacidade_maxima?: number;   // Opcional, 1-1000
+  preco?: number;               // Opcional, >= 0
+  status?: string;              // Opcional, padrão: 'Agendada'
+}): Promise<AtividadeRecreativa>
+```
+**Retorna:** Atividade criada com id, created_at, updated_at
+
+**Validações:**
+- nome: String não vazia
+- capacidade_maxima: Inteiro entre 1 e 1000 (se fornecido)
+- preco: Número >= 0 (se fornecido)
+
+---
+
+#### `atualizarAtividade(id: string, atividade: Partial<AtividadeRecreativa>)`
+```typescript
+atualizarAtividade(id: string, atividade: Partial<AtividadeRecreativa>): Promise<AtividadeRecreativa>
+```
+**Parâmetros:**
+- `id` (string) - UUID da atividade
+- `atividade` (Partial<AtividadeRecreativa>) - Campos a atualizar
+
+**Retorna:** Atividade atualizada
+
+---
+
+#### `deletarAtividade(id: string)`
+```typescript
+deletarAtividade(id: string): Promise<void>
+```
+**Parâmetros:**
+- `id` (string) - UUID da atividade
+
+**Retorna:** void
+
+---
+
+## �🛠️ Endpoints (Operações via Supabase Client)
 
 ### **QUARTOS**
 
