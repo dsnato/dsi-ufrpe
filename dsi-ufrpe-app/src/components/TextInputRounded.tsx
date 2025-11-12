@@ -6,17 +6,11 @@ type TextInputRoundedProps = TextInputProps & {
 export default function TextInputRounded({ placeholder, ...rest }: TextInputRoundedProps) {
     return (
         <View style={styles.container}>
-            <FontAwesome name="search" size={20} color="#132F3B" />
+            <FontAwesome name="search" size={18} color="#64748B" />
             <TextInput
-                style={{
-                    color: "#132F3B",
-                    fontSize: 18,
-                    fontWeight: "bold",
-                    borderColor: "#ccc",
-                    width: "100%",
-                }}
-                placeholder="Pesquisar por nome..."
-                placeholderTextColor="#c4c4c4"
+                style={styles.input}
+                placeholder={placeholder || "Pesquisar por nome..."}
+                placeholderTextColor="#94A3B8"
                 {...rest}
             />
         </View>
@@ -25,15 +19,26 @@ export default function TextInputRounded({ placeholder, ...rest }: TextInputRoun
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: "white", 
-        borderRadius: 20, 
-        overflow: "hidden", 
-        marginHorizontal: 50, 
-        flexDirection: "row", 
-        alignItems: "center", 
-        paddingHorizontal: 10, 
-        gap: 10, 
-        marginBottom: 20, 
-        marginTop: 10,
+        backgroundColor: "#FFFFFF",
+        borderRadius: 12,
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        gap: 12,
+        borderWidth: 1.5,
+        borderColor: "#E2E8F0",
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+        elevation: 1,
+    },
+    input: {
+        flex: 1,
+        color: "#132F3B",
+        fontSize: 15,
+        fontWeight: "500",
+        paddingVertical: 0,
     },
 });
