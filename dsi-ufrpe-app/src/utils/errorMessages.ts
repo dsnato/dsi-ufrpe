@@ -86,6 +86,10 @@ export const getValidationMessage = (field: string, type: string): string => {
       'cpf': 'Por favor, informe o CPF.',
       'hotel_name': 'Por favor, informe o nome do hotel.',
       'celular': 'Por favor, informe o celular.',
+      'numero_quarto': 'Por favor, informe o número do quarto.',
+      'tipo_quarto': 'Por favor, informe o tipo do quarto.',
+      'capacidade': 'Por favor, informe a capacidade do quarto.',
+      'preco': 'Por favor, informe o preço da diária.',
       'default': 'Este campo é obrigatório.',
     },
     'invalid': {
@@ -97,6 +101,8 @@ export const getValidationMessage = (field: string, type: string): string => {
       'cpf': 'O CPF informado não é válido. Verifique os números digitados.',
       'cpf_format': 'CPF inválido. Use o formato 000.000.000-00.',
       'cpf_digits': 'CPF inválido. Os dígitos verificadores estão incorretos.',
+      'capacidade': 'A capacidade deve ser entre 1 e 10 pessoas.',
+      'preco': 'O preço deve ser maior que zero.',
       'default': 'O valor informado não é válido.',
     },
     'mismatch': {

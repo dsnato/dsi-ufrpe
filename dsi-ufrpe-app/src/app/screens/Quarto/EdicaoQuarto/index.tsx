@@ -2,14 +2,17 @@ import { ActionButton } from '@/src/components/ActionButton';
 import { FormInput } from '@/src/components/FormInput';
 import { InfoHeader } from '@/src/components/InfoHeader';
 import { Separator } from '@/src/components/Separator';
+import { useToast } from '@/src/components/ToastContext';
+import { getSuccessMessage, getValidationMessage } from '@/src/utils/errorMessages';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
 const EditarQuarto: React.FC = () => {
     const router = useRouter();
     const { id } = useLocalSearchParams<{ id: string }>();
+    const { showSuccess, showError } = useToast();
 
     const [loading, setLoading] = useState(false);
     const [numero, setNumero] = useState('');
@@ -65,11 +68,11 @@ const EditarQuarto: React.FC = () => {
             setDisponivel(true);
         } catch (error) {
             console.error('Erro ao carregar quarto:', error);
-            Alert.alert('Erro', 'Não foi possível carregar os dados do quarto.');
+            showError('Não foi possível carregar os dados do quarto.');
         } finally {
             setLoading(false);
         }
-    }, [id]);
+    }, [id, showError]);
 
     useFocusEffect(
         useCallback(() => {
@@ -80,35 +83,35 @@ const EditarQuarto: React.FC = () => {
     const handleSave = async () => {
         // Validações
         if (!numero.trim()) {
-            Alert.alert('Atenção', 'O número do quarto é obrigatório.');
+            showError(getValidationMessage('numero_quarto', 'required'));
             return;
         }
 
         if (!tipo.trim()) {
-            Alert.alert('Atenção', 'O tipo do quarto é obrigatório.');
+            showError(getValidationMessage('tipo_quarto', 'required'));
             return;
         }
 
         if (!capacidade.trim()) {
-            Alert.alert('Atenção', 'A capacidade do quarto é obrigatória.');
+            showError(getValidationMessage('capacidade', 'required'));
             return;
         }
 
         const capacidadeNum = parseInt(capacidade);
         if (capacidadeNum < 1 || capacidadeNum > 10) {
-            Alert.alert('Atenção', 'A capacidade deve ser entre 1 e 10 pessoas.');
+            showError(getValidationMessage('capacidade', 'invalid'));
             return;
         }
 
         if (!preco.trim()) {
-            Alert.alert('Atenção', 'O preço do quarto é obrigatório.');
+            showError(getValidationMessage('preco', 'required'));
             return;
         }
 
         // Valida se o preço é maior que zero
         const precoNum = parseFloat(preco.replace(',', '.'));
         if (precoNum <= 0) {
-            Alert.alert('Atenção', 'O preço deve ser maior que zero.');
+            showError(getValidationMessage('preco', 'invalid'));
             return;
         }
 
@@ -126,19 +129,14 @@ const EditarQuarto: React.FC = () => {
             // TODO: Implementar QuartoService.update(id, quartoData)
             console.log('Salvando quarto:', quartoData);
 
-            Alert.alert(
-                'Sucesso',
-                'Quarto atualizado com sucesso!',
-                [
-                    {
-                        text: 'OK',
-                        onPress: () => router.push('/screens/Quarto/ListagemQuarto'),
-                    },
-                ]
-            );
+            showSuccess(getSuccessMessage('update'));
+
+            setTimeout(() => {
+                router.push('/screens/Quarto/ListagemQuarto');
+            }, 2000);
         } catch (error) {
             console.error('Erro ao salvar quarto:', error);
-            Alert.alert('Erro', 'Ocorreu um erro ao salvar. Tente novamente.');
+            showError('Ocorreu um erro ao salvar. Tente novamente.');
         } finally {
             setLoading(false);
         }
