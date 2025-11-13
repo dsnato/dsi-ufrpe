@@ -2,10 +2,11 @@ import { ActionButton } from '@/src/components/ActionButton';
 import { FormInput } from '@/src/components/FormInput';
 import { InfoHeader } from '@/src/components/InfoHeader';
 import { Separator } from '@/src/components/Separator';
+import { buscarQuartoPorId, atualizarQuarto } from '@/src/services/quartosService';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 
 const EditarQuarto: React.FC = () => {
     const router = useRouter();
@@ -16,7 +17,8 @@ const EditarQuarto: React.FC = () => {
     const [tipo, setTipo] = useState('');
     const [capacidade, setCapacidade] = useState('');
     const [preco, setPreco] = useState('');
-    const [disponivel, setDisponivel] = useState(true);
+    const [status, setStatus] = useState<'disponivel' | 'ocupado' | 'manutencao'>('disponivel');
+    const [descricao, setDescricao] = useState('');
 
     // Formata o preço automaticamente para formato monetário
     const handlePriceChange = (text: string) => {
@@ -55,14 +57,20 @@ const EditarQuarto: React.FC = () => {
 
         try {
             setLoading(true);
-            // TODO: Implementar QuartoService.getById(id)
-            // const data = await QuartoService.getById(id);
-            // Por enquanto, dados de exemplo:
-            setNumero('101');
-            setTipo('Luxo');
-            setCapacidade('2');
-            setPreco('250,00');
-            setDisponivel(true);
+            const data = await buscarQuartoPorId(id as string);
+            
+            if (data) {
+                setNumero(data.numero_quarto);
+                setTipo(data.tipo);
+                setCapacidade(data.capacidade_pessoas.toString());
+                const precoFormatted = data.preco_diario.toLocaleString('pt-BR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                });
+                setPreco(precoFormatted);
+                setStatus((data.status?.toLowerCase() || 'disponivel') as 'disponivel' | 'ocupado' | 'manutencao');
+                setDescricao(data.descricao || '');
+            }
         } catch (error) {
             console.error('Erro ao carregar quarto:', error);
             Alert.alert('Erro', 'Não foi possível carregar os dados do quarto.');
@@ -116,14 +124,15 @@ const EditarQuarto: React.FC = () => {
             setLoading(true);
 
             const quartoData = {
-                numero: parseInt(numero),
+                numero_quarto: numero.trim(),
                 tipo: tipo.trim(),
-                capacidade: parseInt(capacidade),
-                preco_diaria: parseFloat(preco.replace(',', '.')),
-                disponivel,
+                capacidade_pessoas: parseInt(capacidade),
+                preco_diario: parseFloat(preco.replace(/\./g, '').replace(',', '.')),
+                status: status.charAt(0).toUpperCase() + status.slice(1), // Disponivel, Ocupado, Manutencao
+                descricao: descricao.trim() || undefined,
             };
 
-            // TODO: Implementar QuartoService.update(id, quartoData)
+            await atualizarQuarto(id as string, quartoData);
             console.log('Salvando quarto:', quartoData);
 
             Alert.alert(
@@ -229,28 +238,87 @@ const EditarQuarto: React.FC = () => {
                             />
                         </View>
 
-                        {/* Status do Quarto */}
-                        <View style={styles.switchContainer}>
-                            <View style={styles.switchLabel}>
-                                <Ionicons
-                                    name={disponivel ? "checkmark-circle" : "close-circle"}
-                                    size={24}
-                                    color={disponivel ? "#10B981" : "#6B7280"}
-                                />
-                                <View style={styles.switchTextContainer}>
-                                    <Text style={styles.switchTitle}>Quarto Disponível</Text>
-                                    <Text style={styles.switchDescription}>
-                                        {disponivel ? 'Este quarto está disponível para reservas' : 'Este quarto está indisponível'}
-                                    </Text>
-                                </View>
-                            </View>
-                            <Switch
-                                value={disponivel}
-                                onValueChange={setDisponivel}
-                                trackColor={{ false: '#D1D5DB', true: '#10B981' }}
-                                thumbColor={disponivel ? '#FFFFFF' : '#F3F4F6'}
-                                disabled={loading}
+                        <View style={styles.fieldGroup}>
+                            <Text style={styles.label}>Descrição</Text>
+                            <FormInput
+                                icon="document-text-outline"
+                                placeholder="Descrição do quarto (opcional)"
+                                value={descricao}
+                                onChangeText={setDescricao}
+                                editable={!loading}
+                                multiline
+                                numberOfLines={4}
+                                helperText="Detalhes e comodidades do quarto"
                             />
+                        </View>
+
+                        {/* Status do Quarto */}
+                        <View style={styles.fieldGroup}>
+                            <Text style={styles.label}>Status</Text>
+                            <View style={styles.statusButtonsRow}>
+                                <TouchableOpacity
+                                    style={[
+                                        styles.statusButtonSmall,
+                                        status === 'disponivel' && styles.statusButtonDisponivel
+                                    ]}
+                                    onPress={() => setStatus('disponivel')}
+                                    disabled={loading}
+                                >
+                                    <Ionicons
+                                        name="checkmark-circle"
+                                        size={18}
+                                        color={status === 'disponivel' ? '#FFFFFF' : '#10B981'}
+                                    />
+                                    <Text style={[
+                                        styles.statusButtonTextSmall,
+                                        status === 'disponivel' && styles.statusButtonTextActive
+                                    ]}>
+                                        Disponível
+                                    </Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    style={[
+                                        styles.statusButtonSmall,
+                                        status === 'ocupado' && styles.statusButtonOcupado
+                                    ]}
+                                    onPress={() => setStatus('ocupado')}
+                                    disabled={loading}
+                                >
+                                    <Ionicons
+                                        name="close-circle"
+                                        size={18}
+                                        color={status === 'ocupado' ? '#FFFFFF' : '#EF4444'}
+                                    />
+                                    <Text style={[
+                                        styles.statusButtonTextSmall,
+                                        status === 'ocupado' && styles.statusButtonTextActive
+                                    ]}>
+                                        Ocupado
+                                    </Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    style={[
+                                        styles.statusButtonSmall,
+                                        status === 'manutencao' && styles.statusButtonManutencao
+                                    ]}
+                                    onPress={() => setStatus('manutencao')}
+                                    disabled={loading}
+                                >
+                                    <Ionicons
+                                        name="build-outline"
+                                        size={18}
+                                        color={status === 'manutencao' ? '#FFFFFF' : '#F59E0B'}
+                                    />
+                                    <Text style={[
+                                        styles.statusButtonTextSmall,
+                                        status === 'manutencao' && styles.statusButtonTextActive
+                                    ]}>
+                                        Manutenção
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
                         </View>
                     </View>
 
@@ -333,34 +401,42 @@ const styles = StyleSheet.create({
     required: {
         color: '#EF4444',
     },
-    switchContainer: {
+    statusButtonsRow: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        gap: 8,
+    },
+    statusButtonSmall: {
+        flex: 1,
+        flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#FFFFFF',
-        padding: 16,
-        borderRadius: 12,
-        borderWidth: 1,
+        justifyContent: 'center',
+        gap: 6,
+        paddingVertical: 10,
+        paddingHorizontal: 8,
+        borderRadius: 10,
+        borderWidth: 2,
         borderColor: '#E2E8F0',
+        backgroundColor: '#FFFFFF',
     },
-    switchLabel: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-        flex: 1,
+    statusButtonDisponivel: {
+        backgroundColor: '#10B981',
+        borderColor: '#10B981',
     },
-    switchTextContainer: {
-        flex: 1,
-        gap: 4,
+    statusButtonOcupado: {
+        backgroundColor: '#EF4444',
+        borderColor: '#EF4444',
     },
-    switchTitle: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#132F3B',
+    statusButtonManutencao: {
+        backgroundColor: '#F59E0B',
+        borderColor: '#F59E0B',
     },
-    switchDescription: {
+    statusButtonTextSmall: {
         fontSize: 12,
-        color: '#64748B',
+        fontWeight: '600',
+        color: '#334155',
+    },
+    statusButtonTextActive: {
+        color: '#FFFFFF',
     },
     actions: {
         gap: 12,

@@ -3,6 +3,7 @@ import { FormInput } from '@/src/components/FormInput';
 import { InfoHeader } from '@/src/components/InfoHeader';
 import { Separator } from '@/src/components/Separator';
 import { useToast } from '@/src/components/ToastContext';
+import { buscarClientePorId, atualizarCliente } from '@/src/services/clientesService';
 import { getSuccessMessage, getValidationMessage } from '@/src/utils/errorMessages';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
@@ -21,6 +22,9 @@ const EditarCliente: React.FC = () => {
     const [email, setEmail] = useState('');
     const [dataNascimento, setDataNascimento] = useState('');
     const [endereco, setEndereco] = useState('');
+    const [cidade, setCidade] = useState('');
+    const [estado, setEstado] = useState('');
+    const [pais, setPais] = useState('Brasil');
     const [ativo, setAtivo] = useState(true);
 
     // Formata CPF automaticamente (000.000.000-00)
@@ -123,16 +127,26 @@ const EditarCliente: React.FC = () => {
 
         try {
             setLoading(true);
-            // TODO: Implementar ClienteService.getById(id)
-            // const data = await ClienteService.getById(id);
-            // Por enquanto, dados de exemplo:
-            setNome('Maria Santos');
-            setCpf('987.654.321-00');
-            setCelular('(81) 91234-5678');
-            setEmail('maria.santos@email.com');
-            setDataNascimento('15/03/1985');
-            setEndereco('Rua das Flores, 123 - Recife/PE');
-            setAtivo(true);
+            const data = await buscarClientePorId(id as string);
+            
+            if (data) {
+                setNome(data.nome_completo);
+                const cpfFormatted = data.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+                setCpf(cpfFormatted);
+                const phoneFormatted = data.telefone ? data.telefone.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3') : '';
+                setCelular(phoneFormatted);
+                setEmail(data.email || '');
+                // Formata data para DD/MM/YYYY
+                if (data.data_nascimento) {
+                    const [year, month, day] = data.data_nascimento.split('-');
+                    setDataNascimento(`${day}/${month}/${year}`);
+                }
+                setEndereco(data.endereco || '');
+                setCidade(data.cidade || '');
+                setEstado(data.estado || '');
+                setPais(data.pais || 'Brasil');
+                setAtivo(true); // Não existe no BD, mantido para UI
+            }
         } catch (error) {
             console.error('Erro ao carregar cliente:', error);
             showError('Não foi possível carregar os dados do cliente.');
@@ -221,18 +235,27 @@ const EditarCliente: React.FC = () => {
         try {
             setLoading(true);
 
+            // Converte data de DD/MM/YYYY para YYYY-MM-DD se preenchida
+            let dataFormatted = null;
+            if (dataNascimento.trim()) {
+                const [day, month, year] = dataNascimento.split('/');
+                dataFormatted = `${year}-${month}-${day}`;
+            }
+
             const clienteData = {
-                nome: nome.trim(),
+                nome_completo: nome.trim(),
                 cpf: cpf.replace(/\D/g, ''),
-                celular: celular.replace(/\D/g, ''),
-                email: email.trim().toLowerCase(),
-                data_nascimento: dataNascimento.trim() || null,
-                endereco: endereco.trim() || null,
-                ativo,
+                telefone: celular.replace(/\D/g, ''),
+                email: email.trim().toLowerCase() || undefined,
+                data_nascimento: dataFormatted || undefined,
+                endereco: endereco.trim() || undefined,
+                cidade: cidade.trim() || undefined,
+                estado: estado.trim() || undefined,
+                pais: pais.trim() || 'Brasil',
+                // ativo não é enviado pois não existe no BD
             };
 
-            // TODO: Implementar ClienteService.update(id, clienteData)
-            console.log('Salvando cliente:', clienteData);
+            await atualizarCliente(id as string, clienteData);
 
             showSuccess(getSuccessMessage('update'));
 
@@ -349,12 +372,44 @@ const EditarCliente: React.FC = () => {
                             <Text style={styles.label}>Endereço</Text>
                             <FormInput
                                 icon="location-outline"
-                                placeholder="Rua, número, bairro, cidade"
+                                placeholder="Rua, número, bairro"
                                 value={endereco}
                                 onChangeText={setEndereco}
                                 editable={!loading}
-                                multiline
-                                numberOfLines={2}
+                            />
+                        </View>
+
+                        <View style={styles.fieldGroup}>
+                            <Text style={styles.label}>Cidade</Text>
+                            <FormInput
+                                icon="business-outline"
+                                placeholder="Nome da cidade"
+                                value={cidade}
+                                onChangeText={setCidade}
+                                editable={!loading}
+                            />
+                        </View>
+
+                        <View style={styles.fieldGroup}>
+                            <Text style={styles.label}>Estado (UF)</Text>
+                            <FormInput
+                                icon="map-outline"
+                                placeholder="Ex: PE, SP, RJ"
+                                value={estado}
+                                onChangeText={(text) => setEstado(text.toUpperCase().slice(0, 2))}
+                                editable={!loading}
+                                maxLength={2}
+                            />
+                        </View>
+
+                        <View style={styles.fieldGroup}>
+                            <Text style={styles.label}>País</Text>
+                            <FormInput
+                                icon="globe-outline"
+                                placeholder="Brasil"
+                                value={pais}
+                                onChangeText={setPais}
+                                editable={!loading}
                             />
                         </View>
 

@@ -2,6 +2,8 @@ import { ActionButton } from '@/src/components/ActionButton';
 import { FormInput } from '@/src/components/FormInput';
 import { InfoHeader } from '@/src/components/InfoHeader';
 import { Separator } from '@/src/components/Separator';
+import { buscarReservaPorId, atualizarReserva } from '@/src/services/reservasService';
+import { useToast } from '@/src/components/ToastContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
@@ -10,6 +12,7 @@ import { Alert, ScrollView, StyleSheet, Switch, Text, View } from 'react-native'
 const EditarReserva: React.FC = () => {
     const router = useRouter();
     const { id } = useLocalSearchParams<{ id: string }>();
+    const { showSuccess, showError } = useToast();
 
     const [loading, setLoading] = useState(false);
     const [dataCheckin, setDataCheckin] = useState('');
@@ -18,6 +21,8 @@ const EditarReserva: React.FC = () => {
     const [quartoId, setQuartoId] = useState('');
     const [valorTotal, setValorTotal] = useState('');
     const [status, setStatus] = useState('confirmada');
+    const [numeroHospedes, setNumeroHospedes] = useState('1');
+    const [observacoes, setObservacoes] = useState('');
     const [ativa, setAtiva] = useState(true);
 
     // Formata a data automaticamente para DD/MM/AAAA
@@ -68,19 +73,35 @@ const EditarReserva: React.FC = () => {
 
         try {
             setLoading(true);
-            // TODO: Implementar ReservaService.getById(id)
-            // const data = await ReservaService.getById(id);
-            // Por enquanto, dados de exemplo:
-            setDataCheckin('15/11/2025');
-            setDataCheckout('18/11/2025');
-            setClienteId('João Silva');
-            setQuartoId('101 - Luxo');
-            setValorTotal('750,00');
-            setStatus('confirmada');
-            setAtiva(true);
+            const data = await buscarReservaPorId(id as string);
+            
+            if (!data) {
+                showError('Reserva não encontrada.');
+                return;
+            }
+            
+            // Format check-in date
+            if (data.data_checkin) {
+                const [year, month, day] = data.data_checkin.split('-');
+                setDataCheckin(`${day}/${month}/${year}`);
+            }
+            
+            // Format check-out date
+            if (data.data_checkout) {
+                const [year, month, day] = data.data_checkout.split('-');
+                setDataCheckout(`${day}/${month}/${year}`);
+            }
+            
+            setClienteId(data.id_cliente || '');
+            setQuartoId(data.id_quarto || '');
+            setValorTotal(data.valor_total ? data.valor_total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '');
+            setStatus(data.status?.toLowerCase() as 'pendente' | 'confirmada' | 'cancelada' || 'pendente');
+            setNumeroHospedes(data.numero_hospedes?.toString() || '');
+            setObservacoes(data.observacoes || '');
+            setAtiva(true); // UI only field
         } catch (error) {
             console.error('Erro ao carregar reserva:', error);
-            Alert.alert('Erro', 'Não foi possível carregar os dados da reserva.');
+            showError('Não foi possível carregar os dados da reserva.');
         } finally {
             setLoading(false);
         }
@@ -156,30 +177,40 @@ const EditarReserva: React.FC = () => {
             return;
         }
 
+        if (!numeroHospedes.trim()) {
+            Alert.alert('Atenção', 'O número de hóspedes é obrigatório.');
+            return;
+        }
+
+        const numHospedes = parseInt(numeroHospedes);
+        if (numHospedes <= 0) {
+            Alert.alert('Atenção', 'O número de hóspedes deve ser maior que zero.');
+            return;
+        }
+
         try {
             setLoading(true);
 
+            // Convert dates from DD/MM/YYYY to YYYY-MM-DD
+            const [dayIn, monthIn, yearIn] = dataCheckin.split('/');
+            const dataCheckinFormatted = `${yearIn}-${monthIn}-${dayIn}`;
+            
+            const [dayOut, monthOut, yearOut] = dataCheckout.split('/');
+            const dataCheckoutFormatted = `${yearOut}-${monthOut}-${dayOut}`;
+
             const reservaData = {
-                data_checkin: dataCheckin.trim(),
-                data_checkout: dataCheckout.trim(),
-                valor_total: parseFloat(valorTotal.replace(',', '.')),
-                status,
-                ativa,
+                data_checkin: dataCheckinFormatted,
+                data_checkout: dataCheckoutFormatted,
+                valor_total: parseFloat(valorTotal.replace(/\./g, '').replace(',', '.')),
+                status: status.charAt(0).toUpperCase() + status.slice(1),
+                numero_hospedes: parseInt(numeroHospedes),
+                observacoes: observacoes.trim() || undefined,
+                // ativa is kept in UI but not sent to backend
             };
 
-            // TODO: Implementar ReservaService.update(id, reservaData)
-            console.log('Salvando reserva:', reservaData);
-
-            Alert.alert(
-                'Sucesso',
-                'Reserva atualizada com sucesso!',
-                [
-                    {
-                        text: 'OK',
-                        onPress: () => router.push('/screens/Reserva/ListagemReserva'),
-                    },
-                ]
-            );
+            await atualizarReserva(id as string, reservaData);
+            showSuccess('Reserva atualizada com sucesso!');
+            router.push('/screens/Reserva/ListagemReserva');
         } catch (error) {
             console.error('Erro ao salvar reserva:', error);
             Alert.alert('Erro', 'Ocorreu um erro ao salvar. Tente novamente.');
@@ -284,6 +315,35 @@ const EditarReserva: React.FC = () => {
                                 editable={!loading}
                                 keyboardType="numeric"
                                 helperText="Valor total da reserva em reais (R$)"
+                            />
+                        </View>
+
+                        <View style={styles.fieldGroup}>
+                            <Text style={styles.label}>
+                                Número de Hóspedes <Text style={styles.required}>*</Text>
+                            </Text>
+                            <FormInput
+                                icon="people-outline"
+                                placeholder="1"
+                                value={numeroHospedes}
+                                onChangeText={setNumeroHospedes}
+                                editable={!loading}
+                                keyboardType="numeric"
+                                helperText="Quantidade de pessoas que ficarão hospedadas"
+                            />
+                        </View>
+
+                        <View style={styles.fieldGroup}>
+                            <Text style={styles.label}>Observações</Text>
+                            <FormInput
+                                icon="document-text-outline"
+                                placeholder="Observações adicionais (opcional)"
+                                value={observacoes}
+                                onChangeText={setObservacoes}
+                                editable={!loading}
+                                multiline
+                                numberOfLines={4}
+                                helperText="Informações complementares sobre a reserva"
                             />
                         </View>
 

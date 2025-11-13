@@ -2,14 +2,17 @@ import { ActionButton } from '@/src/components/ActionButton';
 import { FormInput } from '@/src/components/FormInput';
 import { InfoHeader } from '@/src/components/InfoHeader';
 import { Separator } from '@/src/components/Separator';
+import { buscarAtividadePorId, atualizarAtividade } from '@/src/services/atividadesService';
+import { useToast } from '@/src/components/ToastContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 
 const EditarAtividade: React.FC = () => {
     const router = useRouter();
     const { id } = useLocalSearchParams<{ id: string }>();
+    const { showSuccess, showError } = useToast();
 
     const [loading, setLoading] = useState(false);
     const [nome, setNome] = useState('');
@@ -17,6 +20,9 @@ const EditarAtividade: React.FC = () => {
     const [local, setLocal] = useState('');
     const [dataAtividade, setDataAtividade] = useState('');
     const [horario, setHorario] = useState('');
+    const [capacidadeMaxima, setCapacidadeMaxima] = useState('');
+    const [preco, setPreco] = useState('');
+    const [status, setStatus] = useState<'ativo' | 'cancelado'>('ativo');
     const [ativa, setAtiva] = useState(true);
 
     // Formata a data automaticamente para DD/MM/AAAA
@@ -90,24 +96,61 @@ const EditarAtividade: React.FC = () => {
         setHorario(formatted);
     };
 
+    // Formata capacidade para aceitar apenas números
+    const handleCapacidadeChange = (text: string) => {
+        const numbersOnly = text.replace(/\D/g, '');
+        const limited = numbersOnly.slice(0, 3); // Limita a 3 dígitos
+        setCapacidadeMaxima(limited);
+    };
+
+    // Formata o preço automaticamente para formato monetário
+    const handlePrecoChange = (text: string) => {
+        const numbersOnly = text.replace(/\D/g, '');
+        const numberValue = parseInt(numbersOnly || '0') / 100;
+        const formatted = numberValue.toLocaleString('pt-BR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        });
+        setPreco(formatted);
+    };
+
     // Carrega os dados da atividade
     const loadAtividade = useCallback(async () => {
         if (!id) return;
 
         try {
             setLoading(true);
-            // TODO: Implementar AtividadeService.getById(id)
-            // const data = await AtividadeService.getById(id);
-            // Por enquanto, dados de exemplo:
-            setNome('Aula de Yoga');
-            setDescricao('Sessão relaxante de yoga para todos os níveis');
-            setLocal('Área de lazer');
-            setDataAtividade('15/11/2025');
-            setHorario('08:00');
-            setAtiva(true);
+            const data = await buscarAtividadePorId(id as string);
+            
+            if (!data) {
+                showError('Atividade não encontrada.');
+                return;
+            }
+            
+            setNome(data.nome || '');
+            setDescricao(data.descricao || '');
+            setLocal(data.local || '');
+            
+            // Split data_hora into date and time
+            // Expected format: YYYY-MM-DD HH:MM:SS or YYYY-MM-DDTHH:MM:SS
+            if (data.data_hora) {
+                const dateTimeParts = data.data_hora.split('T')[0]; // Get date part
+                const timePart = data.data_hora.includes('T') 
+                    ? data.data_hora.split('T')[1].substring(0, 5) 
+                    : data.data_hora.split(' ')[1]?.substring(0, 5) || '';
+                
+                const [year, month, day] = dateTimeParts.split('-');
+                setDataAtividade(`${day}/${month}/${year}`);
+                setHorario(timePart);
+            }
+            
+            setCapacidadeMaxima(data.capacidade_maxima?.toString() || '');
+            setPreco(data.preco ? data.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '');
+            setStatus(data.status?.toLowerCase() as 'ativo' | 'cancelado' || 'ativo');
+            setAtiva(true); // UI only field
         } catch (error) {
             console.error('Erro ao carregar atividade:', error);
-            Alert.alert('Erro', 'Não foi possível carregar os dados da atividade.');
+            showError('Não foi possível carregar os dados da atividade.');
         } finally {
             setLoading(false);
         }
@@ -169,34 +212,52 @@ const EditarAtividade: React.FC = () => {
             return;
         }
 
+        if (!capacidadeMaxima.trim()) {
+            Alert.alert('Atenção', 'A capacidade máxima é obrigatória.');
+            return;
+        }
+
+        const capacidade = parseInt(capacidadeMaxima);
+        if (capacidade <= 0) {
+            Alert.alert('Atenção', 'A capacidade máxima deve ser maior que zero.');
+            return;
+        }
+
+        if (!preco.trim()) {
+            Alert.alert('Atenção', 'O preço da atividade é obrigatório.');
+            return;
+        }
+
+        const precoNum = parseFloat(preco.replace(/\./g, '').replace(',', '.'));
+        if (precoNum < 0) {
+            Alert.alert('Atenção', 'O preço não pode ser negativo.');
+            return;
+        }
+
         try {
             setLoading(true);
 
+            // Combina data e horário para data_hora (YYYY-MM-DD HH:MM:SS)
+            const [day, month, year] = dataAtividade.split('/');
+            const dataHora = `${year}-${month}-${day} ${horario}:00`;
+
             const atividadeData = {
                 nome: nome.trim(),
-                descricao: descricao.trim(),
-                local: local.trim(),
-                data_atividade: dataAtividade.trim(),
-                horario: horario.trim(),
-                ativa,
+                descricao: descricao.trim() || undefined,
+                local: local.trim() || undefined,
+                data_hora: dataHora,
+                capacidade_maxima: parseInt(capacidadeMaxima),
+                preco: parseFloat(preco.replace(/\./g, '').replace(',', '.')),
+                status: status.charAt(0).toUpperCase() + status.slice(1),
+                // ativa is kept in UI but not sent to backend
             };
 
-            // TODO: Implementar AtividadeService.update(id, atividadeData)
-            console.log('Salvando atividade:', atividadeData);
-
-            Alert.alert(
-                'Sucesso',
-                'Atividade atualizada com sucesso!',
-                [
-                    {
-                        text: 'OK',
-                        onPress: () => router.back(),
-                    },
-                ]
-            );
+            await atualizarAtividade(id as string, atividadeData);
+            showSuccess('Atividade atualizada com sucesso!');
+            router.push('/screens/Atividade/ListagemAtividade');
         } catch (error) {
             console.error('Erro ao salvar atividade:', error);
-            Alert.alert('Erro', 'Ocorreu um erro ao salvar. Tente novamente.');
+            showError('Ocorreu um erro ao salvar. Tente novamente.');
         } finally {
             setLoading(false);
         }
@@ -295,7 +356,85 @@ const EditarAtividade: React.FC = () => {
                             />
                         </View>
 
+                        <View style={styles.fieldGroup}>
+                            <Text style={styles.label}>
+                                Capacidade Máxima <Text style={styles.required}>*</Text>
+                            </Text>
+                            <FormInput
+                                icon="people-outline"
+                                placeholder="0"
+                                value={capacidadeMaxima}
+                                onChangeText={handleCapacidadeChange}
+                                editable={!loading}
+                                keyboardType="numeric"
+                                helperText="Número máximo de participantes"
+                            />
+                        </View>
+
+                        <View style={styles.fieldGroup}>
+                            <Text style={styles.label}>
+                                Preço <Text style={styles.required}>*</Text>
+                            </Text>
+                            <FormInput
+                                icon="cash-outline"
+                                placeholder="0,00"
+                                value={preco}
+                                onChangeText={handlePrecoChange}
+                                editable={!loading}
+                                keyboardType="numeric"
+                                helperText="Valor da atividade em reais (R$)"
+                            />
+                        </View>
+
                         {/* Status da Atividade */}
+                        <View style={styles.fieldGroup}>
+                            <Text style={styles.label}>Status</Text>
+                            <View style={styles.statusButtonsContainer}>
+                                <TouchableOpacity
+                                    style={[
+                                        styles.statusButton,
+                                        status === 'ativo' && styles.statusButtonActive
+                                    ]}
+                                    onPress={() => setStatus('ativo')}
+                                    disabled={loading}
+                                >
+                                    <Ionicons
+                                        name="checkmark-circle"
+                                        size={20}
+                                        color={status === 'ativo' ? '#FFFFFF' : '#10B981'}
+                                    />
+                                    <Text style={[
+                                        styles.statusButtonText,
+                                        status === 'ativo' && styles.statusButtonTextActive
+                                    ]}>
+                                        Ativo
+                                    </Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    style={[
+                                        styles.statusButton,
+                                        status === 'cancelado' && styles.statusButtonInactive
+                                    ]}
+                                    onPress={() => setStatus('cancelado')}
+                                    disabled={loading}
+                                >
+                                    <Ionicons
+                                        name="close-circle"
+                                        size={20}
+                                        color={status === 'cancelado' ? '#FFFFFF' : '#EF4444'}
+                                    />
+                                    <Text style={[
+                                        styles.statusButtonText,
+                                        status === 'cancelado' && styles.statusButtonTextActive
+                                    ]}>
+                                        Cancelado
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+
+                        {/* Ativa (campo extra - mantido para futuro uso) */}
                         <View style={styles.switchContainer}>
                             <View style={styles.switchLabel}>
                                 <Ionicons
@@ -399,6 +538,39 @@ const styles = StyleSheet.create({
     },
     required: {
         color: '#EF4444',
+    },
+    statusButtonsContainer: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    statusButton: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 12,
+        borderWidth: 2,
+        borderColor: '#E2E8F0',
+        backgroundColor: '#FFFFFF',
+    },
+    statusButtonActive: {
+        backgroundColor: '#10B981',
+        borderColor: '#10B981',
+    },
+    statusButtonInactive: {
+        backgroundColor: '#EF4444',
+        borderColor: '#EF4444',
+    },
+    statusButtonText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#334155',
+    },
+    statusButtonTextActive: {
+        color: '#FFFFFF',
     },
     switchContainer: {
         flexDirection: 'row',

@@ -3,6 +3,7 @@ import { FormInput } from '@/src/components/FormInput';
 import { InfoHeader } from '@/src/components/InfoHeader';
 import { Separator } from '@/src/components/Separator';
 import { useToast } from '@/src/components/ToastContext';
+import { buscarFuncionarioPorId, atualizarFuncionario } from '@/src/services/funcionariosService';
 import { getSuccessMessage, getValidationMessage } from '@/src/utils/errorMessages';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
@@ -20,7 +21,9 @@ const EditarFuncionario: React.FC = () => {
     const [celular, setCelular] = useState('');
     const [email, setEmail] = useState('');
     const [cargo, setCargo] = useState('');
-    const [ativo, setAtivo] = useState(true);
+    const [salario, setSalario] = useState('');
+    const [dataAdmissao, setDataAdmissao] = useState('');
+    const [status, setStatus] = useState<'ativo' | 'inativo'>('ativo');
 
     // Estado para gerenciar a foto
     const [photoUri, setPhotoUri] = useState<string | null>(null);
@@ -59,6 +62,33 @@ const EditarFuncionario: React.FC = () => {
         }
 
         setCelular(formatted);
+    };
+
+    // Formata salário automaticamente para formato monetário
+    const handleSalarioChange = (text: string) => {
+        const numbersOnly = text.replace(/\D/g, '');
+        const numberValue = parseInt(numbersOnly || '0') / 100;
+        const formatted = numberValue.toLocaleString('pt-BR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        });
+        setSalario(formatted);
+    };
+
+    // Formata data de admissão automaticamente (DD/MM/AAAA)
+    const handleDataAdmissaoChange = (text: string) => {
+        const numbersOnly = text.replace(/\D/g, '');
+        const limited = numbersOnly.slice(0, 8);
+
+        let formatted = limited;
+        if (limited.length >= 3) {
+            formatted = `${limited.slice(0, 2)}/${limited.slice(2)}`;
+        }
+        if (limited.length >= 5) {
+            formatted = `${limited.slice(0, 2)}/${limited.slice(2, 4)}/${limited.slice(4)}`;
+        }
+
+        setDataAdmissao(formatted);
     };
 
     // Valida CPF usando algoritmo de dígitos verificadores
@@ -138,28 +168,44 @@ const EditarFuncionario: React.FC = () => {
 
         try {
             setLoading(true);
-            // TODO: Implementar FuncionarioService.getById(id)
-            // const data = await FuncionarioService.getById(id);
-            // Por enquanto, dados de exemplo:
-            setNome('Ana Clara Silva');
-            setCpf('123.456.789-00');
-            setCelular('(81) 98765-4321');
-            setEmail('ana.silva@hotel.com');
-            setCargo('Recepcionista');
-            setAtivo(true);
+            const data = await buscarFuncionarioPorId(id as string);
+            
+            if (data) {
+                setNome(data.nome_completo);
+                // Formata CPF para exibição
+                const cpfFormatted = data.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+                setCpf(cpfFormatted);
+                // Formata telefone para exibição
+                const phoneFormatted = data.telefone ? data.telefone.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3') : '';
+                setCelular(phoneFormatted);
+                setEmail(data.email);
+                setCargo(data.cargo);
+                // Formata salário para exibição
+                const salarioFormatted = (data.salario || 0).toLocaleString('pt-BR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                });
+                setSalario(salarioFormatted);
+                // Formata data para DD/MM/YYYY
+                if (data.data_admissao) {
+                    const [year, month, day] = data.data_admissao.split('-');
+                    setDataAdmissao(`${day}/${month}/${year}`);
+                }
+                setStatus((data.status?.toLowerCase() === 'ativo' ? 'ativo' : 'inativo') as 'ativo' | 'inativo');
 
-            // TODO: Carregar foto do Supabase Storage se existir
-            // if (data.foto_url) {
-            //     setPhotoUri(data.foto_url);
-            //     setHasCustomPhoto(true);
-            // }
+                // TODO: Carregar foto do Supabase Storage se existir
+                // if (data.foto_url) {
+                //     setPhotoUri(data.foto_url);
+                //     setHasCustomPhoto(true);
+                // }
+            }
         } catch (error) {
             console.error('Erro ao carregar funcionário:', error);
-            Alert.alert('Erro', 'Não foi possível carregar os dados do funcionário.');
+            showError('Não foi possível carregar os dados do funcionário.');
         } finally {
             setLoading(false);
         }
-    }, [id]);
+    }, [id, showError]);
 
     useFocusEffect(
         useCallback(() => {
@@ -216,23 +262,47 @@ const EditarFuncionario: React.FC = () => {
             return;
         }
 
+        if (!cargo.trim()) {
+            showError('Cargo é obrigatório');
+            return;
+        }
+
+        if (!salario.trim()) {
+            showError('Salário é obrigatório');
+            return;
+        }
+
+        if (!dataAdmissao.trim()) {
+            showError('Data de admissão é obrigatória');
+            return;
+        }
+
+        // Valida formato da data
+        const dateRegex = /^\d{2}\/\d{2}\/\d{4}$/;
+        if (!dateRegex.test(dataAdmissao)) {
+            showError('Data de admissão inválida. Use o formato DD/MM/AAAA');
+            return;
+        }
+
         try {
             setLoading(true);
 
+            // Converte data de DD/MM/YYYY para YYYY-MM-DD
+            const [day, month, year] = dataAdmissao.split('/');
+            const dataFormatted = `${year}-${month}-${day}`;
+
             const funcionarioData = {
-                nome: nome.trim(),
+                nome_completo: nome.trim(),
                 cpf: cpf.replace(/\D/g, ''), // Remove formatação
-                celular: celular.replace(/\D/g, ''), // Remove formatação
+                telefone: celular.replace(/\D/g, ''), // Remove formatação
                 email: email.trim().toLowerCase(),
                 cargo: cargo.trim(),
-                ativo,
-                // TODO: Adicionar foto_url se houver upload
-                // foto_url: photoUri,
+                salario: parseFloat(salario.replace(/\./g, '').replace(',', '.')),
+                data_admissao: dataFormatted,
+                status: status.charAt(0).toUpperCase() + status.slice(1), // Ativo ou Inativo
             };
 
-            // TODO: Implementar FuncionarioService.update(id, funcionarioData)
-            // TODO: Se photoUri for um arquivo local, fazer upload para Supabase Storage
-            console.log('Salvando funcionário:', funcionarioData);
+            await atualizarFuncionario(id as string, funcionarioData);
 
             showSuccess(getSuccessMessage('update'));
 
@@ -395,7 +465,9 @@ const EditarFuncionario: React.FC = () => {
                         </View>
 
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>Cargo</Text>
+                            <Text style={styles.label}>
+                                Cargo <Text style={styles.required}>*</Text>
+                            </Text>
                             <FormInput
                                 icon="briefcase-outline"
                                 placeholder="Ex: Recepcionista, Gerente"
@@ -405,26 +477,57 @@ const EditarFuncionario: React.FC = () => {
                             />
                         </View>
 
+                        <View style={styles.fieldGroup}>
+                            <Text style={styles.label}>
+                                Salário <Text style={styles.required}>*</Text>
+                            </Text>
+                            <FormInput
+                                icon="cash-outline"
+                                placeholder="0,00"
+                                value={salario}
+                                onChangeText={handleSalarioChange}
+                                editable={!loading}
+                                keyboardType="numeric"
+                                helperText="Formato: 2.500,00"
+                            />
+                        </View>
+
+                        <View style={styles.fieldGroup}>
+                            <Text style={styles.label}>
+                                Data de Admissão <Text style={styles.required}>*</Text>
+                            </Text>
+                            <FormInput
+                                icon="calendar-outline"
+                                placeholder="DD/MM/AAAA"
+                                value={dataAdmissao}
+                                onChangeText={handleDataAdmissaoChange}
+                                editable={!loading}
+                                keyboardType="numeric"
+                                maxLength={10}
+                                helperText="Formato: DD/MM/AAAA"
+                            />
+                        </View>
+
                         {/* Status do Funcionário */}
                         <View style={styles.switchContainer}>
                             <View style={styles.switchLabel}>
                                 <Ionicons
-                                    name={ativo ? "checkmark-circle" : "close-circle"}
+                                    name={status === 'ativo' ? "checkmark-circle" : "close-circle"}
                                     size={24}
-                                    color={ativo ? "#10B981" : "#6B7280"}
+                                    color={status === 'ativo' ? "#10B981" : "#6B7280"}
                                 />
                                 <View style={styles.switchTextContainer}>
                                     <Text style={styles.switchTitle}>Funcionário Ativo</Text>
                                     <Text style={styles.switchDescription}>
-                                        {ativo ? 'Este funcionário está ativo no sistema' : 'Este funcionário está inativo'}
+                                        {status === 'ativo' ? 'Este funcionário está ativo no sistema' : 'Este funcionário está inativo'}
                                     </Text>
                                 </View>
                             </View>
                             <Switch
-                                value={ativo}
-                                onValueChange={setAtivo}
+                                value={status === 'ativo'}
+                                onValueChange={(value) => setStatus(value ? 'ativo' : 'inativo')}
                                 trackColor={{ false: '#D1D5DB', true: '#10B981' }}
-                                thumbColor={ativo ? '#FFFFFF' : '#F3F4F6'}
+                                thumbColor={status === 'ativo' ? '#FFFFFF' : '#F3F4F6'}
                                 disabled={loading}
                             />
                         </View>
