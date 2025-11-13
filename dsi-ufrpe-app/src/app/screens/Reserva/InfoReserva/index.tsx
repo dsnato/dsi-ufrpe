@@ -5,8 +5,7 @@ import { InfoRow } from '@/src/components/InfoRow';
 import { Loading } from '@/src/components/Loading';
 import { StatusBadge } from '@/src/components/StatusBadge';
 import { TitleSection } from '@/src/components/TitleSection';
-import { ReservationService } from '@/src/services/ReservationService';
-import { Reservation } from '@/src/types/reservation';
+import { buscarReservaPorId, excluirReserva, Reserva } from '@/src/services/reservasService';
 import { formatCurrency, formatDate, withPlaceholder } from '@/src/utils/formatters';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
@@ -17,7 +16,7 @@ const InfoReserva: React.FC = () => {
     const { id } = useLocalSearchParams<{ id: string }>();
 
     // Estados
-    const [reserva, setReserva] = useState<Reservation | null>(null);
+    const [reserva, setReserva] = useState<Reserva | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -35,7 +34,7 @@ const InfoReserva: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        const data = await ReservationService.getById(id);
+        const data = await buscarReservaPorId(id as string);
 
         if (!data) {
             setError('Reserva não encontrada');
@@ -70,9 +69,8 @@ const InfoReserva: React.FC = () => {
                     text: "Excluir",
                     style: "destructive",
                     onPress: async () => {
-                        const success = await ReservationService.delete(id);
-
-                        if (success) {
+                        try {
+                            await excluirReserva(id as string);
                             Alert.alert(
                                 "Sucesso",
                                 "Reserva excluída com sucesso!",
@@ -83,7 +81,7 @@ const InfoReserva: React.FC = () => {
                                     }
                                 ]
                             );
-                        } else {
+                        } catch (error) {
                             Alert.alert(
                                 "Erro",
                                 "Não foi possível excluir a reserva. Tente novamente."
@@ -152,8 +150,8 @@ const InfoReserva: React.FC = () => {
                         subtitle="Número da reserva"
                         badge={
                             <StatusBadge
-                                text={reserva.status}
-                                color={getStatusColor(reserva.status)}
+                                text={reserva.status || 'Pendente'}
+                                color={getStatusColor(reserva.status || 'Pendente')}
                             />
                         }
                     />
@@ -162,50 +160,55 @@ const InfoReserva: React.FC = () => {
                     <InfoRow
                         icon="calendar-outline"
                         label="DATA DE CHECK-IN"
-                        value={formatDate(reserva.check_in_date)}
+                        value={formatDate(reserva.data_checkin)}
                     />
 
                     <InfoRow
                         icon="calendar-outline"
                         label="DATA DE CHECK-OUT"
-                        value={formatDate(reserva.check_out_date)}
+                        value={formatDate(reserva.data_checkout)}
                     />
 
                     <InfoRow
                         icon="bed-outline"
                         label="QUARTO"
-                        value={withPlaceholder(reserva.room_id, 'Não informado')}
+                        value={withPlaceholder(reserva.id_quarto, 'Não informado')}
                     />
 
                     <InfoRow
                         icon="cash-outline"
                         label="VALOR TOTAL"
-                        value={formatCurrency(reserva.total_amount)}
+                        value={formatCurrency(reserva.valor_total || 0)}
                     />
 
-                    {reserva.pending_amount > 0 && (
+                    <InfoRow
+                        icon="people-outline"
+                        label="NÚMERO DE HÓSPEDES"
+                        value={`${reserva.numero_hospedes || 0} ${reserva.numero_hospedes === 1 ? 'pessoa' : 'pessoas'}`}
+                    />
+
+                    {reserva.observacoes && (
                         <InfoRow
-                            icon="alert-circle-outline"
-                            label="VALOR PENDENTE"
-                            value={formatCurrency(reserva.pending_amount)}
-                            iconColor="#F59E0B"
+                            icon="document-text-outline"
+                            label="OBSERVAÇÕES"
+                            value={withPlaceholder(reserva.observacoes, 'Sem observações')}
                         />
                     )}
 
-                    {reserva.actual_check_in && (
+                    {reserva.checkin_realizado_em && (
                         <InfoRow
                             icon="checkmark-circle-outline"
                             label="CHECK-IN REALIZADO"
-                            value={formatDate(reserva.actual_check_in)}
+                            value={formatDate(reserva.checkin_realizado_em)}
                             iconColor="#10B981"
                         />
                     )}
 
-                    {reserva.actual_check_out && (
+                    {reserva.checkout_realizado_em && (
                         <InfoRow
                             icon="checkmark-circle-outline"
                             label="CHECK-OUT REALIZADO"
-                            value={formatDate(reserva.actual_check_out)}
+                            value={formatDate(reserva.checkout_realizado_em)}
                             iconColor="#6B7280"
                         />
                     )}
