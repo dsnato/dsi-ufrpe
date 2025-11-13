@@ -1,13 +1,12 @@
 import { supabase } from '@/lib/supabase';
-import { ActionButton } from '@/src/components/ActionButton';
-import { FormInput } from '@/src/components/FormInput';
-import { Separator } from '@/src/components/Separator';
+import ButtonPoint from '@/src/components/button';
+import InputText from '@/src/components/input';
+import PasswordInput from '@/src/components/password';
 import { useToast } from '@/src/components/ToastContext';
 import { getSuccessMessage, getValidationMessage, translateAuthError } from '@/src/utils/errorMessages';
-import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { AppState, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { AppState, Image, StyleSheet, Text, View } from 'react-native';
 
 AppState.addEventListener('change', (state) => {
   if (state === 'active') {
@@ -35,7 +34,7 @@ const LoginScreen: React.FC = () => {
       email: email,
       password: password,
     })
-
+    
     if (error) {
       showError(translateAuthError(error.message))
     } else {
@@ -44,7 +43,7 @@ const LoginScreen: React.FC = () => {
         router.replace('/screens/home')
       }, 3000)
     }
-
+    
     setLoading(false)
   }
 
@@ -54,85 +53,48 @@ const LoginScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      {/* Header com Logo */}
-      <View style={styles.header}>
-        <View style={styles.logoContainer}>
-          <View style={styles.logoBorder}>
-            <Image
-              source={require('@/assets/images/hotel1.png')}
-              style={styles.logo}
-              resizeMode="contain"
-            />
-          </View>
-          <Text style={styles.logoText}>Hostify</Text>
-          <Text style={styles.subtitle}>Sistema de Gestão Hoteleira</Text>
-        </View>
+
+      {/* Container da Logo */}
+      <View style={styles.logoContainer}>
+        <Image
+          source={require('@/assets/images/hotel1.png')}
+          style={styles.logo}
+        />
+        <Text style={styles.logoText}>Hostify</Text>
       </View>
 
-      {/* Content */}
-      <ScrollView
-        style={styles.content}
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Card de Login */}
-        <View style={styles.loginCard}>
-          <View style={styles.cardHeader}>
-            <Ionicons name="log-in-outline" size={24} color="#0162B3" />
-            <Text style={styles.cardTitle}>Entrar no Sistema</Text>
-          </View>
+      {/* Container do Form */}
+      <View style={styles.form}>
+        {/* Email */}
+        <InputText
+        label='E-mail'
+        leftIcon={<Image source={require("@/assets/images/at-email.png")}
+        style={{ marginRight: 10 }}></Image>}
+        value={email}
+        onChange={event => setEmail(event.nativeEvent.text)}></InputText>
 
-          <Separator marginTop={16} marginBottom={20} />
+        {/* Senha */}
+        <PasswordInput
+        leftIcon={<Image source={require("@/assets/images/key-password.png")} 
+        style={{ marginRight: 10 }}></Image>}
+        value={password}
+        onChange={event => setPassword(event.nativeEvent.text)}></PasswordInput>
 
-          <View style={styles.inputGroup}>
-            <FormInput
-              icon="mail-outline"
-              placeholder="Email *"
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              autoCorrect={false}
-            />
-
-            <FormInput
-              icon="key-outline"
-              placeholder="Senha *"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
-          </View>
+        <View style={styles.buttonContainer}>
+          <ButtonPoint
+          label="Entrar"
+          status={loading ? 'loading' : 'idle'}
+          disabled={loading}
+          onPress={() => {signInWithEmail()}}
+          />
+          <Text style={styles.registerText}>
+            Não tem uma conta? <Text style={styles.registerLink} onPress={registerTransition}>Cadastre-se</Text>
+          </Text>
+          <Text style={styles.registerText}>
+            Esqueceu a senha? <Text style={styles.registerLink} onPress={registerTransition}>Recuperar</Text>
+          </Text>
         </View>
-
-        <View style={styles.actions}>
-          <ActionButton
-            variant="primary"
-            icon="log-in-outline"
-            onPress={signInWithEmail}
-            disabled={loading}
-          >
-            {loading ? "Entrando..." : "Entrar"}
-          </ActionButton>
-
-          <ActionButton
-            variant="secondary"
-            icon="person-add-outline"
-            onPress={registerTransition}
-            disabled={loading}
-          >
-            Criar Conta
-          </ActionButton>
-        </View>
-
-        <Separator marginTop={24} marginBottom={20} />
-
-        {/* Link Esqueceu a Senha */}
-        <View style={styles.forgotPasswordContainer}>
-          <Text style={styles.forgotPasswordText}>Esqueceu sua senha?</Text>
-        </View>
-      </ScrollView>
+      </View>
     </View>
   );
 };
@@ -141,86 +103,87 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#132F3B',
-  },
-  header: {
-    backgroundColor: '#132F3B',
-    paddingTop: 60,
-    paddingBottom: 40,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   logoContainer: {
+    position: 'absolute',
+    top: 80,              // controla a altura da logo
+    alignSelf: 'center',
     alignItems: 'center',
-    gap: 8,
-  },
-  logoBorder: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: '#0162B3',
+    zIndex: 2,            // garante que fique acima do form
   },
   logo: {
-    width: 70,
-    height: 70,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 150,
+    height: 150,
   },
   logoText: {
     fontSize: 32,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  subtitle: {
-    fontSize: 13,
-    color: '#94A3B8',
-    fontWeight: '500',
-    marginTop: 4,
-  },
-  content: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-  },
-  scrollContent: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  loginCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  cardTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#1E293B',
-  },
-  inputGroup: {
-    gap: 16,
-  },
-  forgotPasswordContainer: {
-    alignItems: 'center',
-  },
-  forgotPasswordText: {
-    fontSize: 14,
+    fontWeight: 'bold',
     color: '#0162B3',
-    fontWeight: '600',
+    marginTop: 8,
   },
-  actions: {
-    gap: 12,
+  form: {
+    flex: 1,                   // ocupa todo o espaço disponível
+    width: '100%',             // vai de ponta a ponta
+    backgroundColor: '#EFEFF0',// cor do retângulo
+    borderTopLeftRadius: 20,   // arredonda só em cima
+    borderTopRightRadius: 20,
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    // sombra para parecer "cartão"
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    marginTop: 140,
+  },
+  input: {
+    width: '100%',
+    marginBottom: 16,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    padding: 10,
+    backgroundColor: '#fff',
+    color: '#9da3a3ff',
+  },
+  buttonContainer: {
+    width: '100%',
     marginTop: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  registerText: {
+    color: '#666',
+    fontSize: 15,
+    textAlign: 'center',
+  },
+  registerLink: {
+    color: '#0162B3',
+    fontWeight: 'bold',
+  },
+  inputIconWrapper: {
+    width: '100%',
+    marginBottom: 16,
+    position: 'relative',
+    justifyContent: 'center',
+  },
+  iconEye: {
+    position: 'absolute',
+    right: 12,
+    top: -8,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '100%',
+    padding: 6,
   },
 });
 
