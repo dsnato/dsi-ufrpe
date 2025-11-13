@@ -5,8 +5,7 @@ import { InfoRow } from '@/src/components/InfoRow';
 import { Loading } from '@/src/components/Loading';
 import { ProfileSection } from '@/src/components/ProfileSection';
 import { Separator } from '@/src/components/Separator';
-import { FuncionarioService } from '@/src/services/FuncionarioService';
-import { Funcionario } from '@/src/types/funcionario';
+import { buscarFuncionarioPorId, excluirFuncionario, Funcionario } from '@/src/services/funcionariosService';
 import { formatCPF, formatPhone, withPlaceholder } from '@/src/utils/formatters';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
@@ -36,7 +35,7 @@ const InfoFuncionario: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        const data = await FuncionarioService.getById(id);
+        const data = await buscarFuncionarioPorId(id as string);
 
         if (!data) {
             setError('Funcionário não encontrado');
@@ -71,9 +70,8 @@ const InfoFuncionario: React.FC = () => {
                     text: "Excluir",
                     style: "destructive",
                     onPress: async () => {
-                        const success = await FuncionarioService.delete(id);
-
-                        if (success) {
+                        try {
+                            await excluirFuncionario(id as string);
                             Alert.alert(
                                 "Sucesso",
                                 "Funcionário excluído com sucesso!",
@@ -84,7 +82,7 @@ const InfoFuncionario: React.FC = () => {
                                     }
                                 ]
                             );
-                        } else {
+                        } catch (error) {
                             Alert.alert(
                                 "Erro",
                                 "Não foi possível excluir o funcionário. Tente novamente."
@@ -135,8 +133,8 @@ const InfoFuncionario: React.FC = () => {
 
             {/* Seção de foto e nome no fundo azul */}
             <ProfileSection
-                name={withPlaceholder(funcionario.name, 'Nome não informado')}
-                subtitle={withPlaceholder(funcionario.role, 'Cargo não informado')}
+                name={withPlaceholder(funcionario.nome_completo, 'Nome não informado')}
+                subtitle={withPlaceholder(funcionario.cargo, 'Cargo não informado')}
             />
 
             {/* Container branco com informações */}
@@ -156,7 +154,7 @@ const InfoFuncionario: React.FC = () => {
                     <InfoRow
                         icon="call-outline"
                         label="CELULAR"
-                        value={formatPhone(funcionario.phone)}
+                        value={formatPhone(funcionario.telefone)}
                     />
 
                     <InfoRow

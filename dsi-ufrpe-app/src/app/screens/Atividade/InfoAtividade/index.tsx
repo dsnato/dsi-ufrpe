@@ -6,8 +6,7 @@ import { Loading } from '@/src/components/Loading';
 import { Separator } from '@/src/components/Separator';
 import { StatusBadge } from '@/src/components/StatusBadge';
 import { TitleSection } from '@/src/components/TitleSection';
-import { AtividadeService } from '@/src/services/AtividadeService';
-import { Atividade } from '@/src/types/atividade';
+import { buscarAtividadePorId, excluirAtividade, AtividadeRecreativa } from '@/src/services/atividadesService';
 import { formatDate, formatTime, withPlaceholder } from '@/src/utils/formatters';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
@@ -18,7 +17,7 @@ const InfoAtividade: React.FC = () => {
     const { id } = useLocalSearchParams<{ id: string }>();
 
     // Estados
-    const [atividade, setAtividade] = useState<Atividade | null>(null);
+    const [atividade, setAtividade] = useState<AtividadeRecreativa | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -36,7 +35,7 @@ const InfoAtividade: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        const data = await AtividadeService.getById(id);
+        const data = await buscarAtividadePorId(id as string);
 
         if (!data) {
             setError('Atividade não encontrada');
@@ -71,9 +70,8 @@ const InfoAtividade: React.FC = () => {
                     text: "Excluir",
                     style: "destructive",
                     onPress: async () => {
-                        const success = await AtividadeService.delete(id);
-
-                        if (success) {
+                        try {
+                            await excluirAtividade(id as string);
                             Alert.alert(
                                 "Sucesso",
                                 "Atividade excluída com sucesso!",
@@ -84,7 +82,7 @@ const InfoAtividade: React.FC = () => {
                                     }
                                 ]
                             );
-                        } else {
+                        } catch (error) {
                             Alert.alert(
                                 "Erro",
                                 "Não foi possível excluir a atividade. Tente novamente."
@@ -142,8 +140,8 @@ const InfoAtividade: React.FC = () => {
                         subtitle="Atividade recreativa"
                         badge={
                             <StatusBadge
-                                text={atividade.ativa ? 'Ativa' : 'Inativa'}
-                                color={atividade.ativa ? '#10B981' : '#6B7280'}
+                                text={atividade.status || 'Ativo'}
+                                color={atividade.status?.toLowerCase() === 'ativo' ? '#10B981' : '#6B7280'}
                             />
                         }
                     />
@@ -157,14 +155,8 @@ const InfoAtividade: React.FC = () => {
 
                     <InfoRow
                         icon="calendar-outline"
-                        label="DATA DA ATIVIDADE"
-                        value={formatDate(atividade.data_atividade)}
-                    />
-
-                    <InfoRow
-                        icon="time-outline"
-                        label="HORÁRIO"
-                        value={formatTime(atividade.horario)}
+                        label="DATA E HORA"
+                        value={atividade.data_hora ? formatDate(atividade.data_hora) : 'Não informado'}
                     />
 
                     <InfoRow
@@ -172,6 +164,20 @@ const InfoAtividade: React.FC = () => {
                         label="LOCAL"
                         value={withPlaceholder(atividade.local, 'Local não informado')}
                     />
+                    
+                    <InfoRow
+                        icon="people-outline"
+                        label="CAPACIDADE MÁXIMA"
+                        value={`${atividade.capacidade_maxima || 0} ${atividade.capacidade_maxima === 1 ? 'pessoa' : 'pessoas'}`}
+                    />
+                    
+                    {atividade.preco !== undefined && (
+                        <InfoRow
+                            icon="cash-outline"
+                            label="PREÇO"
+                            value={`R$ ${atividade.preco.toFixed(2).replace('.', ',')}`}
+                        />
+                    )}
                 </ScrollView>
 
                 {/* Botões de ação */}

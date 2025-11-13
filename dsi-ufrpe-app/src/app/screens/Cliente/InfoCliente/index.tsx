@@ -5,8 +5,7 @@ import { InfoRow } from '@/src/components/InfoRow';
 import { Loading } from '@/src/components/Loading';
 import { ProfileSection } from '@/src/components/ProfileSection';
 import { Separator } from '@/src/components/Separator';
-import { ClienteService } from '@/src/services/ClienteService';
-import { Cliente } from '@/src/types/cliente';
+import { buscarClientePorId, excluirCliente, Cliente } from '@/src/services/clientesService';
 import { formatCPF, formatPhone, withPlaceholder } from '@/src/utils/formatters';
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useState } from 'react';
@@ -35,7 +34,7 @@ export default function InfoCliente() {
         setLoading(true);
         setError(null);
 
-        const data = await ClienteService.getById(id);
+        const data = await buscarClientePorId(id as string);
 
         if (!data) {
             setError('Cliente não encontrado');
@@ -70,9 +69,8 @@ export default function InfoCliente() {
                     text: "Excluir",
                     style: "destructive",
                     onPress: async () => {
-                        const success = await ClienteService.delete(id);
-
-                        if (success) {
+                        try {
+                            await excluirCliente(id as string);
                             Alert.alert(
                                 "Sucesso",
                                 "Cliente excluído com sucesso!",
@@ -83,7 +81,7 @@ export default function InfoCliente() {
                                     }
                                 ]
                             );
-                        } else {
+                        } catch (error) {
                             Alert.alert(
                                 "Erro",
                                 "Não foi possível excluir o cliente. Tente novamente."
@@ -134,7 +132,7 @@ export default function InfoCliente() {
 
             {/* Seção de foto e nome no fundo azul */}
             <ProfileSection
-                name={withPlaceholder(cliente.name, 'Nome não informado')}
+                name={withPlaceholder(cliente.nome_completo, 'Nome não informado')}
                 subtitle="Cliente"
             />
 
@@ -156,15 +154,15 @@ export default function InfoCliente() {
                     <InfoRow
                         icon="location-outline"
                         label="ENDEREÇO"
-                        value={cliente.street && cliente.number
-                            ? `${cliente.street}, ${cliente.number}, ${cliente.neighborhood}, ${cliente.city} - ${cliente.state}, CEP: ${cliente.zipCode}`
+                        value={cliente.endereco
+                            ? `${cliente.endereco}, ${cliente.cidade} - ${cliente.estado}, ${cliente.pais || ''}`
                             : 'Endereço não informado'}
                     />
 
                     <InfoRow
                         icon="call-outline"
                         label="CELULAR"
-                        value={formatPhone(cliente.phone)}
+                        value={formatPhone(cliente.telefone)}
                     />
 
                     <InfoRow
