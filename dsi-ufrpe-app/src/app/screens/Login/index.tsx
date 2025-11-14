@@ -40,7 +40,7 @@ const LoginScreen: React.FC = () => {
     } else {
       showSuccess(getSuccessMessage('login'))
       setTimeout(() => {
-        router.replace('/screens/(tabs)')
+        router.replace('/screens/home')
       }, 3000)
     }
     
@@ -83,7 +83,8 @@ const LoginScreen: React.FC = () => {
         <View style={styles.buttonContainer}>
           <ButtonPoint
           label="Entrar"
-          loading={loading}
+          status={loading ? 'loading' : 'idle'}
+          disabled={loading}
           onPress={() => {signInWithEmail()}}
           />
           <Text style={styles.registerText}>
