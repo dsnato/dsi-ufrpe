@@ -1,11 +1,13 @@
-import HeaderName from "@/src/components/HeaderName";
-import InfoCard from "@/src/components/InfoCard";
-import TextInputRounded from "@/src/components/TextInputRounded";
-import { useRouter } from "expo-router";
-import { useState } from "react";
-import { FlatList, StyleSheet, Text, View } from "react-native";
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { ActionButton } from '@/src/components/ActionButton';
+import { Separator } from '@/src/components/Separator';
+import TextInputRounded from '@/src/components/TextInputRounded';
+import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
+
+// Implementar os valores presente na entidade de Reserva
 const initialData = [
     { id: '1', numero: '042', dataReserva: '10/10/26 a 20/10/26' },
     { id: '2', numero: '007', dataReserva: '05/11/26 a 12/11/26' },
@@ -19,99 +21,292 @@ const initialData = [
     { id: '10', numero: '066', dataReserva: '07/03/27 a 14/03/27' },
 ];
 
-export default function Crud() {
+type Reserva = {
+    id: string;
+    numero: string;
+    dataReserva: string;
+};
+
+const ListagemReserva: React.FC = () => {
     const router = useRouter();
     const [items, setItems] = useState(initialData);
-    const [modalVisible, setModalVisible] = useState(false);
-    const [selectedItem, setSelectedItem] = useState<any>(null);
     const [search, setSearch] = useState('');
+    const [loading, setLoading] = useState(false);
 
-    const handleUpdate = (updatedData: any) => {
-        setItems(prev => prev.map(i => i.id === updatedData.id ? updatedData : i));
-        setModalVisible(false);
-        setSelectedItem(null);
+    // Filtra reservas por número de quarto ou data
+    const filteredItems = items.filter(
+        (i) =>
+            i.numero.toLowerCase().includes(search.toLowerCase()) ||
+            i.dataReserva.includes(search)
+    );
+
+    // Carrega a lista de reservas
+    const loadReservas = useCallback(async () => {
+        try {
+            setLoading(true);
+            // TODO: Implementar ReservaService.getAll()
+            // const data = await ReservaService.getAll();
+            // setItems(data);
+        } catch (error) {
+            console.error('Erro ao carregar reservas:', error);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useFocusEffect(
+        useCallback(() => {
+            loadReservas();
+        }, [loadReservas])
+    );
+
+    // Navega para tela de informações da reserva
+    const handleReservaPress = (id: string) => {
+        router.push({
+            pathname: '/screens/Reserva/InfoReserva',
+            params: { id },
+        });
     };
 
-    function handleInfoReserva() {
-        router.push({
-            pathname: "/screens/Reserva/InfoReserva",
-            // params: { id: item.id }
-        });
-    }
-const filteredItems = items.filter(i => i.numero.toLowerCase().includes(search.toLowerCase()) || i.dataReserva.includes(search));
+    // Navega para tela de criação de reserva
+    const handleAddReserva = () => {
+        router.push('/screens/Reserva/CriacaoReserva');
+    };
 
+    // Renderiza cada card de reserva
+    const renderReservaCard = ({ item }: { item: Reserva }) => (
+        <TouchableOpacity
+            style={styles.reservaCard}
+            onPress={() => handleReservaPress(item.id)}
+            activeOpacity={0.7}
+        >
+            <View style={styles.cardIcon}>
+                <Ionicons name="bed" size={32} color="#0162B3" />
+            </View>
+            <View style={styles.cardContent}>
+                <View style={styles.cardHeader}>
+                    <Text style={styles.cardLabel}>Quarto</Text>
+                    <Text style={styles.cardNumber}>{item.numero}</Text>
+                </View>
+                <View style={styles.cardFooter}>
+                    <Ionicons name="calendar-outline" size={14} color="#64748B" />
+                    <Text style={styles.cardDate} numberOfLines={1}>
+                        {item.dataReserva}
+                    </Text>
+                </View>
+            </View>
+        </TouchableOpacity>
+    );
 
     return (
-        <SafeAreaProvider>
-            <SafeAreaView style={{backgroundColor: "black", width: "100%", flex: 1}}>
-                <View style={{backgroundColor: "white", flex: 1, width: "100%", height: "100%"}}>                    
-                    <View style={styles.mainContainer}>
-                        <View style={{alignItems: 'center', marginBottom: 20}}>
-                            <Text style={{fontSize: 24, fontWeight: 'bold', alignSelf: 'flex-start', marginHorizontal: 50, marginTop: 15, color: '#FFE157'}}>Funcionalidades</Text>
-                            <View style={styles.gridContainer}>
-                                <InfoCard title="Adicionar" elevate={false} onPress={() => {router.push('/screens/Reserva/CriacaoReserva')}}/>                            
-                            </View>
-                        </View>
-                        <TextInputRounded value={search} onChangeText={setSearch} />
-                        <View style={[styles.gridContainer, {flex: 1, backgroundColor: "#EFEFF0" ,borderTopLeftRadius: 50, borderTopRightRadius: 50, paddingHorizontal: 30, justifyContent: 'center', paddingTop: 20, flexDirection: 'column'}]}>
-                            <Text style={{fontSize: 24, fontWeight: 'bold', alignSelf: 'flex-start', marginTop: 15, color: '#4BBAED'}}>Lista de Clientes</Text>
-                            <FlatList
-                                data={filteredItems}
-                                keyExtractor={item => item.id}
-                                numColumns={2}
-                                renderItem={({ item }) => (
-                                    <View style={{flex: 1, margin: 5}}>
-                                        <InfoCard
-                                            iconName="bed"                                            // elevate={false}
-                                            title={item.numero}
-                                            subtitle={item.dataReserva}
-                                            onPress={handleInfoReserva}
-                                        />
-                                    </View>
-                                )}
-                            />
-                        </View>
-                    </View>
-                </View>
-            </SafeAreaView>
-        </SafeAreaProvider>
-    )
-}
+        <View style={styles.container}>
+            {/* Header customizado para listagem */}
+            <View style={styles.topHeader}>
+                <TouchableOpacity onPress={() => router.push('/screens/(tabs)')} style={styles.backButton}>
+                    <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>Reservas</Text>
+            </View>
 
+            <View style={styles.content}>
+                {/* Header com título e botão */}
+                <View style={styles.header}>
+                    <View style={styles.titleContainer}>
+                        <Ionicons name="calendar" size={24} color="#0162B3" />
+                        <Text style={styles.title}>Lista de Reservas</Text>
+                    </View>
+                    <Text style={styles.subtitle}>
+                        {filteredItems.length}{' '}
+                        {filteredItems.length === 1 ? 'reserva encontrada' : 'reservas encontradas'}
+                    </Text>
+                </View>
+
+                <Separator marginTop={16} marginBottom={20} />
+
+                {/* Botão de adicionar */}
+                <View style={styles.actionContainer}>
+                    <ActionButton
+                        variant="primary"
+                        icon="add-circle-outline"
+                        onPress={handleAddReserva}
+                    >
+                        Adicionar Nova Reserva
+                    </ActionButton>
+                </View>
+
+                {/* Campo de busca */}
+                <View style={styles.searchContainer}>
+                    <TextInputRounded
+                        value={search}
+                        onChangeText={setSearch}
+                        placeholder="Buscar por quarto ou data..."
+                    />
+                </View>
+
+                {/* Lista de reservas */}
+                {filteredItems.length > 0 ? (
+                    <FlatList
+                        data={filteredItems}
+                        keyExtractor={(item) => item.id}
+                        renderItem={renderReservaCard}
+                        numColumns={2}
+                        columnWrapperStyle={styles.row}
+                        contentContainerStyle={styles.listContent}
+                        showsVerticalScrollIndicator={false}
+                    />
+                ) : (
+                    <View style={styles.emptyContainer}>
+                        <Ionicons name="search-outline" size={64} color="#CBD5E1" />
+                        <Text style={styles.emptyTitle}>Nenhuma reserva encontrada</Text>
+                        <Text style={styles.emptySubtitle}>
+                            {search
+                                ? 'Tente buscar com outros termos'
+                                : 'Adicione uma nova reserva para começar'}
+                        </Text>
+                    </View>
+                )}
+            </View>
+        </View>
+    );
+};
+
+export default ListagemReserva;
 
 const styles = StyleSheet.create({
-    mainContainer: {
+    container: {
         flex: 1,
-        width: "100%",
-        backgroundColor: "#132F3B",
+        backgroundColor: '#132F3B',
     },
-    gridContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    padding: 10,
-    gap: 10,
-    // backgroundColor: "red",
-  },
-  gridRow: {
-    flexDirection: 'row',
-    gap: 10,
-    paddingHorizontal: 26,
-    justifyContent: 'center'
-  },
-  gridItem: {
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: '#718FE9',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 10,
-    width: '50%',
-    height: 160,
-  },
-  text: {
-    fontSize: 24,
-    color: "#718FE9",
-    fontWeight: "bold",
-    textAlign: 'center'
-  }
-})
+    topHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingTop: 50,
+        paddingBottom: 16,
+        paddingHorizontal: 16,
+        backgroundColor: '#132F3B',
+        gap: 16,
+    },
+    backButton: {
+        width: 40,
+        height: 40,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    headerTitle: {
+        fontSize: 24,
+        fontWeight: '700',
+        color: '#FFFFFF',
+        flex: 1,
+    },
+    content: {
+        flex: 1,
+        backgroundColor: '#F8FAFC',
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        paddingHorizontal: 20,
+        paddingTop: 20,
+    },
+    header: {
+        gap: 8,
+    },
+    titleContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+    },
+    title: {
+        fontSize: 24,
+        fontWeight: '700',
+        color: '#132F3B',
+    },
+    subtitle: {
+        fontSize: 14,
+        color: '#64748B',
+    },
+    actionContainer: {
+        marginBottom: 16,
+    },
+    searchContainer: {
+        marginBottom: 20,
+    },
+    listContent: {
+        paddingBottom: 20,
+    },
+    row: {
+        justifyContent: 'space-between',
+        marginBottom: 16,
+    },
+    reservaCard: {
+        flex: 1,
+        maxWidth: '48%',
+        backgroundColor: '#FFFFFF',
+        borderRadius: 16,
+        padding: 16,
+        borderWidth: 1.5,
+        borderColor: '#E2E8F0',
+        gap: 12,
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+    },
+    cardIcon: {
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        backgroundColor: '#EFF6FF',
+        justifyContent: 'center',
+        alignItems: 'center',
+        alignSelf: 'center',
+    },
+    cardContent: {
+        gap: 8,
+    },
+    cardHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+    },
+    cardLabel: {
+        fontSize: 13,
+        color: '#64748B',
+        fontWeight: '500',
+    },
+    cardNumber: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#132F3B',
+        fontFamily: 'monospace',
+    },
+    cardFooter: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 4,
+    },
+    cardDate: {
+        fontSize: 12,
+        color: '#64748B',
+        textAlign: 'center',
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingVertical: 40,
+        gap: 12,
+    },
+    emptyTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#475569',
+    },
+    emptySubtitle: {
+        fontSize: 14,
+        color: '#94A3B8',
+        textAlign: 'center',
+        paddingHorizontal: 32,
+    },
+});
