@@ -1,240 +1,453 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
-import { useRouter } from 'expo-router';
-import InputText from '@/src/components/input';
-import ButtonPoint from '@/src/components/button';
-import { criarCliente } from '@/src/services/clientesService';
-import type { Cliente } from '@/src/services/clientesService';
+import { ActionButton } from '@/src/components/ActionButton';
+import { FormInput } from '@/src/components/FormInput';
+import { InfoHeader } from '@/src/components/InfoHeader';
+import { Separator } from '@/src/components/Separator';
 import { useToast } from '@/src/components/ToastContext';
+import { ClienteService } from '@/src/services/ClienteService';
+import type { ClienteFormData } from '@/src/types/cliente';
+import { getSuccessMessage, getValidationMessage } from '@/src/utils/errorMessages';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-export default function CriacaoCliente() {
+const CriarCliente: React.FC = () => {
     const router = useRouter();
     const { showSuccess, showError } = useToast();
-    const [loading, setLoading] = useState(false);
 
-    const [nomeCompleto, setNomeCompleto] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [name, setName] = useState('');
     const [cpf, setCpf] = useState('');
     const [email, setEmail] = useState('');
-    const [telefone, setTelefone] = useState('');
-    const [endereco, setEndereco] = useState('');
-    const [cidade, setCidade] = useState('');
-    const [estado, setEstado] = useState('');
-    const [pais, setPais] = useState('');
-    const [dataNascimento, setDataNascimento] = useState('');
+    const [phone, setPhone] = useState('');
+    const [street, setStreet] = useState('');
+    const [number, setNumber] = useState('');
+    const [neighborhood, setNeighborhood] = useState('');
+    const [city, setCity] = useState('');
+    const [state, setState] = useState('');
+    const [zipCode, setZipCode] = useState('');
 
-    const validarCampos = (): boolean => {
-        if (!nomeCompleto.trim()) {
-            showError('Nome completo é obrigatório');
-            return false;
+    // Formata CPF (000.000.000-00)
+    const handleCpfChange = (text: string) => {
+        const numbersOnly = text.replace(/\D/g, '');
+        const limited = numbersOnly.slice(0, 11);
+
+        let formatted = limited;
+        if (limited.length >= 4) {
+            formatted = `${limited.slice(0, 3)}.${limited.slice(3)}`;
         }
-        if (!cpf.trim()) {
-            showError('CPF é obrigatório');
-            return false;
+        if (limited.length >= 7) {
+            formatted = `${limited.slice(0, 3)}.${limited.slice(3, 6)}.${limited.slice(6)}`;
         }
-        if (!email.trim()) {
-            showError('Email é obrigatório');
-            return false;
+        if (limited.length >= 10) {
+            formatted = `${limited.slice(0, 3)}.${limited.slice(3, 6)}.${limited.slice(6, 9)}-${limited.slice(9)}`;
         }
-        if (!telefone.trim()) {
-            showError('Telefone é obrigatório');
-            return false;
+
+        setCpf(formatted);
+    };
+
+    // Formata telefone ((00) 00000-0000)
+    const handlePhoneChange = (text: string) => {
+        const numbersOnly = text.replace(/\D/g, '');
+        const limited = numbersOnly.slice(0, 11);
+
+        let formatted = limited;
+        if (limited.length >= 3) {
+            formatted = `(${limited.slice(0, 2)}) ${limited.slice(2)}`;
         }
+        if (limited.length >= 8) {
+            formatted = `(${limited.slice(0, 2)}) ${limited.slice(2, 7)}-${limited.slice(7)}`;
+        }
+
+        setPhone(formatted);
+    };
+
+    // Formata CEP (00000-000)
+    const handleZipCodeChange = (text: string) => {
+        const numbersOnly = text.replace(/\D/g, '');
+        const limited = numbersOnly.slice(0, 8);
+
+        let formatted = limited;
+        if (limited.length >= 6) {
+            formatted = `${limited.slice(0, 5)}-${limited.slice(5)}`;
+        }
+
+        setZipCode(formatted);
+    };
+
+    // Valida CPF
+    const validateCpf = (cpfString: string): boolean => {
+        const cpfNumbers = cpfString.replace(/\D/g, '');
+
+        if (cpfNumbers.length !== 11) return false;
+        if (/^(\d)\1{10}$/.test(cpfNumbers)) return false;
+
+        let sum = 0;
+        for (let i = 0; i < 9; i++) {
+            sum += parseInt(cpfNumbers.charAt(i)) * (10 - i);
+        }
+        let firstDigit = 11 - (sum % 11);
+        if (firstDigit >= 10) firstDigit = 0;
+        if (firstDigit !== parseInt(cpfNumbers.charAt(9))) return false;
+
+        sum = 0;
+        for (let i = 0; i < 10; i++) {
+            sum += parseInt(cpfNumbers.charAt(i)) * (11 - i);
+        }
+        let secondDigit = 11 - (sum % 11);
+        if (secondDigit >= 10) secondDigit = 0;
+        if (secondDigit !== parseInt(cpfNumbers.charAt(10))) return false;
+
         return true;
     };
 
-    const handleCriar = async () => {
-        console.log('🔵 [CriacaoCliente] handleCriar iniciado');
-        
-        if (!validarCampos()) {
-            console.log('❌ [CriacaoCliente] Validação falhou');
+    // Valida email
+    const validateEmail = (emailString: string): boolean => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(emailString);
+    };
+
+    const handleSave = async () => {
+        console.log('🔵 [CriacaoCliente] handleSave iniciado');
+
+        // Validações
+        if (!name.trim()) {
+            showError(getValidationMessage('name', 'required'));
+            return;
+        }
+
+        if (name.trim().length < 3) {
+            showError('O nome deve ter pelo menos 3 caracteres.');
+            return;
+        }
+
+        if (!cpf.trim()) {
+            showError(getValidationMessage('cpf', 'required'));
+            return;
+        }
+
+        const cpfRegex = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/;
+        if (!cpfRegex.test(cpf)) {
+            showError(getValidationMessage('cpf_format', 'invalid'));
+            return;
+        }
+
+        if (!validateCpf(cpf)) {
+            showError(getValidationMessage('cpf_digits', 'invalid'));
+            return;
+        }
+
+        if (!email.trim()) {
+            showError(getValidationMessage('email', 'required'));
+            return;
+        }
+
+        if (!validateEmail(email)) {
+            showError(getValidationMessage('email', 'invalid'));
+            return;
+        }
+
+        if (!phone.trim()) {
+            showError(getValidationMessage('phone', 'required'));
+            return;
+        }
+
+        const phoneRegex = /^\(\d{2}\) \d{5}-\d{4}$/;
+        if (!phoneRegex.test(phone)) {
+            showError('Telefone inválido. Use o formato (00) 00000-0000.');
             return;
         }
 
         try {
             setLoading(true);
 
-            const novoCliente: Omit<Cliente, 'id' | 'created_at' | 'updated_at'> = {
-                nome_completo: nomeCompleto.trim(),
-                cpf: cpf.trim(),
-                email: email.trim(),
-                telefone: telefone.trim(),
-                endereco: endereco.trim() || undefined,
-                cidade: cidade.trim() || undefined,
-                estado: estado.trim() || undefined,
-                pais: pais.trim() || undefined,
-                data_nascimento: dataNascimento || undefined,
+            const novoCliente: ClienteFormData = {
+                name: name.trim(),
+                cpf: cpf.replace(/\D/g, ''),
+                email: email.trim().toLowerCase(),
+                phone: phone.replace(/\D/g, ''),
+                street: street.trim(),
+                number: number.trim(),
+                neighborhood: neighborhood.trim(),
+                city: city.trim(),
+                state: state.trim().toUpperCase(),
+                zipCode: zipCode.replace(/\D/g, ''),
             };
 
             console.log('📤 [CriacaoCliente] Enviando dados:', JSON.stringify(novoCliente, null, 2));
-            
-            const resultado = await criarCliente(novoCliente);
-            
+
+            const resultado = await ClienteService.create(novoCliente);
+
             console.log('✅ [CriacaoCliente] Cliente criado com sucesso:', resultado);
 
-            showSuccess('Cliente criado com sucesso!');
-            router.push('/screens/Cliente/ListagemCliente');
+            showSuccess(getSuccessMessage('create'));
+
+            setTimeout(() => {
+                router.push('/screens/Cliente/ListagemCliente');
+            }, 2000);
         } catch (error) {
             console.error('❌ [CriacaoCliente] Erro ao criar cliente:', error);
             console.error('❌ [CriacaoCliente] Detalhes do erro:', JSON.stringify(error, null, 2));
-            showError('Não foi possível criar o cliente');
+            showError('Não foi possível criar o cliente. Tente novamente.');
         } finally {
             setLoading(false);
-            console.log('🔵 [CriacaoCliente] handleCriar finalizado');
+            console.log('🔵 [CriacaoCliente] handleSave finalizado');
         }
     };
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Novo Cliente</Text>
-            
-            <View style={styles.form}>
-                <View style={styles.inputsContainer}>
-                    <InputText 
-                        label='Nome Completo'
-                        leftIcon={<Image source={require("@/assets/images/edit-name.png")} style={{ marginRight: 10 }} />}
-                        value={nomeCompleto}
-                        onChangeText={setNomeCompleto}
-                        editable={!loading}
-                    />
+            <InfoHeader entity="Clientes" onBackPress={() => router.push('/screens/Cliente/ListagemCliente')} />
 
-                    <InputText 
-                        label='CPF'
-                        leftIcon={<Image source={require("@/assets/images/id-cnpj.png")} style={{ marginRight: 10 }} />}
-                        value={cpf}
-                        onChangeText={setCpf}
-                        keyboardType="numeric"
-                        editable={!loading}
-                    />
+            <View style={styles.content}>
+                <ScrollView
+                    style={styles.scrollView}
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                >
+                    {/* Título da seção */}
+                    <View style={styles.titleContainer}>
+                        <Ionicons name="add-circle-outline" size={24} color="#0162B3" />
+                        <Text style={styles.title}>Novo Cliente</Text>
+                    </View>
 
-                    <InputText 
-                        label='E-mail'
-                        leftIcon={<Image source={require("@/assets/images/at-email.png")} style={{ marginRight: 10 }} />}
-                        value={email}
-                        onChangeText={setEmail}
-                        keyboardType="email-address"
-                        autoCapitalize="none"
-                        editable={!loading}
-                    />
-
-                    <InputText 
-                        label='Telefone'
-                        leftIcon={<Image source={require("@/assets/images/callback-vector.png")} style={{ marginRight: 10 }} />}
-                        value={telefone}
-                        onChangeText={setTelefone}
-                        keyboardType="phone-pad"
-                        editable={!loading}
-                    />
-
-                    <InputText 
-                        label='Endereço'
-                        leftIcon={<Image source={require("@/assets/images/edit-name.png")} style={{ marginRight: 10 }} />}
-                        value={endereco}
-                        onChangeText={setEndereco}
-                        editable={!loading}
-                    />
-
-                    <InputText 
-                        label='Cidade'
-                        leftIcon={<Image source={require("@/assets/images/edit-name.png")} style={{ marginRight: 10 }} />}
-                        value={cidade}
-                        onChangeText={setCidade}
-                        editable={!loading}
-                    />
-
-                    <InputText 
-                        label='Estado (ex: PE)'
-                        leftIcon={<Image source={require("@/assets/images/edit-name.png")} style={{ marginRight: 10 }} />}
-                        value={estado}
-                        onChangeText={setEstado}
-                        editable={!loading}
-                    />
-
-                    <InputText 
-                        label='País (ex: Brasil)'
-                        leftIcon={<Image source={require("@/assets/images/edit-name.png")} style={{ marginRight: 10 }} />}
-                        value={pais}
-                        onChangeText={setPais}
-                        editable={!loading}
-                    />
-
-                    <InputText 
-                        label='Data de Nascimento (YYYY-MM-DD)'
-                        leftIcon={<Image source={require("@/assets/images/edit-name.png")} style={{ marginRight: 10 }} />}
-                        value={dataNascimento}
-                        onChangeText={setDataNascimento}
-                        editable={!loading}
-                    />
-                </View>
-
-                <View style={styles.buttonContainer}>
-                    <ButtonPoint 
-                        label={loading ? "Criando..." : "Criar Cliente"}
-                        disabled={loading}
-                        onPress={handleCriar} 
-                    />
-                    <View style={styles.separator} />
-                    <Text style={styles.footerText}>
-                        <Text style={styles.footerLink} onPress={() => router.back()}>
-                            Voltar
-                        </Text>
+                    <Text style={styles.subtitle}>
+                        Cadastre um novo cliente no sistema
                     </Text>
-                </View>
+
+                    <Separator marginTop={16} marginBottom={24} />
+
+                    {/* Formulário */}
+                    <View style={styles.form}>
+                        <View style={styles.fieldGroup}>
+                            <Text style={styles.label}>
+                                Nome Completo <Text style={styles.required}>*</Text>
+                            </Text>
+                            <FormInput
+                                icon="person-outline"
+                                placeholder="Nome completo do cliente"
+                                value={name}
+                                onChangeText={setName}
+                                editable={!loading}
+                                maxLength={100}
+                            />
+                        </View>
+
+                        <View style={styles.row}>
+                            <View style={[styles.fieldGroup, styles.halfWidth]}>
+                                <Text style={styles.label}>
+                                    CPF <Text style={styles.required}>*</Text>
+                                </Text>
+                                <FormInput
+                                    icon="card-outline"
+                                    placeholder="000.000.000-00"
+                                    value={cpf}
+                                    onChangeText={handleCpfChange}
+                                    editable={!loading}
+                                    keyboardType="numeric"
+                                    maxLength={14}
+                                />
+                            </View>
+
+                            <View style={[styles.fieldGroup, styles.halfWidth]}>
+                                <Text style={styles.label}>
+                                    Telefone <Text style={styles.required}>*</Text>
+                                </Text>
+                                <FormInput
+                                    icon="call-outline"
+                                    placeholder="(00) 00000-0000"
+                                    value={phone}
+                                    onChangeText={handlePhoneChange}
+                                    editable={!loading}
+                                    keyboardType="phone-pad"
+                                    maxLength={15}
+                                />
+                            </View>
+                        </View>
+
+                        <View style={styles.fieldGroup}>
+                            <Text style={styles.label}>
+                                E-mail <Text style={styles.required}>*</Text>
+                            </Text>
+                            <FormInput
+                                icon="mail-outline"
+                                placeholder="cliente@email.com"
+                                value={email}
+                                onChangeText={setEmail}
+                                editable={!loading}
+                                keyboardType="email-address"
+                                autoCapitalize="none"
+                                maxLength={100}
+                            />
+                        </View>
+
+                        <View style={styles.row}>
+                            <View style={[styles.fieldGroup, styles.halfWidth]}>
+                                <Text style={styles.label}>Rua</Text>
+                                <FormInput
+                                    icon="location-outline"
+                                    placeholder="Nome da rua"
+                                    value={street}
+                                    onChangeText={setStreet}
+                                    editable={!loading}
+                                    maxLength={100}
+                                />
+                            </View>
+
+                            <View style={[styles.fieldGroup, styles.halfWidth]}>
+                                <Text style={styles.label}>Número</Text>
+                                <FormInput
+                                    icon="keypad-outline"
+                                    placeholder="Ex: 123"
+                                    value={number}
+                                    onChangeText={setNumber}
+                                    editable={!loading}
+                                    maxLength={10}
+                                />
+                            </View>
+                        </View>
+
+                        <View style={styles.fieldGroup}>
+                            <Text style={styles.label}>Bairro</Text>
+                            <FormInput
+                                icon="map-outline"
+                                placeholder="Nome do bairro"
+                                value={neighborhood}
+                                onChangeText={setNeighborhood}
+                                editable={!loading}
+                                maxLength={100}
+                            />
+                        </View>
+
+                        <View style={styles.row}>
+                            <View style={[styles.fieldGroup, styles.halfWidth]}>
+                                <Text style={styles.label}>Cidade</Text>
+                                <FormInput
+                                    icon="business-outline"
+                                    placeholder="Ex: Recife"
+                                    value={city}
+                                    onChangeText={setCity}
+                                    editable={!loading}
+                                    maxLength={100}
+                                />
+                            </View>
+
+                            <View style={[styles.fieldGroup, styles.halfWidth]}>
+                                <Text style={styles.label}>Estado</Text>
+                                <FormInput
+                                    icon="map-outline"
+                                    placeholder="PE"
+                                    value={state}
+                                    onChangeText={setState}
+                                    editable={!loading}
+                                    maxLength={2}
+                                />
+                            </View>
+                        </View>
+
+                        <View style={styles.fieldGroup}>
+                            <Text style={styles.label}>CEP</Text>
+                            <FormInput
+                                icon="navigate-outline"
+                                placeholder="00000-000"
+                                value={zipCode}
+                                onChangeText={handleZipCodeChange}
+                                editable={!loading}
+                                keyboardType="numeric"
+                                maxLength={9}
+                            />
+                        </View>
+                    </View>
+
+                    <Separator marginTop={24} marginBottom={16} />
+
+                    {/* Botões de ação */}
+                    <View style={styles.actions}>
+                        <ActionButton
+                            variant="primary"
+                            icon="checkmark-circle-outline"
+                            onPress={handleSave}
+                            disabled={loading}
+                        >
+                            {loading ? 'Criando...' : 'Criar Cliente'}
+                        </ActionButton>
+
+                        <ActionButton
+                            variant="secondary"
+                            icon="close-circle-outline"
+                            onPress={() => router.push('/screens/Cliente/ListagemCliente')}
+                            disabled={loading}
+                        >
+                            Cancelar
+                        </ActionButton>
+                    </View>
+                </ScrollView>
             </View>
         </View>
     );
-}
+};
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#132f3b',
+        backgroundColor: '#132F3B',
+    },
+    content: {
+        flex: 1,
+        backgroundColor: '#F8FAFC',
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        overflow: 'hidden',
+    },
+    scrollView: {
+        flex: 1,
+    },
+    scrollContent: {
+        flexGrow: 1,
+        padding: 20,
+        paddingBottom: 40,
+    },
+    titleContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        marginBottom: 8,
     },
     title: {
-        color: '#ffe157',
         fontSize: 24,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        marginTop: 60,
-        marginBottom: 20,
+        fontWeight: '700',
+        color: '#132F3B',
+    },
+    subtitle: {
+        fontSize: 14,
+        color: '#64748B',
+        lineHeight: 20,
     },
     form: {
-        flex: 1,
-        width: '100%',
-        backgroundColor: '#efeff0',
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        paddingVertical: 30,
-        paddingHorizontal: 24,
-        paddingBottom: 20,
-        elevation: 6,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 6,
-        marginTop: 20,
+        gap: 20,
     },
-    inputsContainer: {
-        width: '100%',
+    fieldGroup: {
+        gap: 8,
+    },
+    label: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#334155',
+        marginBottom: 4,
+    },
+    required: {
+        color: '#EF4444',
+    },
+    row: {
+        flexDirection: 'row',
         gap: 12,
     },
-    buttonContainer: {
-        width: '100%',
-        marginTop: 20,
-        alignItems: 'center',
+    halfWidth: {
+        flex: 1,
     },
-    separator: {
-        width: '80%',
-        height: 1,
-        backgroundColor: '#ccc',
-        marginVertical: 20,
-    },
-    footerText: {
-        color: '#666',
-        fontSize: 14,
-        textAlign: 'center',
-    },
-    footerLink: {
-        color: '#0162b3',
-        fontWeight: 'bold',
+    actions: {
+        gap: 12,
     },
 });
+
+export default CriarCliente;

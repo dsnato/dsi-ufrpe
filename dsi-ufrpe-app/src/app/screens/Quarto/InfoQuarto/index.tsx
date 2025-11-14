@@ -6,8 +6,7 @@ import { Loading } from '@/src/components/Loading';
 import { Separator } from '@/src/components/Separator';
 import { StatusBadge } from '@/src/components/StatusBadge';
 import { TitleSection } from '@/src/components/TitleSection';
-import { QuartoService } from '@/src/services/QuartoService';
-import { Quarto } from '@/src/types/quarto';
+import { buscarQuartoPorId, excluirQuarto, Quarto } from '@/src/services/quartosService';
 import { formatCurrency, withPlaceholder } from '@/src/utils/formatters';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
@@ -37,7 +36,7 @@ const InfoQuarto: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        const data = await QuartoService.getById(id);
+        const data = await buscarQuartoPorId(id as string);
 
         if (!data) {
             setError('Quarto não encontrado');
@@ -72,9 +71,8 @@ const InfoQuarto: React.FC = () => {
                     text: "Excluir",
                     style: "destructive",
                     onPress: async () => {
-                        const success = await QuartoService.delete(id);
-
-                        if (success) {
+                        try {
+                            await excluirQuarto(id as string);
                             Alert.alert(
                                 "Sucesso",
                                 "Quarto excluído com sucesso!",
@@ -85,7 +83,7 @@ const InfoQuarto: React.FC = () => {
                                     }
                                 ]
                             );
-                        } else {
+                        } catch (error) {
                             Alert.alert(
                                 "Erro",
                                 "Não foi possível excluir o quarto. Tente novamente."
@@ -139,12 +137,12 @@ const InfoQuarto: React.FC = () => {
                 <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
                     {/* Título do quarto com badge de disponibilidade */}
                     <TitleSection
-                        title={`Quarto ${withPlaceholder(quarto.numero, 'S/N')}`}
+                        title={`Quarto ${withPlaceholder(quarto.numero_quarto, 'S/N')}`}
                         subtitle="Número do quarto"
                         badge={
                             <StatusBadge
-                                text={quarto.disponivel ? 'Disponível' : 'Ocupado'}
-                                color={quarto.disponivel ? '#10B981' : '#EF4444'}
+                                text={quarto.status === 'Disponivel' ? 'Disponível' : quarto.status === 'Ocupado' ? 'Ocupado' : 'Manutenção'}
+                                color={quarto.status === 'Disponivel' ? '#10B981' : '#EF4444'}
                             />
                         }
                     />
@@ -159,13 +157,13 @@ const InfoQuarto: React.FC = () => {
                     <InfoRow
                         icon="people-outline"
                         label="CAPACIDADE DO QUARTO"
-                        value={`${quarto.capacidade} ${quarto.capacidade === 1 ? 'pessoa' : 'pessoas'}`}
+                        value={`${quarto.capacidade_pessoas || 0} ${quarto.capacidade_pessoas === 1 ? 'pessoa' : 'pessoas'}`}
                     />
 
                     <InfoRow
                         icon="cash-outline"
                         label="PREÇO DO QUARTO"
-                        value={formatCurrency(quarto.preco)}
+                        value={formatCurrency(quarto.preco_diario || 0)}
                     />
 
                     {quarto.descricao && (
