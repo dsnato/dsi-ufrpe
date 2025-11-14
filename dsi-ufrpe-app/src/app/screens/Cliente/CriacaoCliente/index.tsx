@@ -1,11 +1,13 @@
 import { ActionButton } from '@/src/components/ActionButton';
 import { FormInput } from '@/src/components/FormInput';
+import { FormSelect } from '@/src/components/FormSelect';
 import { InfoHeader } from '@/src/components/InfoHeader';
 import { Separator } from '@/src/components/Separator';
 import { useToast } from '@/src/components/ToastContext';
 import { ClienteService } from '@/src/services/ClienteService';
 import type { ClienteFormData } from '@/src/types/cliente';
 import { getSuccessMessage, getValidationMessage } from '@/src/utils/errorMessages';
+import { estadosBrasileiros } from '@/src/utils/estadosBrasileiros';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
@@ -158,6 +160,11 @@ const CriarCliente: React.FC = () => {
             return;
         }
 
+        if (!state) {
+            showError(getValidationMessage('state', 'required'));
+            return;
+        }
+
         try {
             setLoading(true);
 
@@ -170,7 +177,7 @@ const CriarCliente: React.FC = () => {
                 number: number.trim(),
                 neighborhood: neighborhood.trim(),
                 city: city.trim(),
-                state: state.trim().toUpperCase(),
+                state: state, // Já vem da seleção em uppercase (ex: 'PE')
                 zipCode: zipCode.replace(/\D/g, ''),
             };
 
@@ -333,14 +340,15 @@ const CriarCliente: React.FC = () => {
                             </View>
 
                             <View style={[styles.fieldGroup, styles.halfWidth]}>
-                                <Text style={styles.label}>Estado</Text>
-                                <FormInput
+                                <Text style={styles.label}>Estado <Text style={styles.required}>*</Text></Text>
+                                <FormSelect
                                     icon="map-outline"
-                                    placeholder="PE"
+                                    placeholder="Selecione o estado"
                                     value={state}
-                                    onChangeText={setState}
-                                    editable={!loading}
-                                    maxLength={2}
+                                    options={estadosBrasileiros}
+                                    onSelect={setState}
+                                    disabled={loading}
+                                    helperText="UF do estado"
                                 />
                             </View>
                         </View>
