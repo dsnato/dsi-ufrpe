@@ -1,8 +1,10 @@
 import { FontAwesome } from "@expo/vector-icons";
 import { StyleSheet, TextInput, TextInputProps, View } from "react-native";
+
 type TextInputRoundedProps = TextInputProps & {
     placeholder?: string;
 }
+
 export default function TextInputRounded({ placeholder, ...rest }: TextInputRoundedProps) {
     return (
         <View style={styles.container}>
