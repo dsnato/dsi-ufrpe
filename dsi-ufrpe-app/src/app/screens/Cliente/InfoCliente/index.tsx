@@ -5,11 +5,12 @@ import { InfoRow } from '@/src/components/InfoRow';
 import { Loading } from '@/src/components/Loading';
 import { ProfileSection } from '@/src/components/ProfileSection';
 import { Separator } from '@/src/components/Separator';
-import { buscarClientePorId, excluirCliente, Cliente } from '@/src/services/clientesService';
+import { buscarClientePorId, Cliente, excluirCliente } from '@/src/services/clientesService';
 import { formatCPF, formatPhone, withPlaceholder } from '@/src/utils/formatters';
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function InfoCliente() {
     const router = useRouter();
@@ -126,7 +127,7 @@ export default function InfoCliente() {
     }
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container} edges={['top']}>
             {/* ✅ REQUISITO 9: Breadcrumb/indicador de navegação */}
             <InfoHeader entity="Clientes" onBackPress={() => router.back()} />
 
@@ -199,7 +200,7 @@ export default function InfoCliente() {
                     </ActionButton>
                 </View>
             </View>
-        </View>
+        </SafeAreaView>
     )
 }
 
