@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const EditarFuncionario: React.FC = () => {
     const router = useRouter();
@@ -248,7 +249,7 @@ const EditarFuncionario: React.FC = () => {
     };
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container} edges={['top']}>
             <InfoHeader entity="Funcionários" onBackPress={() => router.push('/screens/Funcionario/ListagemFuncionario')} />
 
             <View style={styles.content}>
@@ -454,7 +455,7 @@ const EditarFuncionario: React.FC = () => {
                     </View>
                 </ScrollView>
             </View>
-        </View>
+        </SafeAreaView>
     );
 };
 
