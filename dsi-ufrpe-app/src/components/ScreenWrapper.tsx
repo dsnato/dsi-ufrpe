@@ -1,6 +1,7 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import React from 'react';
+import { StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface ScreenWrapperProps {
   children: React.ReactNode;
@@ -8,16 +9,19 @@ interface ScreenWrapperProps {
   backgroundColor?: string;
 }
 
-export default function ScreenWrapper({ 
-  children, 
+export default function ScreenWrapper({
+  children,
   statusBarStyle = 'light',
   backgroundColor = 'transparent'
 }: ScreenWrapperProps) {
   return (
-    <View style={[styles.container, { backgroundColor }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor }]}
+      edges={['top', 'left', 'right']}
+    >
       <StatusBar style={statusBarStyle} />
       {children}
-    </View>
+    </SafeAreaView>
   );
 }
 
