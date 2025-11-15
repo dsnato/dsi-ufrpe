@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { AppState, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 AppState.addEventListener('change', (state) => {
   if (state === 'active') {
@@ -53,7 +54,7 @@ const LoginScreen: React.FC = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header com Logo */}
       <View style={styles.header}>
         <View style={styles.logoContainer}>
@@ -133,7 +134,7 @@ const LoginScreen: React.FC = () => {
           <Text style={styles.forgotPasswordText}>Esqueceu sua senha?</Text>
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 

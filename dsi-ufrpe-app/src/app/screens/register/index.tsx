@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function RegisterScreen() {
     const [loading, setLoading] = useState(false);
@@ -177,7 +178,7 @@ export default function RegisterScreen() {
     };
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container} edges={['top']}>
             {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity
@@ -304,7 +305,7 @@ export default function RegisterScreen() {
                     </ActionButton>
                 </View>
             </ScrollView>
-        </View>
+        </SafeAreaView>
     );
 };
 
