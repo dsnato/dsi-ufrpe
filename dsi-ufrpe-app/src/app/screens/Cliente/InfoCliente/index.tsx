@@ -113,7 +113,7 @@ export default function InfoCliente() {
     if (error || !cliente) {
         return (
             <View style={styles.container}>
-                <InfoHeader entity="Clientes" onBackPress={() => router.back()} />
+                <InfoHeader entity="Clientes" onBackPress={() => router.push("/screens/Cliente/ListagemCliente")} />
                 <View style={styles.subContainer}>
                     <ErrorState
                         message={error || 'Cliente não encontrado'}
@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
     subContainer: {
         flex: 1,
         width: '100%',
-        backgroundColor: '#FFFFFF',
+        backgroundColor: '#fafafa',
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         paddingVertical: 24,
