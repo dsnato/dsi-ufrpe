@@ -41,7 +41,7 @@ const LoginScreen: React.FC = () => {
     } else {
       showSuccess(getSuccessMessage('login'))
       setTimeout(() => {
-        router.replace('/screens/(tabs)')
+        router.replace('/screens/home')
       }, 3000)
     }
 
