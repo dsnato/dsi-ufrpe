@@ -1,56 +1,93 @@
 import { supabase } from '@/lib/supabase';
-import ButtonPoint from '@/src/components/button';
-import InputText from '@/src/components/input';
-import PasswordInput from '@/src/components/password';
+import { ActionButton } from '@/src/components/ActionButton';
+import { FormInput } from '@/src/components/FormInput';
+import { Separator } from '@/src/components/Separator';
 import { useToast } from '@/src/components/ToastContext';
 import { getSuccessMessage, getValidationMessage, translateAuthError } from '@/src/utils/errorMessages';
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function RegisterScreen() {
     const [loading, setLoading] = useState(false);
     const { showSuccess, showError, showInfo } = useToast();
-    const [form, setForm] = useState({
-        name: '',
-        email: '',
-        password: '',
-        confirmPassword: '',
-        cnpj: '',
-        hotelName: '',
-        telefone: '',
-    });
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [cnpj, setCnpj] = useState('');
+    const [hotelName, setHotelName] = useState('');
+    const [telefone, setTelefone] = useState('');
+
+    // Formata CNPJ (00.000.000/0000-00)
+    const handleCnpjChange = (text: string) => {
+        const numbersOnly = text.replace(/\D/g, '');
+        const limited = numbersOnly.slice(0, 14);
+
+        let formatted = limited;
+        if (limited.length >= 3) {
+            formatted = `${limited.slice(0, 2)}.${limited.slice(2)}`;
+        }
+        if (limited.length >= 6) {
+            formatted = `${limited.slice(0, 2)}.${limited.slice(2, 5)}.${limited.slice(5)}`;
+        }
+        if (limited.length >= 9) {
+            formatted = `${limited.slice(0, 2)}.${limited.slice(2, 5)}.${limited.slice(5, 8)}/${limited.slice(8)}`;
+        }
+        if (limited.length >= 13) {
+            formatted = `${limited.slice(0, 2)}.${limited.slice(2, 5)}.${limited.slice(5, 8)}/${limited.slice(8, 12)}-${limited.slice(12)}`;
+        }
+
+        setCnpj(formatted);
+    };
+
+    // Formata telefone ((00) 00000-0000)
+    const handleTelefoneChange = (text: string) => {
+        const numbersOnly = text.replace(/\D/g, '');
+        const limited = numbersOnly.slice(0, 11);
+
+        let formatted = limited;
+        if (limited.length >= 3) {
+            formatted = `(${limited.slice(0, 2)}) ${limited.slice(2)}`;
+        }
+        if (limited.length >= 8) {
+            formatted = `(${limited.slice(0, 2)}) ${limited.slice(2, 7)}-${limited.slice(7)}`;
+        }
+
+        setTelefone(formatted);
+    };
 
     async function signUpWithEmail() {
-        setLoading(true)
+        setLoading(true);
         const {
-        data: { session },
-        error,
+            data: { session },
+            error,
         } = await supabase.auth.signUp({
-        email: form.email,
-        password: form.password,
-        options: {
-            data: {
-            display_name: form.name,
-            phone: form.telefone,
-            cnpj: form.cnpj,
-            hotel_name: form.hotelName,
+            email: email,
+            password: password,
+            options: {
+                data: {
+                    display_name: name,
+                    phone: telefone.replace(/\D/g, ''),
+                    cnpj: cnpj.replace(/\D/g, ''),
+                    hotel_name: hotelName,
+                }
             }
-        }
-        })
-        
+        });
+
         if (error) {
-            showError(translateAuthError(error.message))
+            showError(translateAuthError(error.message));
         } else if (!session) {
-            showInfo('📧 Verifique seu e-mail para confirmar o cadastro e ativar sua conta!')
+            showInfo('📧 Verifique seu e-mail para confirmar o cadastro e ativar sua conta!');
         } else {
-            showSuccess(getSuccessMessage('signup'))
+            showSuccess(getSuccessMessage('signup'));
             setTimeout(() => {
-                router.replace('/')
-            }, 3000)
+                router.replace('/');
+            }, 3000);
         }
-        
-        setLoading(false)
+
+        setLoading(false);
     }
 
 
@@ -61,106 +98,212 @@ export default function RegisterScreen() {
 
     const handleSubmitRegister = () => {
         // Validação do nome
-        if (!form.name) {
+        if (!name.trim()) {
             showError(getValidationMessage('name', 'required'));
             return;
         }
 
+        if (name.trim().length < 3) {
+            showError('O nome deve ter pelo menos 3 caracteres.');
+            return;
+        }
+
         // Validação do email
-        if (!form.email) {
+        if (!email.trim()) {
             showError(getValidationMessage('email', 'required'));
             return;
         }
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(form.email)) {
+        if (!emailRegex.test(email)) {
             showError(getValidationMessage('email', 'invalid'));
             return;
         }
 
         // Validação da senha
-        if (!form.password) {
+        if (!password) {
             showError(getValidationMessage('password', 'required'));
             return;
         }
 
-        if (form.password.length < 6) {
+        if (password.length < 6) {
             showError(getValidationMessage('password', 'invalid'));
             return;
         }
 
         // Validação de confirmação de senha
-        if (!form.confirmPassword) {
+        if (!confirmPassword) {
             showError('Por favor, confirme sua senha.');
             return;
         }
 
-        if (form.password !== form.confirmPassword) {
+        if (password !== confirmPassword) {
             showError(getValidationMessage('password', 'mismatch'));
+            return;
+        }
+
+        // Validação do CNPJ
+        if (!cnpj.trim()) {
+            showError(getValidationMessage('cnpj', 'required'));
+            return;
+        }
+
+        const cnpjRegex = /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/;
+        if (!cnpjRegex.test(cnpj)) {
+            showError(getValidationMessage('cnpj', 'invalid'));
+            return;
+        }
+
+        // Validação do nome do hotel
+        if (!hotelName.trim()) {
+            showError(getValidationMessage('hotel_name', 'required'));
+            return;
+        }
+
+        // Validação do telefone
+        if (!telefone.trim()) {
+            showError(getValidationMessage('phone', 'required'));
+            return;
+        }
+
+        const telefoneRegex = /^\(\d{2}\) \d{5}-\d{4}$/;
+        if (!telefoneRegex.test(telefone)) {
+            showError(getValidationMessage('phone', 'invalid'));
             return;
         }
 
         // Se tudo estiver ok, faz o cadastro
         signUpWithEmail();
-    }
+    };
 
     return (
         <View style={styles.container}>
-            <Text style={styles.textCadastro}>
-                Cadastro
-            </Text>
-            <View style={styles.form}>
-                <View style={styles.inputsContainer}>
-                    <InputText label='Nome'
-                    leftIcon={<Image source={require("@/assets/images/edit-name.png")}
-                    style={{ marginRight: 10 }}></Image>}
-                    value={form.name}
-                    onChangeText={(text) => setForm({ ...form, name: text })} />
-                    <InputText label='E-mail'
-                    leftIcon={<Image source={require("@/assets/images/at-email.png")}
-                    style={{ marginRight: 10 }}></Image>}
-                    value={form.email}
-                    onChangeText={(text) => setForm({ ...form, email: text })} />
-                    <PasswordInput label='Senha'
-                    leftIcon={<Image source={require("@/assets/images/key-password.png")}
-                    style={{ marginRight: 10 }}></Image>}
-                    value={form.password}
-                    onChangeText={(text) => setForm({ ...form, password: text })} />
-                    <PasswordInput label='Confirmar Senha'
-                    leftIcon={<Image source={require("@/assets/images/key-password.png")}
-                    style={{ marginRight: 10 }}></Image>}
-                    value={form.confirmPassword}
-                    onChangeText={(text) => setForm({ ...form, confirmPassword: text })}
-                    onBlur={() => {if(form.confirmPassword && form.confirmPassword !== form.password) showError(getValidationMessage('password', 'mismatch'))}} />
-                    <InputText label='CNPJ'
-                    leftIcon={<Image source={require("@/assets/images/id-cnpj.png")}
-                    style={{ marginRight: 10 }}></Image>}
-                    value={form.cnpj}
-                    onChangeText={(text) => setForm({ ...form, cnpj: text })} />
-                    <InputText label='Nome do Hotel'
-                    leftIcon={<Image source={require("@/assets/images/nome-hotel.png")}
-                    style={{ marginRight: 10 }}></Image>}
-                    value={form.hotelName}
-                    onChangeText={(text) => setForm({ ...form, hotelName: text })} />
-                    <InputText label='Telefone'
-                    leftIcon={<Image source={require("@/assets/images/callback-vector.png")}
-                    style={{ marginRight: 10 }}></Image>}
-                    value={form.telefone}
-                    onChangeText={(text) => setForm({ ...form, telefone: text })}
-                    keyboardType="phone-pad" />
+            {/* Header */}
+            <View style={styles.header}>
+                <TouchableOpacity
+                    style={styles.backButton}
+                    onPress={() => router.back()}
+                >
+                    <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>Criar Conta</Text>
+            </View>
+
+            {/* Content */}
+            <ScrollView
+                style={styles.content}
+                contentContainerStyle={styles.scrollContent}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+            >
+                {/* Card de Informações Pessoais */}
+                <View style={styles.sectionCard}>
+                    <View style={styles.sectionHeader}>
+                        <Ionicons name="person-circle-outline" size={24} color="#0162B3" />
+                        <Text style={styles.sectionTitle}>Informações Pessoais</Text>
+                    </View>
+
+                    <Separator marginTop={12} marginBottom={16} />
+
+                    <View style={styles.inputGroup}>
+                        <FormInput
+                            icon="person-outline"
+                            placeholder="Nome completo *"
+                            value={name}
+                            onChangeText={setName}
+                            autoCorrect={false}
+                        />
+
+                        <FormInput
+                            icon="mail-outline"
+                            placeholder="Email *"
+                            value={email}
+                            onChangeText={setEmail}
+                            autoCapitalize="none"
+                            keyboardType="email-address"
+                            autoCorrect={false}
+                        />
+
+                        <FormInput
+                            icon="key-outline"
+                            placeholder="Senha *"
+                            value={password}
+                            onChangeText={setPassword}
+                            secureTextEntry
+                            helperText="Mínimo 6 caracteres"
+                        />
+
+                        <FormInput
+                            icon="key-outline"
+                            placeholder="Confirmar senha *"
+                            value={confirmPassword}
+                            onChangeText={setConfirmPassword}
+                            secureTextEntry
+                        />
+                    </View>
                 </View>
 
-                <View style={styles.buttonContainer}>
-                    <ButtonPoint label="Cadastrar" loading={loading} onPress={handleSubmitRegister} />
-                    <View style={styles.separator} />
-                    <Text style={styles.footerText}>
-                        Já tem uma conta?{' '}
-                        <Text style={styles.footerLink} onPress={handleLoginRedirect}>
-                            Entrar
-                        </Text>
-                    </Text>
+                {/* Card de Informações do Hotel */}
+                <View style={styles.sectionCard}>
+                    <View style={styles.sectionHeader}>
+                        <Ionicons name="business-outline" size={24} color="#0162B3" />
+                        <Text style={styles.sectionTitle}>Informações do Hotel</Text>
+                    </View>
+
+                    <Separator marginTop={12} marginBottom={16} />
+
+                    <View style={styles.inputGroup}>
+                        <FormInput
+                            icon="business-outline"
+                            placeholder="Nome do Hotel *"
+                            value={hotelName}
+                            onChangeText={setHotelName}
+                            autoCorrect={false}
+                        />
+
+                        <FormInput
+                            icon="document-text-outline"
+                            placeholder="CNPJ *"
+                            value={cnpj}
+                            onChangeText={handleCnpjChange}
+                            keyboardType="numeric"
+                            helperText="Formato: 00.000.000/0000-00"
+                            maxLength={18}
+                        />
+
+                        <FormInput
+                            icon="call-outline"
+                            placeholder="Telefone *"
+                            value={telefone}
+                            onChangeText={handleTelefoneChange}
+                            keyboardType="phone-pad"
+                            helperText="Formato: (00) 00000-0000"
+                            maxLength={15}
+                        />
+                    </View>
                 </View>
-            </View>
+
+                {/* Botões de ação */}
+                <View style={styles.actions}>
+                    <ActionButton
+                        variant="primary"
+                        icon="checkmark-circle-outline"
+                        onPress={handleSubmitRegister}
+                        disabled={loading}
+                    >
+                        {loading ? "Cadastrando..." : "Criar Conta"}
+                    </ActionButton>
+
+                    <ActionButton
+                        variant="secondary"
+                        icon="arrow-back-circle-outline"
+                        onPress={handleLoginRedirect}
+                        disabled={loading}
+                    >
+                        Voltar para Login
+                    </ActionButton>
+                </View>
+            </ScrollView>
         </View>
     );
 };
@@ -169,54 +312,65 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#132f3b',
+        backgroundColor: '#132F3B',
     },
-    textCadastro: {
-        color: '#ffe157',
-        fontSize: 24,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        marginTop: 60,
-        marginBottom: 20,
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingTop: 50,
+        paddingBottom: 16,
+        paddingHorizontal: 16,
+        backgroundColor: '#132F3B',
+        gap: 16,
     },
-    form: {
-        flex: 1,
-        width: '100%',
-        backgroundColor: '#efeff0',
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        paddingVertical: 30,
-        paddingHorizontal: 24,
-        paddingBottom: 20,
-        elevation: 6,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 6,
-        marginTop: 20,
-    },
-    inputsContainer: {
-        width: '100%',
-        gap: 12,
-    },
-    buttonContainer: {
-        width: '100%',
-        marginTop: 20,
+    backButton: {
+        width: 40,
+        height: 40,
+        justifyContent: 'center',
         alignItems: 'center',
     },
-    separator: {
-        width: '80%',
-        height: 1,
-        backgroundColor: '#ccc',
-        marginVertical: 20,
+    headerTitle: {
+        fontSize: 24,
+        fontWeight: '700',
+        color: '#FFFFFF',
+        flex: 1,
     },
-    footerText: {
-        color: '#666',
-        fontSize: 14,
-        textAlign: 'center',
+    content: {
+        flex: 1,
+        backgroundColor: '#F8FAFC',
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
     },
-    footerLink: {
-        color: '#0162b3',
-        fontWeight: 'bold',
+    scrollContent: {
+        padding: 20,
+        paddingBottom: 40,
+    },
+    sectionCard: {
+        backgroundColor: '#FFFFFF',
+        borderRadius: 16,
+        padding: 20,
+        marginBottom: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 8,
+        elevation: 2,
+    },
+    sectionHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+    },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#1E293B',
+    },
+    inputGroup: {
+        gap: 16,
+    },
+    actions: {
+        gap: 12,
+        marginTop: 8,
     },
 });
