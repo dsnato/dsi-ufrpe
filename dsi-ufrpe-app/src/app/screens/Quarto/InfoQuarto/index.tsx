@@ -11,6 +11,7 @@ import { formatCurrency, withPlaceholder } from '@/src/utils/formatters';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 
 const InfoQuarto: React.FC = () => {
@@ -100,12 +101,12 @@ const InfoQuarto: React.FC = () => {
      */
     if (loading) {
         return (
-            <View style={styles.container}>
+            <SafeAreaView style={styles.container} edges={['top']}>
                 <InfoHeader entity="Quartos" onBackPress={() => router.back()} />
                 <View style={styles.subContainer}>
                     <Loading message="Carregando quarto..." />
                 </View>
-            </View>
+            </SafeAreaView>
         );
     }
 
@@ -114,7 +115,7 @@ const InfoQuarto: React.FC = () => {
      */
     if (error || !quarto) {
         return (
-            <View style={styles.container}>
+            <SafeAreaView style={styles.container} edges={['top']}>
                 <InfoHeader entity="Quartos" onBackPress={() => router.back()} />
                 <View style={styles.subContainer}>
                     <ErrorState
@@ -123,12 +124,12 @@ const InfoQuarto: React.FC = () => {
                         onGoBack={() => router.push("/screens/Quarto/ListagemQuarto")}
                     />
                 </View>
-            </View>
+            </SafeAreaView>
         );
     }
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container} edges={['top']}>
             {/* ✅ REQUISITO 9: Breadcrumb/indicador de navegação */}
             <InfoHeader entity="Quartos" onBackPress={() => router.back()} />
 
@@ -202,8 +203,7 @@ const InfoQuarto: React.FC = () => {
                     </ActionButton>
                 </View>
             </View>
-        </View>
-    )
+        </SafeAreaView>)
 }
 
 
