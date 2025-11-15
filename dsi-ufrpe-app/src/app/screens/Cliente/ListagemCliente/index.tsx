@@ -96,7 +96,7 @@ const ListagemCliente: React.FC = () => {
         <View style={styles.container}>
             {/* Header customizado para listagem */}
             <View style={styles.topHeader}>
-                <TouchableOpacity onPress={() => router.push('/screens/(tabs)')} style={styles.backButton}>
+                <TouchableOpacity onPress={() => router.push('/screens/home')} style={styles.backButton}>
                     <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Clientes</Text>
