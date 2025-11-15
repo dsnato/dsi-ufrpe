@@ -90,6 +90,13 @@ export const getValidationMessage = (field: string, type: string): string => {
       'tipo_quarto': 'Por favor, informe o tipo do quarto.',
       'capacidade': 'Por favor, informe a capacidade do quarto.',
       'preco': 'Por favor, informe o preço da diária.',
+      'nome_atividade': 'Por favor, informe o nome da atividade.',
+      'local': 'Por favor, informe o local da atividade.',
+      'data': 'Por favor, informe a data da atividade.',
+      'hora': 'Por favor, informe o horário da atividade.',
+      'check_in': 'Por favor, informe a data de check-in.',
+      'check_out': 'Por favor, informe a data de check-out.',
+      'valor_total': 'Por favor, informe o valor total da reserva.',
       'default': 'Este campo é obrigatório.',
     },
     'invalid': {
