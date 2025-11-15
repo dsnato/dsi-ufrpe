@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const EditarReserva: React.FC = () => {
     const router = useRouter();
@@ -189,7 +190,7 @@ const EditarReserva: React.FC = () => {
     };
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container} edges={['top']}>
             <InfoHeader entity="Reservas" onBackPress={() => router.push('/screens/Reserva/ListagemReserva')} />
 
             <View style={styles.content}>
@@ -336,7 +337,7 @@ const EditarReserva: React.FC = () => {
                     </View>
                 </ScrollView>
             </View>
-        </View>
+        </SafeAreaView>
     );
 };
 
