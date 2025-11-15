@@ -10,6 +10,7 @@ import { formatCurrency, formatDate, withPlaceholder } from '@/src/utils/formatt
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const InfoReserva: React.FC = () => {
     const router = useRouter();
@@ -98,12 +99,12 @@ const InfoReserva: React.FC = () => {
      */
     if (loading) {
         return (
-            <View style={styles.container}>
+            <SafeAreaView style={styles.container} edges={['top']}>
                 <InfoHeader entity="Reservas" onBackPress={() => router.back()} />
                 <View style={styles.subContainer}>
                     <Loading message="Carregando reserva..." />
                 </View>
-            </View>
+            </SafeAreaView>
         );
     }
 
@@ -112,7 +113,7 @@ const InfoReserva: React.FC = () => {
      */
     if (error || !reserva) {
         return (
-            <View style={styles.container}>
+            <SafeAreaView style={styles.container} edges={['top']}>
                 <InfoHeader entity="Reservas" onBackPress={() => router.back()} />
                 <View style={styles.subContainer}>
                     <ErrorState
@@ -121,7 +122,7 @@ const InfoReserva: React.FC = () => {
                         onGoBack={() => router.push("/screens/Reserva/ListagemReserva")}
                     />
                 </View>
-            </View>
+            </SafeAreaView>
         );
     }
 
@@ -137,7 +138,7 @@ const InfoReserva: React.FC = () => {
     };
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container} edges={['top']}>
             {/* ✅ REQUISITO 9: Breadcrumb/indicador de navegação */}
             <InfoHeader entity="Reservas" onBackPress={() => router.back()} />
 
@@ -257,8 +258,7 @@ const InfoReserva: React.FC = () => {
                     </ActionButton>
                 </View>
             </View>
-        </View>
-    )
+        </SafeAreaView>)
 }
 
 
