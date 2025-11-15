@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const CriarCliente: React.FC = () => {
     const router = useRouter();
@@ -217,7 +218,7 @@ const CriarCliente: React.FC = () => {
     };
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container} edges={['top']}>
             <InfoHeader entity="Clientes" onBackPress={() => router.push('/screens/Cliente/ListagemCliente')} />
 
             <View style={styles.content}>
@@ -405,7 +406,7 @@ const CriarCliente: React.FC = () => {
                     </View>
                 </ScrollView>
             </View>
-        </View>
+        </SafeAreaView>
     );
 };
 

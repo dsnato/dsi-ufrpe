@@ -11,6 +11,7 @@ import { formatDate, formatTime, withPlaceholder } from '@/src/utils/formatters'
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const InfoAtividade: React.FC = () => {
     const router = useRouter();
@@ -99,12 +100,12 @@ const InfoAtividade: React.FC = () => {
      */
     if (loading) {
         return (
-            <View style={styles.container}>
+            <SafeAreaView style={styles.container} edges={['top']}>
                 <InfoHeader entity="Atividades" onBackPress={() => router.back()} />
                 <View style={styles.subContainer}>
                     <Loading message="Carregando atividade..." />
                 </View>
-            </View>
+            </SafeAreaView>
         );
     }
 
@@ -113,7 +114,7 @@ const InfoAtividade: React.FC = () => {
      */
     if (error || !atividade) {
         return (
-            <View style={styles.container}>
+            <SafeAreaView style={styles.container} edges={['top']}>
                 <InfoHeader entity="Atividades" onBackPress={() => router.back()} />
                 <View style={styles.subContainer}>
                     <ErrorState
@@ -122,12 +123,12 @@ const InfoAtividade: React.FC = () => {
                         onGoBack={() => router.push("/screens/Atividade/ListagemAtividade")}
                     />
                 </View>
-            </View>
+            </SafeAreaView>
         );
     }
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container} edges={['top']}>
             {/* ✅ REQUISITO 9: Breadcrumb/indicador de navegação */}
             <InfoHeader entity="Atividades" onBackPress={() => router.back()} />
 
@@ -208,8 +209,7 @@ const InfoAtividade: React.FC = () => {
                     </ActionButton>
                 </View>
             </View>
-        </View>
-    )
+        </SafeAreaView>)
 }
 
 

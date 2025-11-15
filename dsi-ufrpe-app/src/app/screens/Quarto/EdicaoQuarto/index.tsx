@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const EditarQuarto: React.FC = () => {
     const router = useRouter();
@@ -143,7 +144,7 @@ const EditarQuarto: React.FC = () => {
     };
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container} edges={['top']}>
             <InfoHeader entity="Quartos" onBackPress={() => router.push('/screens/Quarto/ListagemQuarto')} />
 
             <View style={styles.content}>
@@ -276,7 +277,7 @@ const EditarQuarto: React.FC = () => {
                     </View>
                 </ScrollView>
             </View>
-        </View>
+        </SafeAreaView>
     );
 };
 
