@@ -4,7 +4,7 @@ import { FormSelect } from '@/src/components/FormSelect';
 import { InfoHeader } from '@/src/components/InfoHeader';
 import { Separator } from '@/src/components/Separator';
 import { useToast } from '@/src/components/ToastContext';
-import { ClienteService } from '@/src/services/ClienteService';
+import { Cliente, criarCliente } from '@/src/services/clientesService';
 import type { ClienteFormData } from '@/src/types/cliente';
 import { getSuccessMessage, getValidationMessage } from '@/src/utils/errorMessages';
 import { estadosBrasileiros } from '@/src/utils/estadosBrasileiros';
@@ -183,7 +183,21 @@ const CriarCliente: React.FC = () => {
 
             console.log('📤 [CriacaoCliente] Enviando dados:', JSON.stringify(novoCliente, null, 2));
 
-            const resultado = await ClienteService.create(novoCliente);
+            // Mapear campos do form (camelCase) para o banco (snake_case)
+            const enderecoCompleto = `${novoCliente.street}, ${novoCliente.number} - ${novoCliente.neighborhood}, CEP: ${novoCliente.zipCode}`;
+
+            const clienteParaBanco: Omit<Cliente, 'id' | 'created_at' | 'updated_at'> = {
+                nome_completo: novoCliente.name,
+                cpf: novoCliente.cpf,
+                email: novoCliente.email,
+                telefone: novoCliente.phone,
+                endereco: enderecoCompleto,
+                cidade: novoCliente.city,
+                estado: novoCliente.state,
+                pais: 'Brasil',
+            };
+
+            const resultado = await criarCliente(clienteParaBanco);
 
             console.log('✅ [CriacaoCliente] Cliente criado com sucesso:', resultado);
 
