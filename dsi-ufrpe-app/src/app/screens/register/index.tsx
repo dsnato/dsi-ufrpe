@@ -24,21 +24,21 @@ export default function RegisterScreen() {
     async function signUpWithEmail() {
         setLoading(true)
         const {
-        data: { session },
-        error,
+            data: { session },
+            error,
         } = await supabase.auth.signUp({
-        email: form.email,
-        password: form.password,
-        options: {
-            data: {
-            display_name: form.name,
-            phone: form.telefone,
-            cnpj: form.cnpj,
-            hotel_name: form.hotelName,
+            email: form.email,
+            password: form.password,
+            options: {
+                data: {
+                    display_name: form.name,
+                    phone: form.telefone,
+                    cnpj: form.cnpj,
+                    hotel_name: form.hotelName,
+                }
             }
-        }
         })
-        
+
         if (error) {
             showError(translateAuthError(error.message))
         } else if (!session) {
@@ -49,7 +49,7 @@ export default function RegisterScreen() {
                 router.replace('/')
             }, 3000)
         }
-        
+
         setLoading(false)
     }
 
@@ -112,46 +112,51 @@ export default function RegisterScreen() {
             <View style={styles.form}>
                 <View style={styles.inputsContainer}>
                     <InputText label='Nome'
-                    leftIcon={<Image source={require("@/assets/images/edit-name.png")}
-                    style={{ marginRight: 10 }}></Image>}
-                    value={form.name}
-                    onChangeText={(text) => setForm({ ...form, name: text })} />
+                        leftIcon={<Image source={require("@/assets/images/edit-name.png")}
+                            style={{ marginRight: 10 }}></Image>}
+                        value={form.name}
+                        onChangeText={(text) => setForm({ ...form, name: text })} />
                     <InputText label='E-mail'
-                    leftIcon={<Image source={require("@/assets/images/at-email.png")}
-                    style={{ marginRight: 10 }}></Image>}
-                    value={form.email}
-                    onChangeText={(text) => setForm({ ...form, email: text })} />
+                        leftIcon={<Image source={require("@/assets/images/at-email.png")}
+                            style={{ marginRight: 10 }}></Image>}
+                        value={form.email}
+                        onChangeText={(text) => setForm({ ...form, email: text })} />
                     <PasswordInput label='Senha'
-                    leftIcon={<Image source={require("@/assets/images/key-password.png")}
-                    style={{ marginRight: 10 }}></Image>}
-                    value={form.password}
-                    onChangeText={(text) => setForm({ ...form, password: text })} />
+                        leftIcon={<Image source={require("@/assets/images/key-password.png")}
+                            style={{ marginRight: 10 }}></Image>}
+                        value={form.password}
+                        onChangeText={(text) => setForm({ ...form, password: text })} />
                     <PasswordInput label='Confirmar Senha'
-                    leftIcon={<Image source={require("@/assets/images/key-password.png")}
-                    style={{ marginRight: 10 }}></Image>}
-                    value={form.confirmPassword}
-                    onChangeText={(text) => setForm({ ...form, confirmPassword: text })}
-                    onBlur={() => {if(form.confirmPassword && form.confirmPassword !== form.password) showError(getValidationMessage('password', 'mismatch'))}} />
+                        leftIcon={<Image source={require("@/assets/images/key-password.png")}
+                            style={{ marginRight: 10 }}></Image>}
+                        value={form.confirmPassword}
+                        onChangeText={(text) => setForm({ ...form, confirmPassword: text })}
+                        onBlur={() => { if (form.confirmPassword && form.confirmPassword !== form.password) showError(getValidationMessage('password', 'mismatch')) }} />
                     <InputText label='CNPJ'
-                    leftIcon={<Image source={require("@/assets/images/id-cnpj.png")}
-                    style={{ marginRight: 10 }}></Image>}
-                    value={form.cnpj}
-                    onChangeText={(text) => setForm({ ...form, cnpj: text })} />
+                        leftIcon={<Image source={require("@/assets/images/id-cnpj.png")}
+                            style={{ marginRight: 10 }}></Image>}
+                        value={form.cnpj}
+                        onChangeText={(text) => setForm({ ...form, cnpj: text })} />
                     <InputText label='Nome do Hotel'
-                    leftIcon={<Image source={require("@/assets/images/nome-hotel.png")}
-                    style={{ marginRight: 10 }}></Image>}
-                    value={form.hotelName}
-                    onChangeText={(text) => setForm({ ...form, hotelName: text })} />
+                        leftIcon={<Image source={require("@/assets/images/nome-hotel.png")}
+                            style={{ marginRight: 10 }}></Image>}
+                        value={form.hotelName}
+                        onChangeText={(text) => setForm({ ...form, hotelName: text })} />
                     <InputText label='Telefone'
-                    leftIcon={<Image source={require("@/assets/images/callback-vector.png")}
-                    style={{ marginRight: 10 }}></Image>}
-                    value={form.telefone}
-                    onChangeText={(text) => setForm({ ...form, telefone: text })}
-                    keyboardType="phone-pad" />
+                        leftIcon={<Image source={require("@/assets/images/callback-vector.png")}
+                            style={{ marginRight: 10 }}></Image>}
+                        value={form.telefone}
+                        onChangeText={(text) => setForm({ ...form, telefone: text })}
+                        keyboardType="phone-pad" />
                 </View>
 
                 <View style={styles.buttonContainer}>
-                    <ButtonPoint label="Cadastrar" loading={loading} onPress={handleSubmitRegister} />
+                    <ButtonPoint
+                        label="Cadastrar"
+                        status={loading ? 'loading' : 'idle'}
+                        disabled={loading}
+                        onPress={handleSubmitRegister}
+                    />
                     <View style={styles.separator} />
                     <Text style={styles.footerText}>
                         Já tem uma conta?{' '}
