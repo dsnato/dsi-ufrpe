@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const initialData = [
     { id: '1', nome: 'Ana Clara', cpf: '987.654.321-00' },
@@ -96,7 +97,7 @@ const ListagemFuncionario: React.FC = () => {
     );
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container} edges={['top']}>
             {/* Header customizado para listagem */}
             <View style={styles.topHeader}>
                 <TouchableOpacity onPress={() => router.push('/screens/home')} style={styles.backButton}>
@@ -163,7 +164,7 @@ const ListagemFuncionario: React.FC = () => {
                     </View>
                 )}
             </View>
-        </View>
+        </SafeAreaView>
     );
 };
 

@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const CriarAtividade: React.FC = () => {
     const router = useRouter();
@@ -161,7 +162,7 @@ const CriarAtividade: React.FC = () => {
     };
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container} edges={['top']}>
             <InfoHeader entity="Atividades" onBackPress={() => router.push('/screens/Atividade/ListagemAtividade')} />
 
             <View style={styles.content}>
@@ -322,7 +323,7 @@ const CriarAtividade: React.FC = () => {
                     </View>
                 </ScrollView>
             </View>
-        </View>
+        </SafeAreaView>
     );
 };
 
