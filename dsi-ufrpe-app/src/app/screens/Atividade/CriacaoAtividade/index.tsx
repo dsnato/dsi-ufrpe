@@ -4,6 +4,7 @@ import { InfoHeader } from '@/src/components/InfoHeader';
 import { Separator } from '@/src/components/Separator';
 import { useToast } from '@/src/components/ToastContext';
 import { getSuccessMessage, getValidationMessage } from '@/src/utils/errorMessages';
+import { criarAtividade } from '@/src/services/atividadesService';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
@@ -135,24 +136,27 @@ const CriarAtividade: React.FC = () => {
         try {
             setLoading(true);
 
+            // Combina data e hora em um timestamp
+            const [day, month, year] = data.split('/').map(Number);
+            const [hours, minutes] = hora.split(':').map(Number);
+            const dataHora = new Date(year, month - 1, day, hours, minutes);
+
             const atividadeData = {
                 nome: nome.trim(),
                 descricao: descricao.trim() || null,
                 local: local.trim(),
-                data_atividade: data,
-                hora_atividade: hora,
+                data_hora: dataHora.toISOString(),
                 capacidade: capacidade ? parseInt(capacidade) : null,
-                ativa,
+                status: ativa ? 'ativa' : 'inativa',
             };
 
-            // TODO: Implementar AtividadeService.create(atividadeData)
-            console.log('Criando atividade:', atividadeData);
+            await criarAtividade(atividadeData);
 
             showSuccess(getSuccessMessage('create'));
 
             setTimeout(() => {
-                router.push('/screens/Atividade/ListagemAtividade');
-            }, 2000);
+                router.back();
+            }, 1500);
         } catch (error) {
             console.error('Erro ao criar atividade:', error);
             showError('Ocorreu um erro ao criar a atividade. Tente novamente.');

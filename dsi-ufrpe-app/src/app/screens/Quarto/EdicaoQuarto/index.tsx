@@ -4,6 +4,7 @@ import { InfoHeader } from '@/src/components/InfoHeader';
 import { Separator } from '@/src/components/Separator';
 import { useToast } from '@/src/components/ToastContext';
 import { getSuccessMessage, getValidationMessage } from '@/src/utils/errorMessages';
+import { buscarQuartoPorId, atualizarQuarto, Quarto } from '@/src/services/quartosService';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
@@ -59,14 +60,18 @@ const EditarQuarto: React.FC = () => {
 
         try {
             setLoading(true);
-            // TODO: Implementar QuartoService.getById(id)
-            // const data = await QuartoService.getById(id);
-            // Por enquanto, dados de exemplo:
-            setNumero('101');
-            setTipo('Luxo');
-            setCapacidade('2');
-            setPreco('250,00');
-            setDisponivel(true);
+            const data = await buscarQuartoPorId(id as string);
+            
+            if (!data) {
+                showError('Quarto não encontrado.');
+                return;
+            }
+            
+            setNumero(data.numero_quarto?.toString() || '');
+            setTipo(data.tipo || '');
+            setCapacidade(data.capacidade_pessoas?.toString() || '');
+            setPreco(data.preco_diario?.toFixed(2).replace('.', ',') || '');
+            setDisponivel(data.status === 'disponível');
         } catch (error) {
             console.error('Erro ao carregar quarto:', error);
             showError('Não foi possível carregar os dados do quarto.');
@@ -120,21 +125,20 @@ const EditarQuarto: React.FC = () => {
             setLoading(true);
 
             const quartoData = {
-                numero: parseInt(numero),
+                numero_quarto: parseInt(numero),
                 tipo: tipo.trim(),
-                capacidade: parseInt(capacidade),
-                preco_diaria: parseFloat(preco.replace(',', '.')),
-                disponivel,
+                capacidade_pessoas: parseInt(capacidade),
+                preco_diario: parseFloat(preco.replace(',', '.')),
+                status: disponivel ? 'disponível' : 'ocupado',
             };
 
-            // TODO: Implementar QuartoService.update(id, quartoData)
-            console.log('Salvando quarto:', quartoData);
+            await atualizarQuarto(id as string, quartoData);
 
             showSuccess(getSuccessMessage('update'));
 
             setTimeout(() => {
-                router.push('/screens/Quarto/ListagemQuarto');
-            }, 2000);
+                router.back();
+            }, 1500);
         } catch (error) {
             console.error('Erro ao salvar quarto:', error);
             showError('Ocorreu um erro ao salvar. Tente novamente.');

@@ -9,17 +9,20 @@ import { buscarClientePorId, Cliente, excluirCliente } from '@/src/services/clie
 import { formatCPF, formatPhone, withPlaceholder } from '@/src/utils/formatters';
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View, Platform } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useToast } from '@/src/components/ToastContext';
 
 export default function InfoCliente() {
     const router = useRouter();
     const { id } = useLocalSearchParams<{ id: string }>();
+    const { showSuccess, showError } = useToast();
 
     // Estados
     const [cliente, setCliente] = useState<Cliente | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     /**
      * ✅ REQUISITO 1: Carregamento dos dados usando ID da URL
@@ -58,40 +61,38 @@ export default function InfoCliente() {
      * ✅ REQUISITO 5: Modal de confirmação antes de excluir
      */
     const handleDelete = () => {
-        Alert.alert(
-            "Confirmar Exclusão",
-            "Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita.",
-            [
-                {
-                    text: "Cancelar",
-                    style: "cancel"
-                },
-                {
-                    text: "Excluir",
-                    style: "destructive",
-                    onPress: async () => {
-                        try {
-                            await excluirCliente(id as string);
-                            Alert.alert(
-                                "Sucesso",
-                                "Cliente excluído com sucesso!",
-                                [
-                                    {
-                                        text: "OK",
-                                        onPress: () => router.push("/screens/Cliente/ListagemCliente")
-                                    }
-                                ]
-                            );
-                        } catch (error) {
-                            Alert.alert(
-                                "Erro",
-                                "Não foi possível excluir o cliente. Tente novamente."
-                            );
-                        }
-                    }
-                }
-            ]
-        );
+        console.log('🟡 [InfoCliente] handleDelete chamado!');
+        console.log('🟡 [InfoCliente] Cliente ID:', id);
+        console.log('🟡 [InfoCliente] Cliente objeto:', cliente);
+        
+        setShowDeleteConfirm(true);
+    };
+
+    const confirmDelete = async () => {
+        try {
+            console.log('🔴 [InfoCliente] Iniciando exclusão, ID:', id);
+            setShowDeleteConfirm(false);
+            setLoading(true);
+            
+            await excluirCliente(id as string);
+            
+            console.log('✅ [InfoCliente] Exclusão concluída com sucesso');
+            showSuccess('Cliente excluído com sucesso!');
+            
+            setTimeout(() => {
+                router.push("/screens/Cliente/ListagemCliente");
+            }, 1500);
+        } catch (error: any) {
+            console.error('🔴 [InfoCliente] Erro ao excluir:', error);
+            console.error('🔴 [InfoCliente] Mensagem:', error?.message);
+            console.error('🔴 [InfoCliente] Stack:', error?.stack);
+            showError(`Erro ao excluir: ${error?.message || 'Erro desconhecido'}`);
+            setLoading(false);
+        }
+    };
+
+    const cancelDelete = () => {
+        setShowDeleteConfirm(false);
     };
 
     /**
@@ -200,6 +201,34 @@ export default function InfoCliente() {
                     </ActionButton>
                 </View>
             </View>
+
+            {/* Modal de Confirmação de Exclusão */}
+            {showDeleteConfirm && (
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>Confirmar Exclusão</Text>
+                        <Text style={styles.modalMessage}>
+                            Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita.
+                        </Text>
+                        <View style={styles.modalButtons}>
+                            <ActionButton
+                                variant="secondary"
+                                onPress={cancelDelete}
+                                style={styles.modalButton}
+                            >
+                                Cancelar
+                            </ActionButton>
+                            <ActionButton
+                                variant="danger"
+                                onPress={confirmDelete}
+                                style={styles.modalButton}
+                            >
+                                Excluir
+                            </ActionButton>
+                        </View>
+                    </View>
+                </View>
+            )}
         </SafeAreaView>
     )
 }
@@ -246,5 +275,47 @@ const styles = StyleSheet.create({
         gap: 12,
         paddingTop: 16,
         paddingBottom: 8,
+    },
+    modalOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 1000,
+    },
+    modalContent: {
+        backgroundColor: 'white',
+        borderRadius: 12,
+        padding: 24,
+        width: '90%',
+        maxWidth: 400,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5,
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#DC2626',
+        marginBottom: 12,
+    },
+    modalMessage: {
+        fontSize: 16,
+        color: '#64748B',
+        marginBottom: 24,
+        lineHeight: 24,
+    },
+    modalButtons: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    modalButton: {
+        flex: 1,
     },
 });

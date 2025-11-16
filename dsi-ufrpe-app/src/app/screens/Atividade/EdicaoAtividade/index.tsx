@@ -2,6 +2,9 @@ import { ActionButton } from '@/src/components/ActionButton';
 import { FormInput } from '@/src/components/FormInput';
 import { InfoHeader } from '@/src/components/InfoHeader';
 import { Separator } from '@/src/components/Separator';
+import { useToast } from '@/src/components/ToastContext';
+import { getSuccessMessage } from '@/src/utils/errorMessages';
+import { buscarAtividadePorId, atualizarAtividade, AtividadeRecreativa } from '@/src/services/atividadesService';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
@@ -11,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 const EditarAtividade: React.FC = () => {
     const router = useRouter();
     const { id } = useLocalSearchParams<{ id: string }>();
+    const { showSuccess, showError } = useToast();
 
     const [loading, setLoading] = useState(false);
     const [nome, setNome] = useState('');
@@ -97,22 +101,38 @@ const EditarAtividade: React.FC = () => {
 
         try {
             setLoading(true);
-            // TODO: Implementar AtividadeService.getById(id)
-            // const data = await AtividadeService.getById(id);
-            // Por enquanto, dados de exemplo:
-            setNome('Aula de Yoga');
-            setDescricao('Sessão relaxante de yoga para todos os níveis');
-            setLocal('Área de lazer');
-            setDataAtividade('15/11/2025');
-            setHorario('08:00');
-            setAtiva(true);
+            const data = await buscarAtividadePorId(id as string);
+            
+            if (!data) {
+                showError('Atividade não encontrada.');
+                return;
+            }
+            
+            setNome(data.nome || '');
+            setDescricao(data.descricao || '');
+            setLocal(data.local || '');
+            
+            // Converte data_hora (timestamp) para data e hora separados
+            if (data.data_hora) {
+                const dateTime = new Date(data.data_hora);
+                const day = String(dateTime.getDate()).padStart(2, '0');
+                const month = String(dateTime.getMonth() + 1).padStart(2, '0');
+                const year = dateTime.getFullYear();
+                setDataAtividade(`${day}/${month}/${year}`);
+                
+                const hours = String(dateTime.getHours()).padStart(2, '0');
+                const minutes = String(dateTime.getMinutes()).padStart(2, '0');
+                setHorario(`${hours}:${minutes}`);
+            }
+            
+            setAtiva(data.status === 'ativa');
         } catch (error) {
             console.error('Erro ao carregar atividade:', error);
-            Alert.alert('Erro', 'Não foi possível carregar os dados da atividade.');
+            showError('Não foi possível carregar os dados da atividade.');
         } finally {
             setLoading(false);
         }
-    }, [id]);
+    }, [id, showError]);
 
     useFocusEffect(
         useCallback(() => {
@@ -123,19 +143,19 @@ const EditarAtividade: React.FC = () => {
     const handleSave = async () => {
         // Validações
         if (!nome.trim()) {
-            Alert.alert('Atenção', 'O nome da atividade é obrigatório.');
+            showError('O nome da atividade é obrigatório.');
             return;
         }
 
         if (!dataAtividade.trim()) {
-            Alert.alert('Atenção', 'A data da atividade é obrigatória.');
+            showError('A data da atividade é obrigatória.');
             return;
         }
 
         // Valida formato da data (DD/MM/AAAA)
         const dateRegex = /^\d{2}\/\d{2}\/\d{4}$/;
         if (!dateRegex.test(dataAtividade)) {
-            Alert.alert('Atenção', 'Data inválida. Use o formato DD/MM/AAAA.');
+            showError('Data inválida. Use o formato DD/MM/AAAA.');
             return;
         }
 
@@ -147,43 +167,46 @@ const EditarAtividade: React.FC = () => {
             date.getMonth() !== month - 1 ||
             date.getFullYear() !== year
         ) {
-            Alert.alert('Atenção', 'Data inválida. Verifique o dia e mês informados.');
+            showError('Data inválida. Verifique o dia e mês informados.');
             return;
         }
 
         if (!horario.trim()) {
-            Alert.alert('Atenção', 'O horário da atividade é obrigatório.');
+            showError('O horário da atividade é obrigatório.');
             return;
         }
 
         // Valida formato do horário (HH:MM)
         const timeRegex = /^\d{2}:\d{2}$/;
         if (!timeRegex.test(horario)) {
-            Alert.alert('Atenção', 'Horário inválido. Use o formato HH:MM.');
+            showError('Horário inválido. Use o formato HH:MM.');
             return;
         }
 
         // Valida se é um horário válido
         const [hour, minute] = horario.split(':').map(Number);
         if (hour > 23 || minute > 59) {
-            Alert.alert('Atenção', 'Horário inválido. Hora deve ser 00-23 e minuto 00-59.');
+            showError('Horário inválido. Hora deve ser 00-23 e minuto 00-59.');
             return;
         }
 
         try {
             setLoading(true);
 
+            // Combina data e hora em um timestamp
+            const [day, month, year] = dataAtividade.split('/').map(Number);
+            const [hour, minute] = horario.split(':').map(Number);
+            const dataHora = new Date(year, month - 1, day, hour, minute);
+
             const atividadeData = {
                 nome: nome.trim(),
                 descricao: descricao.trim(),
                 local: local.trim(),
-                data_atividade: dataAtividade.trim(),
-                horario: horario.trim(),
-                ativa,
+                data_hora: dataHora.toISOString(),
+                status: ativa ? 'ativa' : 'inativa',
             };
 
-            // TODO: Implementar AtividadeService.update(id, atividadeData)
-            console.log('Salvando atividade:', atividadeData);
+            await atualizarAtividade(id as string, atividadeData);
 
             Alert.alert(
                 'Sucesso',
