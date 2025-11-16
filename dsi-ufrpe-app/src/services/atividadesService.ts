@@ -15,6 +15,7 @@ export interface AtividadeRecreativa {
   capacidade_maxima?: number;
   preco?: number;
   status?: string;
+  imagem_url?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -227,4 +228,148 @@ export const finalizarAtividade = async (id: string): Promise<AtividadeRecreativ
   }
 
   return data;
+};
+
+/**
+ * Upload de imagem para uma atividade
+ * @param atividadeId - ID da atividade
+ * @param uri - URI da imagem (pode ser file://, http://, ou base64)
+ * @param fileName - Nome do arquivo (opcional, será gerado automaticamente se não fornecido)
+ * @returns URL pública da imagem
+ */
+export const uploadImagemAtividade = async (
+  atividadeId: string,
+  uri: string,
+  fileName?: string
+): Promise<string> => {
+  try {
+    console.log('🔵 [atividadesService] Upload de imagem iniciado');
+    console.log('🔵 [atividadesService] Atividade ID:', atividadeId);
+    console.log('🔵 [atividadesService] URI:', uri);
+
+    // Gera nome único para o arquivo
+    const timestamp = new Date().getTime();
+    const fileExt = fileName?.split('.').pop() || 'jpg';
+    const filePath = `atividades/${atividadeId}/${timestamp}.${fileExt}`;
+
+    // Converte a URI para formato compatível com Supabase
+    let fileData: Blob | ArrayBuffer;
+    
+    if (uri.startsWith('data:')) {
+      // Base64
+      const base64Data = uri.split(',')[1];
+      const binaryString = atob(base64Data);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      fileData = bytes.buffer;
+    } else {
+      // Fetch da URI (funciona para file:// e http://)
+      const response = await fetch(uri);
+      const blob = await response.blob();
+      fileData = blob;
+    }
+
+    console.log('🔵 [atividadesService] Enviando arquivo para storage...');
+
+    // Upload para o Supabase Storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('atividades-images')
+      .upload(filePath, fileData, {
+        contentType: 'image/jpeg',
+        upsert: true,
+      });
+
+    if (uploadError) {
+      console.error('🔴 [atividadesService] Erro no upload:', uploadError);
+      throw new Error(uploadError.message);
+    }
+
+    console.log('✅ [atividadesService] Upload concluído:', uploadData.path);
+
+    // Obtém a URL pública da imagem
+    const { data: publicUrlData } = supabase.storage
+      .from('atividades-images')
+      .getPublicUrl(filePath);
+
+    const imageUrl = publicUrlData.publicUrl;
+    console.log('🔵 [atividadesService] URL pública:', imageUrl);
+
+    // Atualiza a atividade com a URL da imagem
+    console.log('🔵 [atividadesService] Atualizando registro no banco...');
+    console.log('🔵 [atividadesService] Dados do update:', { 
+      tabela: 'atividades_recreativas',
+      id: atividadeId, 
+      imagem_url: imageUrl 
+    });
+
+    const { data: updateData, error: updateError } = await supabase
+      .from('atividades_recreativas')
+      .update({ imagem_url: imageUrl })
+      .eq('id', atividadeId)
+      .select();
+
+    if (updateError) {
+      console.error('🔴 [atividadesService] Erro ao atualizar atividade:', updateError);
+      throw new Error(updateError.message);
+    }
+
+    console.log('✅ [atividadesService] Atividade atualizada com URL da imagem');
+    console.log('✅ [atividadesService] Dados atualizados:', updateData);
+    return imageUrl;
+  } catch (error: any) {
+    console.error('🔴 [atividadesService] Erro geral no upload:', error);
+    throw new Error(`Erro ao fazer upload da imagem: ${error.message}`);
+  }
+};
+
+/**
+ * Remove a imagem de uma atividade
+ * @param atividadeId - ID da atividade
+ */
+export const removerImagemAtividade = async (atividadeId: string): Promise<void> => {
+  try {
+    console.log('🔴 [atividadesService] Removendo imagem da atividade:', atividadeId);
+
+    // Busca a atividade para obter a URL da imagem
+    const atividade = await buscarAtividadePorId(atividadeId);
+    
+    if (!atividade?.imagem_url) {
+      console.log('⚠️ [atividadesService] Atividade não possui imagem');
+      return;
+    }
+
+    // Extrai o caminho do arquivo da URL
+    const url = new URL(atividade.imagem_url);
+    const filePath = url.pathname.split('/').slice(-3).join('/'); // atividades/{id}/{timestamp}.jpg
+
+    console.log('🔴 [atividadesService] Removendo arquivo:', filePath);
+
+    // Remove do storage
+    const { error: deleteError } = await supabase.storage
+      .from('atividades-images')
+      .remove([filePath]);
+
+    if (deleteError) {
+      console.error('🔴 [atividadesService] Erro ao remover arquivo:', deleteError);
+      // Continua mesmo com erro, pois o importante é limpar o banco
+    }
+
+    // Atualiza a atividade removendo a URL
+    const { error: updateError } = await supabase
+      .from('atividades_recreativas')
+      .update({ imagem_url: null })
+      .eq('id', atividadeId);
+
+    if (updateError) {
+      console.error('🔴 [atividadesService] Erro ao atualizar atividade:', updateError);
+      throw new Error(updateError.message);
+    }
+
+    console.log('✅ [atividadesService] Imagem removida com sucesso');
+  } catch (error: any) {
+    console.error('🔴 [atividadesService] Erro ao remover imagem:', error);
+    throw new Error(`Erro ao remover imagem: ${error.message}`);
+  }
 };

@@ -3,12 +3,13 @@ import { FormInput } from '@/src/components/FormInput';
 import { InfoHeader } from '@/src/components/InfoHeader';
 import { Separator } from '@/src/components/Separator';
 import { useToast } from '@/src/components/ToastContext';
+import { ImagePicker } from '@/src/components/ImagePicker';
 import { getSuccessMessage, getValidationMessage } from '@/src/utils/errorMessages';
-import { criarAtividade } from '@/src/services/atividadesService';
+import { criarAtividade, uploadImagemAtividade } from '@/src/services/atividadesService';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Switch, Text, View, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const CriarAtividade: React.FC = () => {
@@ -23,6 +24,7 @@ const CriarAtividade: React.FC = () => {
     const [hora, setHora] = useState('');
     const [capacidade, setCapacidade] = useState('');
     const [ativa, setAtiva] = useState(true);
+    const [imagemUri, setImagemUri] = useState<string | null>(null);
 
     // Formata data automaticamente (DD/MM/AAAA)
     const handleDateChange = (text: string) => {
@@ -146,11 +148,35 @@ const CriarAtividade: React.FC = () => {
                 descricao: descricao.trim() || null,
                 local: local.trim(),
                 data_hora: dataHora.toISOString(),
-                capacidade: capacidade ? parseInt(capacidade) : null,
+                capacidade_maxima: capacidade ? parseInt(capacidade) : null,
                 status: ativa ? 'ativa' : 'inativa',
             };
 
-            await criarAtividade(atividadeData);
+            const novaAtividade = await criarAtividade(atividadeData);
+
+            // Se houver imagem selecionada, faz o upload
+            if (imagemUri && novaAtividade.id) {
+                try {
+                    console.log('🖼️ [CriacaoAtividade] Iniciando upload de imagem...');
+                    console.log('🖼️ [CriacaoAtividade] Atividade ID:', novaAtividade.id);
+                    console.log('🖼️ [CriacaoAtividade] Image URI length:', imagemUri.length);
+                    
+                    const imageUrl = await uploadImagemAtividade(novaAtividade.id, imagemUri);
+                    
+                    console.log('✅ [CriacaoAtividade] Imagem enviada com sucesso!');
+                    console.log('✅ [CriacaoAtividade] URL da imagem:', imageUrl);
+                } catch (error) {
+                    console.error('❌ [CriacaoAtividade] ERRO ao enviar imagem:', error);
+                    console.error('❌ [CriacaoAtividade] Stack trace:', error);
+                    // Não bloqueia a criação se o upload falhar
+                    showError('Atividade criada, mas houve erro ao enviar a imagem.');
+                }
+            } else {
+                console.log('ℹ️ [CriacaoAtividade] Sem imagem para upload:', {
+                    temImagemUri: !!imagemUri,
+                    temAtividadeId: !!novaAtividade.id
+                });
+            }
 
             showSuccess(getSuccessMessage('create'));
 
@@ -186,6 +212,20 @@ const CriarAtividade: React.FC = () => {
                     </Text>
 
                     <Separator marginTop={16} marginBottom={24} />
+
+                    {/* Imagem da Atividade */}
+                    <View style={styles.fieldGroup}>
+                        <Text style={styles.label}>Imagem da Atividade</Text>
+                        <Text style={{ fontSize: 12, color: '#666', marginBottom: 8 }}>
+                            DEBUG: ImagePicker deve aparecer abaixo (Platform: {Platform.OS})
+                        </Text>
+                        <ImagePicker
+                            imageUri={imagemUri}
+                            onImageSelected={setImagemUri}
+                            onImageRemoved={() => setImagemUri(null)}
+                            disabled={loading}
+                        />
+                    </View>
 
                     {/* Formulário */}
                     <View style={styles.form}>
