@@ -2,6 +2,9 @@ import { ActionButton } from '@/src/components/ActionButton';
 import { FormInput } from '@/src/components/FormInput';
 import { InfoHeader } from '@/src/components/InfoHeader';
 import { Separator } from '@/src/components/Separator';
+import { useToast } from '@/src/components/ToastContext';
+import { getSuccessMessage } from '@/src/utils/errorMessages';
+import { buscarReservaPorId, atualizarReserva, Reserva } from '@/src/services/reservasService';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
@@ -11,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 const EditarReserva: React.FC = () => {
     const router = useRouter();
     const { id } = useLocalSearchParams<{ id: string }>();
+    const { showSuccess, showError } = useToast();
 
     const [loading, setLoading] = useState(false);
     const [dataCheckin, setDataCheckin] = useState('');
@@ -69,23 +73,35 @@ const EditarReserva: React.FC = () => {
 
         try {
             setLoading(true);
-            // TODO: Implementar ReservaService.getById(id)
-            // const data = await ReservaService.getById(id);
-            // Por enquanto, dados de exemplo:
-            setDataCheckin('15/11/2025');
-            setDataCheckout('18/11/2025');
-            setClienteId('João Silva');
-            setQuartoId('101 - Luxo');
-            setValorTotal('750,00');
-            setStatus('confirmada');
-            setAtiva(true);
+            const data = await buscarReservaPorId(id as string);
+            
+            if (!data) {
+                showError('Reserva não encontrada.');
+                return;
+            }
+            
+            // Converte as datas de YYYY-MM-DD para DD/MM/YYYY
+            if (data.data_checkin) {
+                const [ano, mes, dia] = data.data_checkin.split('-');
+                setDataCheckin(`${dia}/${mes}/${ano}`);
+            }
+            if (data.data_checkout) {
+                const [ano, mes, dia] = data.data_checkout.split('-');
+                setDataCheckout(`${dia}/${mes}/${ano}`);
+            }
+            
+            setClienteId(data.id_cliente || '');
+            setQuartoId(data.id_quarto || '');
+            setValorTotal(data.valor_total?.toFixed(2).replace('.', ',') || '');
+            setStatus(data.status || 'confirmada');
+            setAtiva(data.ativa ?? true);
         } catch (error) {
             console.error('Erro ao carregar reserva:', error);
-            Alert.alert('Erro', 'Não foi possível carregar os dados da reserva.');
+            showError('Não foi possível carregar os dados da reserva.');
         } finally {
             setLoading(false);
         }
-    }, [id]);
+    }, [id, showError]);
 
     useFocusEffect(
         useCallback(() => {
@@ -96,24 +112,24 @@ const EditarReserva: React.FC = () => {
     const handleSave = async () => {
         // Validações
         if (!dataCheckin.trim()) {
-            Alert.alert('Atenção', 'A data de check-in é obrigatória.');
+            showError('A data de check-in é obrigatória.');
             return;
         }
 
         if (!dataCheckout.trim()) {
-            Alert.alert('Atenção', 'A data de check-out é obrigatória.');
+            showError('A data de check-out é obrigatória.');
             return;
         }
 
         // Valida formato das datas
         const dateRegex = /^\d{2}\/\d{2}\/\d{4}$/;
         if (!dateRegex.test(dataCheckin)) {
-            Alert.alert('Atenção', 'Data de check-in inválida. Use o formato DD/MM/AAAA.');
+            showError('Data de check-in inválida. Use o formato DD/MM/AAAA.');
             return;
         }
 
         if (!dateRegex.test(dataCheckout)) {
-            Alert.alert('Atenção', 'Data de check-out inválida. Use o formato DD/MM/AAAA.');
+            showError('Data de check-out inválida. Use o formato DD/MM/AAAA.');
             return;
         }
 
@@ -125,7 +141,7 @@ const EditarReserva: React.FC = () => {
             dateIn.getMonth() !== monthIn - 1 ||
             dateIn.getFullYear() !== yearIn
         ) {
-            Alert.alert('Atenção', 'Data de check-in inválida. Verifique o dia e mês informados.');
+            showError('Data de check-in inválida. Verifique o dia e mês informados.');
             return;
         }
 
@@ -136,40 +152,44 @@ const EditarReserva: React.FC = () => {
             dateOut.getMonth() !== monthOut - 1 ||
             dateOut.getFullYear() !== yearOut
         ) {
-            Alert.alert('Atenção', 'Data de check-out inválida. Verifique o dia e mês informados.');
+            showError('Data de check-out inválida. Verifique o dia e mês informados.');
             return;
         }
 
         // Valida se check-out é posterior ao check-in
         if (dateOut <= dateIn) {
-            Alert.alert('Atenção', 'A data de check-out deve ser posterior à data de check-in.');
+            showError('A data de check-out deve ser posterior à data de check-in.');
             return;
         }
 
         if (!valorTotal.trim()) {
-            Alert.alert('Atenção', 'O valor total é obrigatório.');
+            showError('O valor total é obrigatório.');
             return;
         }
 
-        const valorNum = parseFloat(valorTotal.replace(',', '.'));
+        const valorNum = parseFloat(valorTotal.replace(/\./g, '').replace(',', '.'));
         if (valorNum <= 0) {
-            Alert.alert('Atenção', 'O valor total deve ser maior que zero.');
+            showError('O valor total deve ser maior que zero.');
             return;
         }
 
         try {
             setLoading(true);
 
+            // Converte as datas de DD/MM/YYYY para YYYY-MM-DD
+            const [diaIn, mesIn, anoIn] = dataCheckin.split('/');
+            const dataCheckinFormatada = `${anoIn}-${mesIn}-${diaIn}`;
+            const [diaOut, mesOut, anoOut] = dataCheckout.split('/');
+            const dataCheckoutFormatada = `${anoOut}-${mesOut}-${diaOut}`;
+
             const reservaData = {
-                data_checkin: dataCheckin.trim(),
-                data_checkout: dataCheckout.trim(),
-                valor_total: parseFloat(valorTotal.replace(',', '.')),
+                data_checkin: dataCheckinFormatada,
+                data_checkout: dataCheckoutFormatada,
+                valor_total: parseFloat(valorTotal.replace(/\./g, '').replace(',', '.')),
                 status,
-                ativa,
             };
 
-            // TODO: Implementar ReservaService.update(id, reservaData)
-            console.log('Salvando reserva:', reservaData);
+            await atualizarReserva(id as string, reservaData);
 
             Alert.alert(
                 'Sucesso',

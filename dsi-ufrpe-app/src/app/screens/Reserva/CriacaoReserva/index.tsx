@@ -5,6 +5,9 @@ import { InfoHeader } from '@/src/components/InfoHeader';
 import { Separator } from '@/src/components/Separator';
 import { useToast } from '@/src/components/ToastContext';
 import { getSuccessMessage, getValidationMessage } from '@/src/utils/errorMessages';
+import { criarReserva } from '@/src/services/reservasService';
+import { buscarClientePorCPF } from '@/src/services/clientesService';
+import { listarQuartos } from '@/src/services/quartosService';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
@@ -240,25 +243,52 @@ const CriarReserva: React.FC = () => {
         try {
             setLoading(true);
 
+            // 1. Buscar cliente pelo CPF para obter o UUID
+            const cpfLimpo = clienteCpf.replace(/\D/g, '');
+            const cliente = await buscarClientePorCPF(cpfLimpo);
+            
+            if (!cliente) {
+                showError('Cliente não encontrado. Verifique o CPF informado.');
+                setLoading(false);
+                return;
+            }
+
+            // 2. Buscar quarto pelo número para obter o UUID
+            const quartos = await listarQuartos();
+            const quarto = quartos.find(q => q.numero_quarto === numeroQuarto.trim());
+            
+            if (!quarto) {
+                showError('Quarto não encontrado. Verifique o número informado.');
+                setLoading(false);
+                return;
+            }
+
+            // 3. Converter datas de DD/MM/AAAA para AAAA-MM-DD
+            const [diaIn, mesIn, anoIn] = checkIn.split('/');
+            const dataCheckinFormatada = `${anoIn}-${mesIn}-${diaIn}`;
+            
+            const [diaOut, mesOut, anoOut] = checkOut.split('/');
+            const dataCheckoutFormatada = `${anoOut}-${mesOut}-${diaOut}`;
+
+            // 4. Criar reserva com os UUIDs corretos e datas formatadas
             const reservaData = {
-                numero_quarto: numeroQuarto.trim(),
-                cliente_nome: clienteNome.trim(),
-                cliente_cpf: clienteCpf.replace(/\D/g, ''),
-                check_in: checkIn,
-                check_out: checkOut,
+                id_quarto: quarto.id!,
+                id_cliente: cliente.id!,
+                data_checkin: dataCheckinFormatada,
+                data_checkout: dataCheckoutFormatada,
+                numero_hospedes: 1,
                 valor_total: valorNumerico,
                 observacoes: observacoes.trim() || null,
-                status: confirmada ? 'Confirmada' : 'Pendente',
+                status: confirmada ? 'confirmada' : 'pendente',
             };
 
-            // TODO: Implementar ReservaService.create(reservaData)
-            console.log('Criando reserva:', reservaData);
+            await criarReserva(reservaData);
 
             showSuccess(getSuccessMessage('create'));
 
             setTimeout(() => {
-                router.push('/screens/Reserva/ListagemReserva');
-            }, 2000);
+                router.back();
+            }, 1500);
         } catch (error) {
             console.error('Erro ao criar reserva:', error);
             showError('Ocorreu um erro ao criar a reserva. Tente novamente.');

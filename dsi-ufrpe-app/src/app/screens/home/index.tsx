@@ -3,6 +3,11 @@ import { DashboardCard } from "@/src/components/DashboardCard";
 import { QuickActionButton } from "@/src/components/QuickActionButton";
 import { Separator } from "@/src/components/Separator";
 import { StatCard } from "@/src/components/StatCard";
+import { listarClientes } from "@/src/services/clientesService";
+import { listarFuncionarios } from "@/src/services/funcionariosService";
+import { listarQuartos } from "@/src/services/quartosService";
+import { listarReservas } from "@/src/services/reservasService";
+import { listarAtividades } from "@/src/services/atividadesService";
 import { Ionicons } from '@expo/vector-icons';
 import { Session } from "@supabase/supabase-js";
 import { useRouter } from "expo-router";
@@ -46,18 +51,18 @@ export default function Home({ session }: { session: Session }) {
 
             if (profileError && profileError.code !== 'PGRST116') throw profileError;
 
-            // Se tiver funcionario_id, busca o nome do funcionário ()
-            // TODO Possívelmente poderá haver alteração nessa parte
+            // Se tiver funcionario_id, busca o nome do funcionário
+            // TODO Possivelmente poderá haver alteração nessa parte
             if (profileData?.funcionario_id) {
                 const { data: funcionarioData, error: funcionarioError } = await supabase
                     .from('funcionarios')
-                    .select('name')
+                    .select('nome_completo')
                     .eq('id', profileData.funcionario_id)
                     .single();
 
-                if (!funcionarioError && funcionarioData?.name) {
+                if (!funcionarioError && funcionarioData?.nome_completo) {
                     // Usa apenas o primeiro nome
-                    const firstName = funcionarioData.name.split(' ')[0];
+                    const firstName = funcionarioData.nome_completo.split(' ')[0];
                     setUsername(firstName);
                     return;
                 }
@@ -80,52 +85,57 @@ export default function Home({ session }: { session: Session }) {
         try {
             setLoading(true);
 
-            // Busca estatísticas em paralelo
-            const [reservasData, clientesData, funcionariosData, quartosData, atividadesData] =
-                await Promise.all([
-                    supabase.from('reservas').select('id, status, check_in'),
-                    supabase.from('clientes').select('id'),
-                    supabase.from('funcionarios').select('id'),
-                    supabase.from('quartos').select('id, disponivel'),
-                    supabase.from('atividade_recreativa').select('id, ativa, data_atividade'),
-                ]);
+            // Busca estatísticas em paralelo usando os services
+            const [reservas, clientes, funcionarios, quartos, atividades] = await Promise.all([
+                listarReservas(),
+                listarClientes(),
+                listarFuncionarios(),
+                listarQuartos(),
+                listarAtividades(),
+            ]);
 
             // Processa reservas
             const today = new Date().toISOString().split('T')[0];
-            const reservasHoje = reservasData.data?.filter((r: any) =>
-                r.check_in?.startsWith(today)
-            ).length || 0;
-            const reservasConfirmadas = reservasData.data?.filter((r: any) =>
-                r.status === 'Confirmada'
-            ).length || 0;
+            const reservasHoje = reservas.filter((r) => 
+                r.data_checkin?.startsWith(today)
+            ).length;
+            const reservasConfirmadas = reservas.filter((r) => 
+                r.status === 'confirmada'
+            ).length;
 
             // Processa quartos
-            const quartosDisponiveis = quartosData.data?.filter((q: any) => q.disponivel).length || 0;
-            const quartosOcupados = (quartosData.data?.length || 0) - quartosDisponiveis;
+            const quartosDisponiveis = quartos.filter((q) => q.status === 'disponível').length;
+            const quartosOcupados = quartos.filter((q) => q.status === 'ocupado').length;
 
-            // Processa atividades
-            const atividadesAgendadas = atividadesData.data?.filter((a: any) => a.ativa).length || 0;
+            // Processa atividades agendadas (status ativo e data futura)
+            const agora = new Date();
+            const atividadesAgendadas = atividades.filter((a) => {
+                if (a.status !== 'ativa') return false;
+                if (!a.data_hora) return false;
+                const dataAtividade = new Date(a.data_hora);
+                return dataAtividade > agora;
+            }).length;
 
             setStats({
                 reservations: {
-                    total: reservasData.data?.length || 0,
+                    total: reservas.length,
                     today: reservasHoje,
                     confirmed: reservasConfirmadas,
                 },
                 clients: {
-                    total: clientesData.data?.length || 0,
-                    active: clientesData.data?.length || 0,
+                    total: clientes.length,
+                    active: clientes.length,
                 },
                 employees: {
-                    total: funcionariosData.data?.length || 0,
+                    total: funcionarios.length,
                 },
                 rooms: {
-                    total: quartosData.data?.length || 0,
+                    total: quartos.length,
                     available: quartosDisponiveis,
                     occupied: quartosOcupados,
                 },
                 activities: {
-                    total: atividadesData.data?.length || 0,
+                    total: atividades.length,
                     scheduled: atividadesAgendadas,
                 },
             });
