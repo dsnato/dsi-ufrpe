@@ -4,50 +4,37 @@ import TextInputRounded from '@/src/components/TextInputRounded';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { listarAtividades, AtividadeRecreativa } from '@/src/services/atividadesService';
+import { useToast } from '@/src/components/ToastContext';
 
-interface Atividade {
-    id: string;
-    nome: string;
-    local: string;
-    data: string;
-    hora: string;
-    ativa: boolean;
-}
-
-const initialData: Atividade[] = [
-    { id: '1', nome: 'Música ao Vivo', local: 'Salão Principal', data: '12/11/2025', hora: '18:00', ativa: true },
-    { id: '2', nome: 'Yoga Matinal', local: 'Área da Piscina', data: '13/11/2025', hora: '07:00', ativa: true },
-    { id: '3', nome: 'Aula de Culinária', local: 'Restaurante', data: '13/11/2025', hora: '15:00', ativa: true },
-    { id: '4', nome: 'Festa na Piscina', local: 'Piscina', data: '14/11/2025', hora: '14:00', ativa: true },
-    { id: '5', nome: 'Cinema ao Ar Livre', local: 'Jardim', data: '14/11/2025', hora: '20:00', ativa: true },
-    { id: '6', nome: 'Torneio de Tênis', local: 'Quadra de Tênis', data: '15/11/2025', hora: '10:00', ativa: false },
-];
+type Atividade = AtividadeRecreativa;
 
 const ListagemAtividade: React.FC = () => {
     const router = useRouter();
-    const [items, setItems] = useState(initialData);
+    const { showError } = useToast();
+    const [items, setItems] = useState<Atividade[]>([]);
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(false);
 
-    // Filtra atividades por nome, local ou data
+    // Filtra atividades por nome, local ou status
     const filteredItems = items.filter(
         (i) =>
-            i.nome.toLowerCase().includes(search.toLowerCase()) ||
-            i.local.toLowerCase().includes(search.toLowerCase()) ||
-            i.data.includes(search)
+            i.nome?.toLowerCase().includes(search.toLowerCase()) ||
+            i.local?.toLowerCase().includes(search.toLowerCase()) ||
+            i.descricao?.toLowerCase().includes(search.toLowerCase())
     );
 
     // Carrega a lista de atividades
     const loadAtividades = useCallback(async () => {
         try {
             setLoading(true);
-            // TODO: Implementar AtividadeService.getAll()
-            // const data = await AtividadeService.getAll();
-            // setItems(data);
+            const data = await listarAtividades();
+            setItems(data);
         } catch (error) {
             console.error('Erro ao carregar atividades:', error);
+            showError('Erro ao carregar atividades');
         } finally {
             setLoading(false);
         }
@@ -76,15 +63,15 @@ const ListagemAtividade: React.FC = () => {
     const renderAtividadeCard = ({ item }: { item: Atividade }) => (
         <TouchableOpacity
             style={styles.atividadeCard}
-            onPress={() => handleAtividadePress(item.id)}
+            onPress={() => handleAtividadePress(item.id!)}
             activeOpacity={0.7}
         >
             <View style={styles.cardHeader}>
                 <View style={styles.cardIcon}>
                     <Ionicons name="calendar" size={24} color="#0162B3" />
                 </View>
-                <View style={[styles.statusBadge, item.ativa ? styles.statusActive : styles.statusInactive]}>
-                    <Text style={styles.statusText}>{item.ativa ? 'Ativa' : 'Inativa'}</Text>
+                <View style={[styles.statusBadge, item.status === 'ativa' ? styles.statusActive : styles.statusInactive]}>
+                    <Text style={styles.statusText}>{item.status || 'Inativa'}</Text>
                 </View>
             </View>
             <View style={styles.cardContent}>
@@ -100,11 +87,12 @@ const ListagemAtividade: React.FC = () => {
                 <View style={styles.cardFooter}>
                     <View style={styles.cardInfoItem}>
                         <Ionicons name="calendar-outline" size={14} color="#64748B" />
-                        <Text style={styles.cardInfoText}>{item.data}</Text>
-                    </View>
-                    <View style={styles.cardInfoItem}>
-                        <Ionicons name="time-outline" size={14} color="#64748B" />
-                        <Text style={styles.cardInfoText}>{item.hora}</Text>
+                        <Text style={styles.cardInfoText}>
+                            {item.data_hora ? new Date(item.data_hora).toLocaleString('pt-BR', { 
+                                dateStyle: 'short', 
+                                timeStyle: 'short' 
+                            }) : 'Data não disponível'}
+                        </Text>
                     </View>
                 </View>
             </View>

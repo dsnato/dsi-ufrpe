@@ -4,52 +4,35 @@ import TextInputRounded from '@/src/components/TextInputRounded';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-const initialData = [
-    { id: '1', nome: 'Ana Clara', cpf: '987.654.321-00' },
-    { id: '2', nome: 'Ana Júlia', cpf: '917.234.222-20' },
-    { id: '3', nome: 'Carlos José', cpf: '127.124.334-09' },
-    { id: '4', nome: 'João Lucas', cpf: '045.254.111-30' },
-    { id: '5', nome: 'Maria Silva', cpf: '231.632.345-98' },
-    { id: '6', nome: 'Maria da Paz', cpf: '230.103.984-14' },
-    { id: '7', nome: 'Edson Gomes', cpf: '655.923.103-87' },
-    { id: '8', nome: 'Milka Marques', cpf: '789.456.123-24' },
-    { id: '9', nome: 'Adriana Salsa', cpf: '834.943.114-45' },
-    { id: '10', nome: 'Evandro Silva', cpf: '201.349.583-58' },
-    { id: '11', nome: 'Vinícius Araujo', cpf: '028.095.545-34' },
-    { id: '12', nome: 'Denilson Gomes', cpf: '459.293.201-57' },
-];
-
-type Funcionario = {
-    id: string;
-    nome: string;
-    cpf: string;
-};
+import { listarFuncionarios, Funcionario } from '@/src/services/funcionariosService';
+import { useToast } from '@/src/components/ToastContext';
 
 const ListagemFuncionario: React.FC = () => {
     const router = useRouter();
-    const [items, setItems] = useState(initialData);
+    const { showError } = useToast();
+    const [items, setItems] = useState<Funcionario[]>([]);
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(false);
 
     // Filtra funcionários por nome ou CPF
     const filteredItems = items.filter(
         (i) =>
-            i.nome.toLowerCase().includes(search.toLowerCase()) ||
-            i.cpf.includes(search)
+            i.nome_completo?.toLowerCase().includes(search.toLowerCase()) ||
+            i.cpf?.includes(search) ||
+            i.cargo?.toLowerCase().includes(search.toLowerCase())
     );
 
     // Carrega a lista de funcionários
     const loadFuncionarios = useCallback(async () => {
         try {
             setLoading(true);
-            // TODO: Implementar FuncionarioService.getAll()
-            // const data = await FuncionarioService.getAll();
-            // setItems(data);
+            const data = await listarFuncionarios();
+            setItems(data);
         } catch (error) {
             console.error('Erro ao carregar funcionários:', error);
+            showError('Erro ao carregar funcionários');
         } finally {
             setLoading(false);
         }
@@ -78,6 +61,8 @@ const ListagemFuncionario: React.FC = () => {
     const renderFuncionarioCard = ({ item }: { item: Funcionario }) => (
         <TouchableOpacity
             style={styles.funcionarioCard}
+            onPress={() => handleFuncionarioPress(item.id!)}
+            activeOpacity={0.7}
             onPress={() => handleFuncionarioPress(item.id)}
             activeOpacity={0.7}
         >
@@ -86,12 +71,15 @@ const ListagemFuncionario: React.FC = () => {
             </View>
             <View style={styles.cardContent}>
                 <Text style={styles.cardTitle} numberOfLines={1}>
-                    {item.nome}
+                    {item.nome_completo}
                 </Text>
                 <View style={styles.cardFooter}>
                     <Ionicons name="card-outline" size={14} color="#64748B" />
                     <Text style={styles.cardCpf}>{item.cpf}</Text>
                 </View>
+                {item.cargo && (
+                    <Text style={styles.cardCargo}>{item.cargo}</Text>
+                )}
             </View>
         </TouchableOpacity>
     );
