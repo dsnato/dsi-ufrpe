@@ -10,7 +10,7 @@ import { buscarAtividadePorId, excluirAtividade, AtividadeRecreativa } from '@/s
 import { formatDate, formatTime, withPlaceholder } from '@/src/utils/formatters';
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, Platform } from "react-native";
+import { ScrollView, StyleSheet, Text, View, Platform, Image } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useToast } from '@/src/components/ToastContext';
 
@@ -127,6 +127,17 @@ const InfoAtividade: React.FC = () => {
             {/* Container branco com informações */}
             <View style={styles.subContainer}>
                 <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
+                    {/* Imagem da atividade (se existir) */}
+                    {atividade.imagem_url && (
+                        <View style={styles.imageContainer}>
+                            <Image
+                                source={{ uri: atividade.imagem_url }}
+                                style={styles.activityImage}
+                                resizeMode="cover"
+                            />
+                        </View>
+                    )}
+
                     {/* Título da atividade com badge de status */}
                     <TitleSection
                         title={withPlaceholder(atividade.nome, 'Sem nome')}
@@ -397,6 +408,22 @@ const styles = StyleSheet.create({
     },
     modalButton: {
         flex: 1,
+    },
+    imageContainer: {
+        width: '100%',
+        marginBottom: 20,
+        borderRadius: 12,
+        overflow: 'hidden',
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+    },
+    activityImage: {
+        width: '100%',
+        height: 200,
+        backgroundColor: '#F1F5F9',
     },
 })
 

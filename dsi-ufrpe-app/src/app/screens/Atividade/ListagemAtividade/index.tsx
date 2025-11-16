@@ -4,7 +4,7 @@ import TextInputRounded from '@/src/components/TextInputRounded';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
+import { FlatList, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { listarAtividades, AtividadeRecreativa } from '@/src/services/atividadesService';
 import { useToast } from '@/src/components/ToastContext';
@@ -31,6 +31,12 @@ const ListagemAtividade: React.FC = () => {
         try {
             setLoading(true);
             const data = await listarAtividades();
+            console.log('📋 [ListagemAtividade] Atividades carregadas:', data.length);
+            console.log('📋 [ListagemAtividade] Primeira atividade:', data[0]);
+            console.log('📋 [ListagemAtividade] URLs das imagens:', data.map(a => ({ 
+                nome: a.nome, 
+                imagem_url: a.imagem_url 
+            })));
             setItems(data);
         } catch (error) {
             console.error('Erro ao carregar atividades:', error);
@@ -66,6 +72,19 @@ const ListagemAtividade: React.FC = () => {
             onPress={() => handleAtividadePress(item.id!)}
             activeOpacity={0.7}
         >
+            {/* Imagem de thumbnail */}
+            {item.imagem_url ? (
+                <Image 
+                    source={{ uri: item.imagem_url }} 
+                    style={styles.cardImage}
+                    resizeMode="cover"
+                />
+            ) : (
+                <View style={styles.cardImagePlaceholder}>
+                    <Ionicons name="image-outline" size={32} color="#CBD5E1" />
+                </View>
+            )}
+            
             <View style={styles.cardHeader}>
                 <View style={styles.cardIcon}>
                     <Ionicons name="calendar" size={24} color="#0162B3" />
@@ -242,20 +261,33 @@ const styles = StyleSheet.create({
         maxWidth: '48%',
         backgroundColor: '#FFFFFF',
         borderRadius: 16,
-        padding: 16,
+        overflow: 'hidden',
         borderWidth: 1.5,
         borderColor: '#E2E8F0',
-        gap: 12,
         elevation: 2,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
     },
+    cardImage: {
+        width: '100%',
+        height: 120,
+        backgroundColor: '#F1F5F9',
+    },
+    cardImagePlaceholder: {
+        width: '100%',
+        height: 120,
+        backgroundColor: '#F8FAFC',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
     cardHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingTop: 12,
     },
     cardIcon: {
         width: 40,
@@ -282,6 +314,8 @@ const styles = StyleSheet.create({
         color: '#132F3B',
     },
     cardContent: {
+        paddingHorizontal: 16,
+        paddingBottom: 16,
         gap: 8,
     },
     cardTitle: {
