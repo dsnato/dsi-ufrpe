@@ -275,7 +275,7 @@ export const uploadImagemAtividade = async (
 
     // Upload para o Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('atividades-images')
+      .from('atividades-images2')
       .upload(filePath, fileData, {
         contentType: 'image/jpeg',
         upsert: true,
@@ -290,7 +290,7 @@ export const uploadImagemAtividade = async (
 
     // Obtém a URL pública da imagem
     const { data: publicUrlData } = supabase.storage
-      .from('atividades-images')
+      .from('atividades-images2')
       .getPublicUrl(filePath);
 
     const imageUrl = publicUrlData.publicUrl;
@@ -348,7 +348,7 @@ export const removerImagemAtividade = async (atividadeId: string): Promise<void>
 
     // Remove do storage
     const { error: deleteError } = await supabase.storage
-      .from('atividades-images')
+      .from('atividades-images2')
       .remove([filePath]);
 
     if (deleteError) {
