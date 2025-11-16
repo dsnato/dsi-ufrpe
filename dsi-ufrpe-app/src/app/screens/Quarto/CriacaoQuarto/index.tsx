@@ -5,6 +5,7 @@ import { InfoHeader } from '@/src/components/InfoHeader';
 import { Separator } from '@/src/components/Separator';
 import { useToast } from '@/src/components/ToastContext';
 import { getSuccessMessage, getValidationMessage } from '@/src/utils/errorMessages';
+import { criarQuarto } from '@/src/services/quartosService';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
@@ -106,22 +107,21 @@ const CriarQuarto: React.FC = () => {
             setLoading(true);
 
             const quartoData = {
-                numero: numeroInt,
+                numero_quarto: numeroInt,
                 tipo: tipo,
-                capacidade: capacidadeInt,
-                preco_diaria: precoNumerico,
+                capacidade_pessoas: capacidadeInt,
+                preco_diario: precoNumerico,
                 descricao: descricao.trim() || null,
-                disponivel: disponivel,
+                status: disponivel ? 'disponível' : 'ocupado',
             };
 
-            // TODO: Implementar QuartoService.create(quartoData)
-            console.log('Criando quarto:', quartoData);
+            await criarQuarto(quartoData);
 
             showSuccess(getSuccessMessage('create'));
 
             setTimeout(() => {
-                router.push('/screens/Quarto/ListagemQuarto');
-            }, 2000);
+                router.back();
+            }, 1500);
         } catch (error) {
             console.error('Erro ao criar quarto:', error);
             showError('Ocorreu um erro ao criar o quarto. Tente novamente.');

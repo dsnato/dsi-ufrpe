@@ -175,16 +175,25 @@ export const atualizarReserva = async (id: string, reserva: Partial<Reserva>): P
 /**
  * Excluir reserva
  */
+/**
+ * Excluir reserva
+ */
 export const excluirReserva = async (id: string): Promise<void> => {
+  console.log('🔴 [reservasService] excluirReserva chamado');
+  console.log('🔴 [reservasService] ID:', id);
+  
   const { error } = await supabase
     .from('reservas')
     .delete()
     .eq('id', id);
 
   if (error) {
-    console.error('Erro ao excluir reserva:', error);
+    console.error('🔴 [reservasService] Erro ao excluir reserva:', error);
+    console.error('🔴 [reservasService] Erro detalhes:', JSON.stringify(error, null, 2));
     throw new Error(error.message);
   }
+  
+  console.log('✅ [reservasService] Reserva excluída com sucesso');
 };
 
 /**

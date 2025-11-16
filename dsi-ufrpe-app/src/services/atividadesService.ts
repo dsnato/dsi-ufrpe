@@ -127,16 +127,25 @@ export const atualizarAtividade = async (id: string, atividade: Partial<Atividad
 /**
  * Excluir atividade
  */
+/**
+ * Excluir atividade
+ */
 export const excluirAtividade = async (id: string): Promise<void> => {
+  console.log('🔴 [atividadesService] excluirAtividade chamado');
+  console.log('🔴 [atividadesService] ID:', id);
+  
   const { error } = await supabase
     .from('atividades_recreativas')
     .delete()
     .eq('id', id);
 
   if (error) {
-    console.error('Erro ao excluir atividade:', error);
+    console.error('🔴 [atividadesService] Erro ao excluir atividade:', error);
+    console.error('🔴 [atividadesService] Erro detalhes:', JSON.stringify(error, null, 2));
     throw new Error(error.message);
   }
+  
+  console.log('✅ [atividadesService] Atividade excluída com sucesso');
 };
 
 /**

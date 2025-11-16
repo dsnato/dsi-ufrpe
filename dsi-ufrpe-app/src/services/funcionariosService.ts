@@ -135,15 +135,21 @@ export const atualizarFuncionario = async (id: string, funcionario: Partial<Func
  * Excluir funcionário
  */
 export const excluirFuncionario = async (id: string): Promise<void> => {
+  console.log('🔴 [funcionariosService] excluirFuncionario chamado');
+  console.log('🔴 [funcionariosService] ID:', id);
+  
   const { error } = await supabase
     .from('funcionarios')
     .delete()
     .eq('id', id);
 
   if (error) {
-    console.error('Erro ao excluir funcionário:', error);
+    console.error('🔴 [funcionariosService] Erro ao excluir funcionário:', error);
+    console.error('🔴 [funcionariosService] Erro detalhes:', JSON.stringify(error, null, 2));
     throw new Error(error.message);
   }
+  
+  console.log('✅ [funcionariosService] Funcionário excluído com sucesso');
 };
 
 /**
