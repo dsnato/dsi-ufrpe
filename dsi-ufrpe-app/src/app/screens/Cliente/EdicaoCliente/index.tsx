@@ -4,6 +4,7 @@ import { InfoHeader } from '@/src/components/InfoHeader';
 import { Separator } from '@/src/components/Separator';
 import { useToast } from '@/src/components/ToastContext';
 import { getSuccessMessage, getValidationMessage } from '@/src/utils/errorMessages';
+import { buscarClientePorId, atualizarCliente, Cliente } from '@/src/services/clientesService';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
@@ -124,16 +125,20 @@ const EditarCliente: React.FC = () => {
 
         try {
             setLoading(true);
-            // TODO: Implementar ClienteService.getById(id)
-            // const data = await ClienteService.getById(id);
-            // Por enquanto, dados de exemplo:
-            setNome('Maria Santos');
-            setCpf('987.654.321-00');
-            setCelular('(81) 91234-5678');
-            setEmail('maria.santos@email.com');
-            setDataNascimento('15/03/1985');
-            setEndereco('Rua das Flores, 123 - Recife/PE');
-            setAtivo(true);
+            const data = await buscarClientePorId(id as string);
+            
+            if (!data) {
+                showError('Cliente não encontrado.');
+                return;
+            }
+            
+            setNome(data.nome_completo || '');
+            setCpf(data.cpf || '');
+            setCelular(data.telefone || '');
+            setEmail(data.email || '');
+            setDataNascimento(data.data_nascimento || '');
+            setEndereco(data.endereco || '');
+            setAtivo(data.ativo ?? true);
         } catch (error) {
             console.error('Erro ao carregar cliente:', error);
             showError('Não foi possível carregar os dados do cliente.');
@@ -223,23 +228,21 @@ const EditarCliente: React.FC = () => {
             setLoading(true);
 
             const clienteData = {
-                nome: nome.trim(),
+                nome_completo: nome.trim(),
                 cpf: cpf.replace(/\D/g, ''),
-                celular: celular.replace(/\D/g, ''),
+                telefone: celular.replace(/\D/g, ''),
                 email: email.trim().toLowerCase(),
                 data_nascimento: dataNascimento.trim() || null,
                 endereco: endereco.trim() || null,
-                ativo,
             };
 
-            // TODO: Implementar ClienteService.update(id, clienteData)
-            console.log('Salvando cliente:', clienteData);
+            await atualizarCliente(id as string, clienteData);
 
             showSuccess(getSuccessMessage('update'));
 
             setTimeout(() => {
-                router.push('/screens/Cliente/ListagemCliente');
-            }, 2000);
+                router.back();
+            }, 1500);
         } catch (error) {
             console.error('Erro ao salvar cliente:', error);
             showError('Ocorreu um erro ao salvar. Tente novamente.');

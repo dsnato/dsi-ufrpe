@@ -7,19 +7,22 @@ import { StatusBadge } from '@/src/components/StatusBadge';
 import { TitleSection } from '@/src/components/TitleSection';
 import { buscarReservaPorId, excluirReserva, Reserva } from '@/src/services/reservasService';
 import { formatCurrency, formatDate, withPlaceholder } from '@/src/utils/formatters';
-import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, Platform } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useToast } from '@/src/components/ToastContext';
 
 const InfoReserva: React.FC = () => {
     const router = useRouter();
     const { id } = useLocalSearchParams<{ id: string }>();
+    const { showSuccess, showError } = useToast();
 
     // Estados
     const [reserva, setReserva] = useState<Reserva | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     /**
      * ✅ REQUISITO 1: Carregamento dos dados usando ID da URL
@@ -58,40 +61,29 @@ const InfoReserva: React.FC = () => {
      * ✅ REQUISITO 5: Modal de confirmação antes de excluir
      */
     const handleDelete = () => {
-        Alert.alert(
-            "Confirmar Exclusão",
-            "Tem certeza que deseja excluir esta reserva? Esta ação não pode ser desfeita.",
-            [
-                {
-                    text: "Cancelar",
-                    style: "cancel"
-                },
-                {
-                    text: "Excluir",
-                    style: "destructive",
-                    onPress: async () => {
-                        try {
-                            await excluirReserva(id as string);
-                            Alert.alert(
-                                "Sucesso",
-                                "Reserva excluída com sucesso!",
-                                [
-                                    {
-                                        text: "OK",
-                                        onPress: () => router.push("/screens/Reserva/ListagemReserva")
-                                    }
-                                ]
-                            );
-                        } catch (error) {
-                            Alert.alert(
-                                "Erro",
-                                "Não foi possível excluir a reserva. Tente novamente."
-                            );
-                        }
-                    }
-                }
-            ]
-        );
+        setShowDeleteConfirm(true);
+    };
+
+    const confirmDelete = async () => {
+        try {
+            setShowDeleteConfirm(false);
+            setLoading(true);
+            
+            await excluirReserva(id as string);
+            
+            showSuccess('Reserva excluída com sucesso!');
+            
+            setTimeout(() => {
+                router.push("/screens/Reserva/ListagemReserva");
+            }, 1500);
+        } catch (error: any) {
+            showError(`Erro ao excluir: ${error?.message || 'Erro desconhecido'}`);
+            setLoading(false);
+        }
+    };
+
+    const cancelDelete = () => {
+        setShowDeleteConfirm(false);
     };
 
     /**
@@ -258,6 +250,34 @@ const InfoReserva: React.FC = () => {
                     </ActionButton>
                 </View>
             </View>
+
+            {/* Modal de Confirmação de Exclusão */}
+            {showDeleteConfirm && (
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>Confirmar Exclusão</Text>
+                        <Text style={styles.modalMessage}>
+                            Tem certeza que deseja excluir esta reserva? Esta ação não pode ser desfeita.
+                        </Text>
+                        <View style={styles.modalButtons}>
+                            <ActionButton
+                                variant="secondary"
+                                onPress={cancelDelete}
+                                style={styles.modalButton}
+                            >
+                                Cancelar
+                            </ActionButton>
+                            <ActionButton
+                                variant="danger"
+                                onPress={confirmDelete}
+                                style={styles.modalButton}
+                            >
+                                Excluir
+                            </ActionButton>
+                        </View>
+                    </View>
+                </View>
+            )}
         </SafeAreaView>)
 }
 
@@ -417,6 +437,48 @@ const styles = StyleSheet.create({
     },
     buttonIcon: {
         marginRight: 8,
+    },
+    modalOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 1000,
+    },
+    modalContent: {
+        backgroundColor: 'white',
+        borderRadius: 12,
+        padding: 24,
+        width: '90%',
+        maxWidth: 400,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5,
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#DC2626',
+        marginBottom: 12,
+    },
+    modalMessage: {
+        fontSize: 16,
+        color: '#64748B',
+        marginBottom: 24,
+        lineHeight: 24,
+    },
+    modalButtons: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    modalButton: {
+        flex: 1,
     },
 })
 

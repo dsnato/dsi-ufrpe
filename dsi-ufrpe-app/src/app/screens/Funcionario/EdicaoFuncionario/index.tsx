@@ -4,6 +4,7 @@ import { InfoHeader } from '@/src/components/InfoHeader';
 import { Separator } from '@/src/components/Separator';
 import { useToast } from '@/src/components/ToastContext';
 import { getSuccessMessage, getValidationMessage } from '@/src/utils/errorMessages';
+import { buscarFuncionarioPorId, atualizarFuncionario, Funcionario } from '@/src/services/funcionariosService';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
@@ -139,15 +140,19 @@ const EditarFuncionario: React.FC = () => {
 
         try {
             setLoading(true);
-            // TODO: Implementar FuncionarioService.getById(id)
-            // const data = await FuncionarioService.getById(id);
-            // Por enquanto, dados de exemplo:
-            setNome('Ana Clara Silva');
-            setCpf('123.456.789-00');
-            setCelular('(81) 98765-4321');
-            setEmail('ana.silva@hotel.com');
-            setCargo('Recepcionista');
-            setAtivo(true);
+            const data = await buscarFuncionarioPorId(id as string);
+            
+            if (!data) {
+                showError('Funcionário não encontrado.');
+                return;
+            }
+            
+            setNome(data.nome_completo || '');
+            setCpf(data.cpf || '');
+            setCelular(data.telefone || '');
+            setEmail(data.email || '');
+            setCargo(data.cargo || '');
+            setAtivo(data.status === 'ativo');
 
             // TODO: Carregar foto do Supabase Storage se existir
             // if (data.foto_url) {
@@ -156,11 +161,11 @@ const EditarFuncionario: React.FC = () => {
             // }
         } catch (error) {
             console.error('Erro ao carregar funcionário:', error);
-            Alert.alert('Erro', 'Não foi possível carregar os dados do funcionário.');
+            showError('Não foi possível carregar os dados do funcionário.');
         } finally {
             setLoading(false);
         }
-    }, [id]);
+    }, [id, showError]);
 
     useFocusEffect(
         useCallback(() => {
@@ -221,25 +226,23 @@ const EditarFuncionario: React.FC = () => {
             setLoading(true);
 
             const funcionarioData = {
-                nome: nome.trim(),
-                cpf: cpf.replace(/\D/g, ''), // Remove formatação
-                celular: celular.replace(/\D/g, ''), // Remove formatação
+                nome_completo: nome.trim(),
+                cpf: cpf.replace(/\D/g, ''),
+                telefone: celular.replace(/\D/g, ''),
                 email: email.trim().toLowerCase(),
                 cargo: cargo.trim(),
-                ativo,
+                status: ativo ? 'ativo' : 'inativo',
                 // TODO: Adicionar foto_url se houver upload
                 // foto_url: photoUri,
             };
 
-            // TODO: Implementar FuncionarioService.update(id, funcionarioData)
-            // TODO: Se photoUri for um arquivo local, fazer upload para Supabase Storage
-            console.log('Salvando funcionário:', funcionarioData);
+            await atualizarFuncionario(id as string, funcionarioData);
 
             showSuccess(getSuccessMessage('update'));
 
             setTimeout(() => {
-                router.push('/screens/Funcionario/ListagemFuncionario');
-            }, 2000);
+                router.back();
+            }, 1500);
         } catch (error) {
             console.error('Erro ao salvar funcionário:', error);
             showError('Ocorreu um erro ao salvar. Tente novamente.');
