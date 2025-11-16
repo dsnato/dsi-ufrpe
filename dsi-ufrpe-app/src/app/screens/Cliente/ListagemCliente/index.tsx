@@ -1,49 +1,40 @@
 import { ActionButton } from '@/src/components/ActionButton';
 import { Separator } from '@/src/components/Separator';
 import TextInputRounded from '@/src/components/TextInputRounded';
-import clientes from '@/src/data/clientes.json';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { listarClientes, Cliente } from '@/src/services/clientesService';
+import { useToast } from '@/src/components/ToastContext';
 
-const initialData = clientes;
-
-type Client = {
-    id: string;
-    name: string;
-    cpf: string;
-    street: string;
-    number: string;
-    neighborhood: string;
-    city: string;
-    state: string;
-    zipCode: string;
-};
+type Client = Cliente;
 
 const ListagemCliente: React.FC = () => {
     const router = useRouter();
-    const [items, setItems] = useState(initialData);
+    const { showError } = useToast();
+    const [items, setItems] = useState<Cliente[]>([]);
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(false);
 
     // Filtra clientes por nome ou CPF
     const filteredItems = items.filter(
         (i) =>
-            i.name.toLowerCase().includes(search.toLowerCase()) ||
-            i.cpf.includes(search)
+            i.nome_completo?.toLowerCase().includes(search.toLowerCase()) ||
+            i.cpf?.includes(search) ||
+            i.email?.toLowerCase().includes(search.toLowerCase())
     );
 
     // Carrega a lista de clientes
     const loadClientes = useCallback(async () => {
         try {
             setLoading(true);
-            // TODO: Implementar ClienteService.getAll()
-            // const data = await ClienteService.getAll();
-            // setItems(data);
+            const data = await listarClientes();
+            setItems(data);
         } catch (error) {
             console.error('Erro ao carregar clientes:', error);
+            showError('Erro ao carregar clientes');
         } finally {
             setLoading(false);
         }
@@ -72,7 +63,7 @@ const ListagemCliente: React.FC = () => {
     const renderClienteCard = ({ item }: { item: Client }) => (
         <TouchableOpacity
             style={styles.clienteCard}
-            onPress={() => handleClientePress(item.id)}
+            onPress={() => handleClientePress(item.id!)}
             activeOpacity={0.7}
         >
             <View style={styles.cardIcon}>

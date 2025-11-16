@@ -4,50 +4,35 @@ import TextInputRounded from '@/src/components/TextInputRounded';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-const initialData = [
-    { id: '1', numero: '101', tipo: 'solteiro' },
-    { id: '2', numero: '102', tipo: 'casal' },
-    { id: '3', numero: '103', tipo: 'solteiro' },
-    { id: '4', numero: '104', tipo: 'casal' },
-    { id: '5', numero: '105', tipo: 'solteiro' },
-    { id: '6', numero: '106', tipo: 'casal' },
-    { id: '7', numero: '107', tipo: 'solteiro' },
-    { id: '8', numero: '108', tipo: 'casal' },
-    { id: '9', numero: '109', tipo: 'solteiro' },
-    { id: '10', numero: '110', tipo: 'casal' },
-];
-
-type Quarto = {
-    id: string;
-    numero: string;
-    tipo: string;
-};
+import { listarQuartos, Quarto } from '@/src/services/quartosService';
+import { useToast } from '@/src/components/ToastContext';
 
 const ListagemQuarto: React.FC = () => {
     const router = useRouter();
-    const [items, setItems] = useState(initialData);
+    const { showError } = useToast();
+    const [items, setItems] = useState<Quarto[]>([]);
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(false);
 
     // Filtra quartos por número ou tipo
     const filteredItems = items.filter(
         (i) =>
-            i.numero.toLowerCase().includes(search.toLowerCase()) ||
-            i.tipo.toLowerCase().includes(search.toLowerCase())
+            i.numero_quarto?.toLowerCase().includes(search.toLowerCase()) ||
+            i.tipo?.toLowerCase().includes(search.toLowerCase()) ||
+            i.status?.toLowerCase().includes(search.toLowerCase())
     );
 
     // Carrega a lista de quartos
     const loadQuartos = useCallback(async () => {
         try {
             setLoading(true);
-            // TODO: Implementar QuartoService.getAll()
-            // const data = await QuartoService.getAll();
-            // setItems(data);
+            const data = await listarQuartos();
+            setItems(data);
         } catch (error) {
             console.error('Erro ao carregar quartos:', error);
+            showError('Erro ao carregar quartos');
         } finally {
             setLoading(false);
         }
@@ -76,24 +61,27 @@ const ListagemQuarto: React.FC = () => {
     const renderQuartoCard = ({ item }: { item: Quarto }) => (
         <TouchableOpacity
             style={styles.quartoCard}
-            onPress={() => handleQuartoPress(item.id)}
+            onPress={() => handleQuartoPress(item.id!)}
             activeOpacity={0.7}
         >
             <View style={styles.cardIcon}>
                 <Ionicons name="bed" size={32} color="#0162B3" />
             </View>
             <View style={styles.cardContent}>
-                <Text style={styles.cardNumber}>{item.numero}</Text>
+                <Text style={styles.cardNumber}>Quarto {item.numero_quarto}</Text>
                 <View style={styles.cardFooter}>
                     <Ionicons
-                        name={item.tipo === 'casal' ? 'heart-outline' : 'person-outline'}
+                        name="bed-outline"
                         size={14}
                         color="#64748B"
                     />
                     <Text style={styles.cardType}>
-                        {item.tipo.charAt(0).toUpperCase() + item.tipo.slice(1)}
+                        {item.tipo}
                     </Text>
                 </View>
+                {item.status && (
+                    <Text style={styles.cardStatus}>{item.status}</Text>
+                )}
             </View>
         </TouchableOpacity>
     );

@@ -4,52 +4,35 @@ import TextInputRounded from '@/src/components/TextInputRounded';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-
-// Implementar os valores presente na entidade de Reserva
-const initialData = [
-    { id: '1', numero: '042', dataReserva: '10/10/26 a 20/10/26' },
-    { id: '2', numero: '007', dataReserva: '05/11/26 a 12/11/26' },
-    { id: '3', numero: '100', dataReserva: '01/12/26 a 07/12/26' },
-    { id: '4', numero: '021', dataReserva: '15/10/26 a 18/10/26' },
-    { id: '5', numero: '089', dataReserva: '20/09/26 a 25/09/26' },
-    { id: '6', numero: '034', dataReserva: '02/01/27 a 09/01/27' },
-    { id: '7', numero: '076', dataReserva: '10/02/27 a 14/02/27' },
-    { id: '8', numero: '058', dataReserva: '22/11/26 a 29/11/26' },
-    { id: '9', numero: '013', dataReserva: '30/12/26 a 05/01/27' },
-    { id: '10', numero: '066', dataReserva: '07/03/27 a 14/03/27' },
-];
-
-type Reserva = {
-    id: string;
-    numero: string;
-    dataReserva: string;
-};
+import { listarReservas, Reserva } from '@/src/services/reservasService';
+import { useToast } from '@/src/components/ToastContext';
 
 const ListagemReserva: React.FC = () => {
     const router = useRouter();
-    const [items, setItems] = useState(initialData);
+    const { showError } = useToast();
+    const [items, setItems] = useState<Reserva[]>([]);
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(false);
 
-    // Filtra reservas por número de quarto ou data
+    // Filtra reservas por status ou datas
     const filteredItems = items.filter(
         (i) =>
-            i.numero.toLowerCase().includes(search.toLowerCase()) ||
-            i.dataReserva.includes(search)
+            i.status?.toLowerCase().includes(search.toLowerCase()) ||
+            i.data_checkin?.includes(search) ||
+            i.data_checkout?.includes(search)
     );
 
     // Carrega a lista de reservas
     const loadReservas = useCallback(async () => {
         try {
             setLoading(true);
-            // TODO: Implementar ReservaService.getAll()
-            // const data = await ReservaService.getAll();
-            // setItems(data);
+            const data = await listarReservas();
+            setItems(data);
         } catch (error) {
             console.error('Erro ao carregar reservas:', error);
+            showError('Erro ao carregar reservas');
         } finally {
             setLoading(false);
         }
@@ -78,6 +61,8 @@ const ListagemReserva: React.FC = () => {
     const renderReservaCard = ({ item }: { item: Reserva }) => (
         <TouchableOpacity
             style={styles.reservaCard}
+            onPress={() => handleReservaPress(item.id!)}
+            activeOpacity={0.7}
             onPress={() => handleReservaPress(item.id)}
             activeOpacity={0.7}
         >
@@ -86,15 +71,18 @@ const ListagemReserva: React.FC = () => {
             </View>
             <View style={styles.cardContent}>
                 <View style={styles.cardHeader}>
-                    <Text style={styles.cardLabel}>Quarto</Text>
-                    <Text style={styles.cardNumber}>{item.numero}</Text>
+                    <Text style={styles.cardLabel}>Reserva #{item.id?.substring(0, 8)}</Text>
+                    {item.status && <Text style={styles.cardStatus}>{item.status}</Text>}
                 </View>
                 <View style={styles.cardFooter}>
                     <Ionicons name="calendar-outline" size={14} color="#64748B" />
                     <Text style={styles.cardDate} numberOfLines={1}>
-                        {item.dataReserva}
+                        {item.data_checkin} - {item.data_checkout}
                     </Text>
                 </View>
+                {item.valor_total && (
+                    <Text style={styles.cardValor}>R$ {item.valor_total.toFixed(2)}</Text>
+                )}
             </View>
         </TouchableOpacity>
     );
@@ -280,6 +268,18 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: '#132F3B',
         fontFamily: 'monospace',
+    },
+    cardStatus: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#0162B3',
+        textTransform: 'capitalize',
+    },
+    cardValor: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#10B981',
+        marginTop: 4,
     },
     cardFooter: {
         flexDirection: 'row',
