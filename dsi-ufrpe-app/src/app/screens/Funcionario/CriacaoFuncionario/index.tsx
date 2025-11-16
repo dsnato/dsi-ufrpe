@@ -5,6 +5,7 @@ import { InfoHeader } from '@/src/components/InfoHeader';
 import { Separator } from '@/src/components/Separator';
 import { useToast } from '@/src/components/ToastContext';
 import { getSuccessMessage, getValidationMessage } from '@/src/utils/errorMessages';
+import { criarFuncionario } from '@/src/services/funcionariosService';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
@@ -239,24 +240,23 @@ const CriarFuncionario: React.FC = () => {
             setLoading(true);
 
             const funcionarioData = {
-                nome: nome.trim(),
+                nome_completo: nome.trim(),
                 cpf: cpf.replace(/\D/g, ''),
-                celular: celular.replace(/\D/g, ''),
+                telefone: celular.replace(/\D/g, ''),
                 email: email.trim().toLowerCase(),
                 cargo: cargo,
                 data_admissao: dataAdmissao,
                 salario: salarioNumerico,
-                ativo: ativo,
+                status: ativo ? 'ativo' : 'inativo',
             };
 
-            // TODO: Implementar FuncionarioService.create(funcionarioData)
-            console.log('Criando funcionário:', funcionarioData);
+            await criarFuncionario(funcionarioData);
 
             showSuccess(getSuccessMessage('create'));
 
             setTimeout(() => {
-                router.push('/screens/Funcionario/ListagemFuncionario');
-            }, 2000);
+                router.back();
+            }, 1500);
         } catch (error) {
             console.error('Erro ao criar funcionário:', error);
             showError('Ocorreu um erro ao criar o funcionário. Tente novamente.');

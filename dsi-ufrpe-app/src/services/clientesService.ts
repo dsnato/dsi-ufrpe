@@ -165,6 +165,9 @@ export const atualizarCliente = async (id: string, cliente: Partial<Cliente>): P
 
   if (error) {
     console.error('🔴 [clientesService] Erro ao atualizar cliente:', error);
+    console.error('🔴 [clientesService] Erro código:', error.code);
+    console.error('🔴 [clientesService] Erro detalhes:', error.details);
+    console.error('🔴 [clientesService] Dados enviados:', JSON.stringify(cliente, null, 2));
     throw new Error(error.message);
   }
 
@@ -176,15 +179,21 @@ export const atualizarCliente = async (id: string, cliente: Partial<Cliente>): P
  * Excluir cliente
  */
 export const excluirCliente = async (id: string): Promise<void> => {
+  console.log('🔴 [clientesService] excluirCliente chamado');
+  console.log('🔴 [clientesService] ID:', id);
+  
   const { error } = await supabase
     .from('clientes')
     .delete()
     .eq('id', id);
 
   if (error) {
-    console.error('Erro ao excluir cliente:', error);
+    console.error('🔴 [clientesService] Erro ao excluir cliente:', error);
+    console.error('🔴 [clientesService] Erro detalhes:', JSON.stringify(error, null, 2));
     throw new Error(error.message);
   }
+  
+  console.log('✅ [clientesService] Cliente excluído com sucesso');
 };
 
 /**
