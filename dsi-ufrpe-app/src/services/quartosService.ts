@@ -129,15 +129,21 @@ export const atualizarQuarto = async (id: string, quarto: Partial<Quarto>): Prom
  * Excluir quarto
  */
 export const excluirQuarto = async (id: string): Promise<void> => {
+  console.log('🔴 [quartosService] excluirQuarto chamado');
+  console.log('🔴 [quartosService] ID:', id);
+  
   const { error } = await supabase
     .from('quartos')
     .delete()
     .eq('id', id);
 
   if (error) {
-    console.error('Erro ao excluir quarto:', error);
+    console.error('🔴 [quartosService] Erro ao excluir quarto:', error);
+    console.error('🔴 [quartosService] Erro detalhes:', JSON.stringify(error, null, 2));
     throw new Error(error.message);
   }
+  
+  console.log('✅ [quartosService] Quarto excluído com sucesso');
 };
 
 /**
