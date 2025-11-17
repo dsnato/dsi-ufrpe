@@ -5,7 +5,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 interface DashboardCardProps {
     icon: keyof typeof Ionicons.glyphMap;
     title: string;
-    count: number;
+    count?: number;
     subtitle?: string;
     color: string;
     onPress: () => void;
@@ -45,7 +45,7 @@ export const DashboardCard: React.FC<DashboardCardProps> = ({
             </View>
 
             <View style={styles.content}>
-                <Text style={styles.count}>{count}</Text>
+                {count !== undefined && <Text style={styles.count}>{count}</Text>}
                 <Text style={styles.title}>{title}</Text>
                 {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
             </View>
