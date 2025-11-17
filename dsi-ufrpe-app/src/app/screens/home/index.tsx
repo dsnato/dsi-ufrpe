@@ -295,6 +295,15 @@ export default function Home({ session }: { session: Session }) {
                                 color="#EC4899"
                                 onPress={() => router.push('/screens/Atividade/ListagemAtividade')}
                             />
+
+                            <DashboardCard
+                                icon="location"
+                                title="Localização"
+                                count={0}
+                                subtitle="Ver no mapa"
+                                color="#14B8A6"
+                                onPress={() => router.push('/screens/Localizacao' as any)}
+                            />
                         </View>
                     </ScrollView>
                 </View>
