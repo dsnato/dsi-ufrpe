@@ -188,7 +188,7 @@ export default function Home({ session }: { session: Session }) {
                             style={styles.logoutButton}
                             onPress={handleLogout}
                         >
-                            <Ionicons name="log-out-outline" size={24} color="#FFE157" />
+                            <Ionicons name="log-out-outline" size={22} color="#FFE157" />
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -351,14 +351,15 @@ const styles = StyleSheet.create({
         color: '#FFE157',
     },
     logoutButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
+        width: 44,
+        height: 44,
+        borderRadius: 22,
         backgroundColor: '#132F3B',
-        borderWidth: 1,
+        borderWidth: 1.5,
         borderColor: '#FFE157',
         alignItems: 'center',
         justifyContent: 'center',
+        padding: 0,
     },
     content: {
         flex: 1,
