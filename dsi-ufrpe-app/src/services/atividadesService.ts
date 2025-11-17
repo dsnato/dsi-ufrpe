@@ -34,6 +34,14 @@ export const listarAtividades = async (): Promise<AtividadeRecreativa[]> => {
     throw new Error(error.message);
   }
 
+  // Debug: Log das URLs de imagens
+  console.log('📋 [atividadesService] Atividades com imagens:', 
+    data?.filter(a => a.imagem_url).map(a => ({
+      nome: a.nome,
+      imagem_url: a.imagem_url
+    }))
+  );
+
   return data || [];
 };
 

@@ -10,9 +10,10 @@ import { buscarAtividadePorId, excluirAtividade, AtividadeRecreativa } from '@/s
 import { formatDate, formatTime, withPlaceholder } from '@/src/utils/formatters';
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, Platform, Image } from "react-native";
+import { ScrollView, StyleSheet, Text, View, Platform } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useToast } from '@/src/components/ToastContext';
+import { Image } from 'expo-image';
 
 const InfoAtividade: React.FC = () => {
     const router = useRouter();
@@ -131,9 +132,11 @@ const InfoAtividade: React.FC = () => {
                     {atividade.imagem_url && (
                         <View style={styles.imageContainer}>
                             <Image
-                                source={{ uri: atividade.imagem_url }}
+                                source={atividade.imagem_url}
                                 style={styles.activityImage}
-                                resizeMode="cover"
+                                contentFit="cover"
+                                transition={200}
+                                cachePolicy="memory-disk"
                             />
                         </View>
                     )}
