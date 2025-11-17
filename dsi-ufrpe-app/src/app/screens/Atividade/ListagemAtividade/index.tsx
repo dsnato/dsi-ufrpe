@@ -4,10 +4,11 @@ import TextInputRounded from '@/src/components/TextInputRounded';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, Image } from 'react-native';
+import { FlatList, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { listarAtividades, AtividadeRecreativa } from '@/src/services/atividadesService';
 import { useToast } from '@/src/components/ToastContext';
+import { Image } from 'expo-image';
 
 type Atividade = AtividadeRecreativa;
 
@@ -66,24 +67,47 @@ const ListagemAtividade: React.FC = () => {
     };
 
     // Renderiza cada card de atividade
-    const renderAtividadeCard = ({ item }: { item: Atividade }) => (
-        <TouchableOpacity
-            style={styles.atividadeCard}
-            onPress={() => handleAtividadePress(item.id!)}
-            activeOpacity={0.7}
-        >
-            {/* Imagem de thumbnail */}
-            {item.imagem_url ? (
-                <Image 
-                    source={{ uri: item.imagem_url }} 
-                    style={styles.cardImage}
-                    resizeMode="cover"
-                />
-            ) : (
-                <View style={styles.cardImagePlaceholder}>
-                    <Ionicons name="image-outline" size={32} color="#CBD5E1" />
-                </View>
-            )}
+    const renderAtividadeCard = ({ item }: { item: Atividade }) => {
+        // Debug: Log da URL da imagem
+        if (item.imagem_url) {
+            console.log('🖼️ [Card] Renderizando imagem:', {
+                nome: item.nome,
+                url: item.imagem_url,
+                urlLength: item.imagem_url.length
+            });
+        }
+        
+        return (
+            <TouchableOpacity
+                style={styles.atividadeCard}
+                onPress={() => handleAtividadePress(item.id!)}
+                activeOpacity={0.7}
+            >
+                {/* Imagem de thumbnail */}
+                {item.imagem_url ? (
+                    <Image 
+                        source={item.imagem_url}
+                        style={styles.cardImage}
+                        contentFit="cover"
+                        transition={200}
+                        cachePolicy="memory-disk"
+                        placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
+                        onError={(error) => {
+                            console.error('❌ [Card] Erro ao carregar imagem:', {
+                                nome: item.nome,
+                                url: item.imagem_url,
+                                error
+                            });
+                        }}
+                        onLoad={() => {
+                            console.log('✅ [Card] Imagem carregada com sucesso:', item.nome);
+                        }}
+                    />
+                ) : (
+                    <View style={styles.cardImagePlaceholder}>
+                        <Ionicons name="image-outline" size={32} color="#CBD5E1" />
+                    </View>
+                )}
             
             <View style={styles.cardHeader}>
                 <View style={styles.cardIcon}>
@@ -116,7 +140,8 @@ const ListagemAtividade: React.FC = () => {
                 </View>
             </View>
         </TouchableOpacity>
-    );
+        );
+    };
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
