@@ -299,8 +299,7 @@ export default function Home({ session }: { session: Session }) {
                             <DashboardCard
                                 icon="location"
                                 title="Localização"
-                                count={0}
-                                subtitle="Ver no mapa"
+                                subtitle="Ver localização do hotel no mapa"
                                 color="#14B8A6"
                                 onPress={() => router.push('/screens/Localizacao' as any)}
                             />
