@@ -21,6 +21,8 @@ const EditarReserva: React.FC = () => {
     const [dataCheckout, setDataCheckout] = useState('');
     const [clienteId, setClienteId] = useState('');
     const [quartoId, setQuartoId] = useState('');
+    const [clienteNome, setClienteNome] = useState('');
+    const [quartoNumero, setQuartoNumero] = useState('');
     const [valorTotal, setValorTotal] = useState('');
     const [status, setStatus] = useState('confirmada');
     const [ativa, setAtiva] = useState(true);
@@ -92,6 +94,21 @@ const EditarReserva: React.FC = () => {
             
             setClienteId(data.id_cliente || '');
             setQuartoId(data.id_quarto || '');
+            
+            // Define nomes legíveis para exibição
+            if (data.clientes) {
+                setClienteNome(data.clientes.nome_completo || 'Cliente não identificado');
+            } else {
+                setClienteNome('Cliente não encontrado');
+            }
+            
+            if (data.quartos) {
+                const quartoInfo = `Quarto ${data.quartos.numero_quarto} - ${data.quartos.tipo}`;
+                setQuartoNumero(quartoInfo);
+            } else {
+                setQuartoNumero('Quarto não encontrado');
+            }
+            
             setValorTotal(data.valor_total?.toFixed(2).replace('.', ',') || '');
             setStatus(data.status || 'confirmada');
             setAtiva(data.ativa ?? true);
@@ -235,8 +252,8 @@ const EditarReserva: React.FC = () => {
                             <FormInput
                                 icon="person-outline"
                                 placeholder="Nome do cliente"
-                                value={clienteId}
-                                onChangeText={setClienteId}
+                                value={clienteNome}
+                                onChangeText={() => {}}
                                 editable={false}
                                 helperText="Cliente vinculado à reserva (não editável)"
                             />
@@ -249,8 +266,8 @@ const EditarReserva: React.FC = () => {
                             <FormInput
                                 icon="bed-outline"
                                 placeholder="Número e tipo do quarto"
-                                value={quartoId}
-                                onChangeText={setQuartoId}
+                                value={quartoNumero}
+                                onChangeText={() => {}}
                                 editable={false}
                                 helperText="Quarto vinculado à reserva (não editável)"
                             />
