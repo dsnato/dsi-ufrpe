@@ -23,12 +23,13 @@ interface DashboardStats {
     activities: { total: number; scheduled: number };
 }
 
-export default function Home({ session }: { session: Session }) {
+export default function Home() {
     const router = useRouter();
 
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [username, setUsername] = useState('Usuário');
+    const [session, setSession] = useState<Session | null>(null);
     const [stats, setStats] = useState<DashboardStats>({
         reservations: { total: 0, today: 0, confirmed: 0 },
         clients: { total: 0, active: 0 },
@@ -40,45 +41,47 @@ export default function Home({ session }: { session: Session }) {
     // Busca perfil do usuário e nome do funcionário vinculado
     const getProfile = useCallback(async () => {
         try {
-            if (!session?.user) throw new Error('Usuário não autenticado!');
-
-            // Busca o profile do usuário
-            const { data: profileData, error: profileError } = await supabase
-                .from('profiles')
-                .select(`username, funcionario_id`)
-                .eq('id', session?.user.id)
-                .single();
-
-            if (profileError && profileError.code !== 'PGRST116') throw profileError;
-
-            // Se tiver funcionario_id, busca o nome do funcionário
-            // TODO Possivelmente poderá haver alteração nessa parte
-            if (profileData?.funcionario_id) {
-                const { data: funcionarioData, error: funcionarioError } = await supabase
-                    .from('funcionarios')
-                    .select('nome_completo')
-                    .eq('id', profileData.funcionario_id)
-                    .single();
-
-                if (!funcionarioError && funcionarioData?.nome_completo) {
-                    // Usa apenas o primeiro nome
-                    const firstName = funcionarioData.nome_completo.split(' ')[0];
-                    setUsername(firstName);
-                    return;
-                }
+            console.log('🔍 Iniciando getProfile...');
+            
+            // Busca a sessão atual
+            const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
+            
+            console.log('📝 Sessão obtida:', currentSession);
+            
+            if (sessionError) {
+                console.error('❌ Erro ao obter sessão:', sessionError);
+                throw sessionError;
+            }
+            
+            if (!currentSession?.user) {
+                console.error('❌ Usuário não autenticado!');
+                router.replace('/screens/Login');
+                return;
             }
 
-            // Fallback: usa username do profile ou email
-            if (profileData?.username) {
-                setUsername(profileData.username);
-            } else if (session?.user?.email) {
-                const emailName = session.user.email.split('@')[0];
+            console.log('✅ Usuário autenticado:', currentSession.user.id);
+            setSession(currentSession);
+
+            // Tenta usar o display_name do user metadata (cadastrado no registro)
+            const displayName = currentSession.user.user_metadata?.display_name;
+            
+            if (displayName) {
+                const firstName = displayName.split(' ')[0];
+                console.log('✅ Usando display_name do metadata:', firstName);
+                setUsername(firstName);
+                return;
+            }
+
+            // Fallback: usa o email
+            if (currentSession?.user?.email) {
+                const emailName = currentSession.user.email.split('@')[0];
+                console.log('✅ Usando email como username:', emailName);
                 setUsername(emailName);
             }
         } catch (error) {
-            console.error('Erro ao buscar perfil:', error);
+            console.error('❌ Erro ao buscar perfil:', error);
         }
-    }, [session]);
+    }, [router]);
 
     // Busca estatísticas do dashboard
     const loadDashboardStats = useCallback(async () => {
@@ -149,11 +152,24 @@ export default function Home({ session }: { session: Session }) {
     }, []);
 
     useEffect(() => {
-        if (session) {
-            getProfile();
-            loadDashboardStats();
-        }
-    }, [session, getProfile, loadDashboardStats]);
+        console.log('🚀 useEffect executado');
+        getProfile();
+        loadDashboardStats();
+
+        // Listener para mudanças na autenticação
+        const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+            console.log('🔄 Auth state changed:', _event, session?.user?.id);
+            if (session) {
+                setSession(session);
+            } else {
+                router.replace('/screens/Login');
+            }
+        });
+
+        return () => {
+            authListener.subscription.unsubscribe();
+        };
+    }, [getProfile, loadDashboardStats]);
 
     const onRefresh = () => {
         setRefreshing(true);

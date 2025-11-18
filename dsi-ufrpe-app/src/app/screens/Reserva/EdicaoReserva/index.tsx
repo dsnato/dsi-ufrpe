@@ -3,12 +3,12 @@ import { FormInput } from '@/src/components/FormInput';
 import { InfoHeader } from '@/src/components/InfoHeader';
 import { Separator } from '@/src/components/Separator';
 import { useToast } from '@/src/components/ToastContext';
+import { atualizarReserva, buscarReservaPorId } from '@/src/services/reservasService';
 import { getSuccessMessage } from '@/src/utils/errorMessages';
-import { buscarReservaPorId, atualizarReserva, Reserva } from '@/src/services/reservasService';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const EditarReserva: React.FC = () => {
@@ -191,19 +191,14 @@ const EditarReserva: React.FC = () => {
 
             await atualizarReserva(id as string, reservaData);
 
-            Alert.alert(
-                'Sucesso',
-                'Reserva atualizada com sucesso!',
-                [
-                    {
-                        text: 'OK',
-                        onPress: () => router.push('/screens/Reserva/ListagemReserva'),
-                    },
-                ]
-            );
+            showSuccess(getSuccessMessage('update'));
+
+            setTimeout(() => {
+                router.back();
+            }, 1500);
         } catch (error) {
             console.error('Erro ao salvar reserva:', error);
-            Alert.alert('Erro', 'Ocorreu um erro ao salvar. Tente novamente.');
+            showError('Ocorreu um erro ao salvar. Tente novamente.');
         } finally {
             setLoading(false);
         }
@@ -211,7 +206,7 @@ const EditarReserva: React.FC = () => {
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
-            <InfoHeader entity="Reservas" onBackPress={() => router.push('/screens/Reserva/ListagemReserva')} />
+            <InfoHeader entity="Reservas" action="Edição" onBackPress={() => router.push('/screens/Reserva/ListagemReserva')} />
 
             <View style={styles.content}>
                 <ScrollView

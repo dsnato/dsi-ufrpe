@@ -23,7 +23,7 @@ const VARIANT_STYLES = {
     },
     secondary: {
         container: {
-            backgroundColor: 'transparent',
+            backgroundColor: '#FFFFFF',
             borderWidth: 1.5,
             borderColor: '#0162B3',
         },
@@ -34,7 +34,7 @@ const VARIANT_STYLES = {
     },
     danger: {
         container: {
-            backgroundColor: 'transparent',
+            backgroundColor: '#FFFFFF',
             borderWidth: 1.5,
             borderColor: '#EF4444',
         },
