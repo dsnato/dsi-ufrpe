@@ -98,6 +98,20 @@ const EditarCliente: React.FC = () => {
             processedValue = limited.slice(0, 2) + correctedMonth + limited.slice(4);
         }
 
+        // Valida e corrige o ano (1900-2100)
+        if (processedValue.length === 8) {
+            const year = parseInt(processedValue.slice(4, 8));
+            let correctedYear = processedValue.slice(4, 8);
+
+            if (year < 1900) {
+                correctedYear = '1900';
+            } else if (year > 2100) {
+                correctedYear = '2100';
+            }
+
+            processedValue = processedValue.slice(0, 4) + correctedYear;
+        }
+
         let formatted = processedValue;
         if (processedValue.length >= 3) {
             formatted = `${processedValue.slice(0, 2)}/${processedValue.slice(2)}`;
@@ -141,9 +155,9 @@ const EditarCliente: React.FC = () => {
     const formatCpfForDisplay = (cpf: string): string => {
         if (!cpf) return '';
         const numbersOnly = cpf.replace(/\D/g, '');
-        
+
         if (numbersOnly.length !== 11) return cpf; // Retorna como está se não tiver 11 dígitos
-        
+
         return `${numbersOnly.slice(0, 3)}.${numbersOnly.slice(3, 6)}.${numbersOnly.slice(6, 9)}-${numbersOnly.slice(9)}`;
     };
 
@@ -151,9 +165,9 @@ const EditarCliente: React.FC = () => {
     const formatPhoneForDisplay = (phone: string): string => {
         if (!phone) return '';
         const numbersOnly = phone.replace(/\D/g, '');
-        
+
         if (numbersOnly.length !== 11) return phone; // Retorna como está se não tiver 11 dígitos
-        
+
         return `(${numbersOnly.slice(0, 2)}) ${numbersOnly.slice(2, 7)}-${numbersOnly.slice(7)}`;
     };
 
@@ -164,16 +178,16 @@ const EditarCliente: React.FC = () => {
         try {
             setLoading(true);
             const data = await buscarClientePorId(id as string);
-            
+
             if (!data) {
                 showError('Cliente não encontrado.');
                 return;
             }
-            
+
             console.log('📋 [EdicaoCliente] Dados brutos do banco:', data);
             console.log('📋 [EdicaoCliente] CPF do banco:', data.cpf);
             console.log('📋 [EdicaoCliente] Telefone do banco:', data.telefone);
-            
+
             setNome(data.nome_completo || '');
             setCpf(formatCpfForDisplay(data.cpf || ''));
             setCelular(formatPhoneForDisplay(data.telefone || ''));
@@ -182,7 +196,7 @@ const EditarCliente: React.FC = () => {
             setEndereco(data.endereco || '');
             setImagemUri(data.imagem_url || null);
             setImagemOriginal(data.imagem_url || null);
-            
+
             console.log('✅ [EdicaoCliente] CPF formatado:', formatCpfForDisplay(data.cpf || ''));
             console.log('✅ [EdicaoCliente] Telefone formatado:', formatPhoneForDisplay(data.telefone || ''));
         } catch (error) {
@@ -289,14 +303,14 @@ const EditarCliente: React.FC = () => {
             console.log('🖼️ [EdicaoCliente] imagemUri:', imagemUri);
             console.log('🖼️ [EdicaoCliente] imagemOriginal:', imagemOriginal);
             console.log('🖼️ [EdicaoCliente] São diferentes?', imagemUri !== imagemOriginal);
-            
+
             // Verifica se é uma nova imagem local (começa com file://)
             const isNewLocalImage = imagemUri && imagemUri.startsWith('file://');
             const imagemFoiAlterada = imagemUri !== imagemOriginal;
-            
+
             console.log('🖼️ [EdicaoCliente] É imagem local?', isNewLocalImage);
             console.log('🖼️ [EdicaoCliente] Imagem foi alterada?', imagemFoiAlterada);
-            
+
             if (isNewLocalImage && imagemFoiAlterada) {
                 // Nova imagem selecionada - fazer upload
                 try {

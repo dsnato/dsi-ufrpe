@@ -48,6 +48,20 @@ const EditarReserva: React.FC = () => {
             processedValue = limited.slice(0, 2) + correctedMonth + limited.slice(4);
         }
 
+        // Valida e corrige o ano (1900-2100)
+        if (processedValue.length === 8) {
+            const year = parseInt(processedValue.slice(4, 8));
+            let correctedYear = processedValue.slice(4, 8);
+
+            if (year < 1900) {
+                correctedYear = '1900';
+            } else if (year > 2100) {
+                correctedYear = '2100';
+            }
+
+            processedValue = processedValue.slice(0, 4) + correctedYear;
+        }
+
         let formatted = processedValue;
         if (processedValue.length >= 3) {
             formatted = `${processedValue.slice(0, 2)}/${processedValue.slice(2)}`;
@@ -79,13 +93,13 @@ const EditarReserva: React.FC = () => {
         if (checkout > checkin) {
             const diferencaDias = Math.ceil((checkout.getTime() - checkin.getTime()) / (1000 * 60 * 60 * 24));
             const total = diferencaDias * precoDiario;
-            
+
             // Validação de overflow
             if (total > 999999.99) {
                 showError('O valor total excede o limite máximo permitido.');
                 return;
             }
-            
+
             setValorTotal(total.toFixed(2).replace('.', ','));
         }
     }, [dataCheckin, dataCheckout, precoDiario, showError]);
@@ -102,12 +116,12 @@ const EditarReserva: React.FC = () => {
         try {
             setLoading(true);
             const data = await buscarReservaPorId(id as string);
-            
+
             if (!data) {
                 showError('Reserva não encontrada.');
                 return;
             }
-            
+
             // Converte as datas de YYYY-MM-DD para DD/MM/YYYY
             // Usa Date com parsing local para evitar problema de timezone
             if (data.data_checkin) {
@@ -124,17 +138,17 @@ const EditarReserva: React.FC = () => {
                 const ano = dateCheckout.getFullYear();
                 setDataCheckout(`${dia}/${mes}/${ano}`);
             }
-            
+
             setClienteId(data.id_cliente || '');
             setQuartoId(data.id_quarto || '');
-            
+
             // Define nomes legíveis para exibição
             if (data.clientes) {
                 setClienteNome(data.clientes.nome_completo || 'Cliente não identificado');
             } else {
                 setClienteNome('Cliente não encontrado');
             }
-            
+
             if (data.quartos) {
                 const quartoInfo = `Quarto ${data.quartos.numero_quarto} - ${data.quartos.tipo}`;
                 setQuartoNumero(quartoInfo);
@@ -143,10 +157,10 @@ const EditarReserva: React.FC = () => {
                 setQuartoNumero('Quarto não encontrado');
                 setPrecoDiario(0);
             }
-            
+
             setValorTotal(data.valor_total?.toFixed(2).replace('.', ',') || '');
             setStatus(data.status || 'confirmada');
-            
+
             // Define ativa baseado no status
             setAtiva(data.status !== 'Cancelada' && data.status !== 'cancelada');
         } catch (error) {
@@ -290,7 +304,7 @@ const EditarReserva: React.FC = () => {
                                 icon="person-outline"
                                 placeholder="Nome do cliente"
                                 value={clienteNome}
-                                onChangeText={() => {}}
+                                onChangeText={() => { }}
                                 editable={false}
                                 helperText="Cliente vinculado à reserva (não editável)"
                             />
@@ -304,7 +318,7 @@ const EditarReserva: React.FC = () => {
                                 icon="bed-outline"
                                 placeholder="Número e tipo do quarto"
                                 value={quartoNumero}
-                                onChangeText={() => {}}
+                                onChangeText={() => { }}
                                 editable={false}
                                 helperText="Quarto vinculado à reserva (não editável)"
                             />
@@ -350,7 +364,7 @@ const EditarReserva: React.FC = () => {
                                 icon="cash-outline"
                                 placeholder="0,00"
                                 value={valorTotal}
-                                onChangeText={() => {}}
+                                onChangeText={() => { }}
                                 editable={false}
                                 keyboardType="numeric"
                                 helperText="Calculado automaticamente (dias × preço diário)"

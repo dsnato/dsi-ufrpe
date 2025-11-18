@@ -1,13 +1,13 @@
 import { ActionButton } from '@/src/components/ActionButton';
 import { Separator } from '@/src/components/Separator';
 import TextInputRounded from '@/src/components/TextInputRounded';
+import { useToast } from '@/src/components/ToastContext';
+import { Funcionario, listarFuncionarios } from '@/src/services/funcionariosService';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { listarFuncionarios, Funcionario } from '@/src/services/funcionariosService';
-import { useToast } from '@/src/components/ToastContext';
 
 const ListagemFuncionario: React.FC = () => {
     const router = useRouter();
@@ -61,9 +61,7 @@ const ListagemFuncionario: React.FC = () => {
     const renderFuncionarioCard = ({ item }: { item: Funcionario }) => (
         <TouchableOpacity
             style={styles.funcionarioCard}
-            onPress={() => handleFuncionarioPress(item.id!)}
-            activeOpacity={0.7}
-            onPress={() => handleFuncionarioPress(item.id)}
+            onPress={() => handleFuncionarioPress(item.id || '')}
             activeOpacity={0.7}
         >
             <View style={styles.cardIcon}>
@@ -133,7 +131,7 @@ const ListagemFuncionario: React.FC = () => {
                 {filteredItems.length > 0 ? (
                     <FlatList
                         data={filteredItems}
-                        keyExtractor={(item) => item.id}
+                        keyExtractor={(item) => item.id || ''}
                         renderItem={renderFuncionarioCard}
                         numColumns={2}
                         columnWrapperStyle={styles.row}
@@ -265,6 +263,12 @@ const styles = StyleSheet.create({
         fontSize: 13,
         color: '#64748B',
         fontFamily: 'monospace',
+    },
+    cardCargo: {
+        fontSize: 12,
+        color: '#0162B3',
+        fontWeight: '500',
+        textAlign: 'center',
     },
     emptyContainer: {
         flex: 1,
