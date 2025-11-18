@@ -4,8 +4,8 @@ import { FormSelect, SelectOption } from '@/src/components/FormSelect';
 import { InfoHeader } from '@/src/components/InfoHeader';
 import { Separator } from '@/src/components/Separator';
 import { useToast } from '@/src/components/ToastContext';
-import { getSuccessMessage, getValidationMessage } from '@/src/utils/errorMessages';
 import { criarQuarto } from '@/src/services/quartosService';
+import { getSuccessMessage, getValidationMessage } from '@/src/utils/errorMessages';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
@@ -107,11 +107,11 @@ const CriarQuarto: React.FC = () => {
             setLoading(true);
 
             const quartoData = {
-                numero_quarto: numeroInt,
+                numero_quarto: numero.trim(),
                 tipo: tipo,
                 capacidade_pessoas: capacidadeInt,
                 preco_diario: precoNumerico,
-                descricao: descricao.trim() || null,
+                descricao: descricao.trim() || undefined,
                 status: disponivel ? 'disponível' : 'ocupado',
             };
 
@@ -132,7 +132,7 @@ const CriarQuarto: React.FC = () => {
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
-            <InfoHeader entity="Quartos" onBackPress={() => router.push('/screens/Quarto/ListagemQuarto')} />
+            <InfoHeader entity="Quartos" action="Adição" onBackPress={() => router.push('/screens/Quarto/ListagemQuarto')} />
 
             <View style={styles.content}>
                 <ScrollView
