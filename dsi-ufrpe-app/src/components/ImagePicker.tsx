@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { View, Image, TouchableOpacity, StyleSheet, Text, ActivityIndicator, Alert, Platform } from 'react-native';
-import * as ImagePickerExpo from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePickerExpo from 'expo-image-picker';
+import React, { useState } from 'react';
+import { ActivityIndicator, Alert, Image, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface ImagePickerProps {
   imageUri?: string | null;
@@ -48,8 +48,15 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
         quality: 0.8,
       });
 
+      console.log('📸 [ImagePicker] Resultado da seleção:', result);
+      
       if (!result.canceled && result.assets[0]) {
-        onImageSelected(result.assets[0].uri);
+        const selectedUri = result.assets[0].uri;
+        console.log('✅ [ImagePicker] Imagem selecionada:', selectedUri);
+        console.log('✅ [ImagePicker] Chamando onImageSelected com:', selectedUri);
+        onImageSelected(selectedUri);
+      } else {
+        console.log('⚠️ [ImagePicker] Seleção cancelada ou sem assets');
       }
     } catch (error) {
       console.error('Erro ao selecionar imagem:', error);

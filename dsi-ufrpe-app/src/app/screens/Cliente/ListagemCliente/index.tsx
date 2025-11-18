@@ -4,10 +4,11 @@ import TextInputRounded from '@/src/components/TextInputRounded';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
+import { FlatList, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { listarClientes, Cliente } from '@/src/services/clientesService';
 import { useToast } from '@/src/components/ToastContext';
+import { formatCPF } from '@/src/utils/formatters';
 
 type Client = Cliente;
 
@@ -66,18 +67,31 @@ const ListagemCliente: React.FC = () => {
             onPress={() => handleClientePress(item.id!)}
             activeOpacity={0.7}
         >
-            <View style={styles.cardIcon}>
-                <Ionicons name="person" size={32} color="#0162B3" />
+            {/* Imagem do cliente ou padrão */}
+            <View style={styles.cardImageContainer}>
+                {item.imagem_url ? (
+                    <Image
+                        source={{ uri: item.imagem_url }}
+                        style={styles.cardImage}
+                        resizeMode="cover"
+                    />
+                ) : (
+                    <View style={styles.cardIcon}>
+                        <Ionicons name="person" size={32} color="#0162B3" />
+                    </View>
+                )}
             </View>
+            
+            {/* Conteúdo do card */}
             <View style={styles.cardContent}>
-                <Text style={styles.cardTitle} numberOfLines={1}>
-                    {item.name}
+                <Text style={styles.cardTitle} numberOfLines={2}>
+                    {item.nome_completo}
                 </Text>
-                <Text style={styles.cardSubtitle}>{item.cpf}</Text>
+                <Text style={styles.cardSubtitle}>{formatCPF(item.cpf)}</Text>
                 <View style={styles.cardFooter}>
                     <Ionicons name="location-outline" size={14} color="#64748B" />
                     <Text style={styles.cardLocation} numberOfLines={1}>
-                        {item.city}/{item.state}
+                        {item.cidade}/{item.estado}
                     </Text>
                 </View>
             </View>
@@ -237,6 +251,17 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 4,
     },
+    cardImageContainer: {
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        overflow: 'hidden',
+        alignSelf: 'center',
+    },
+    cardImage: {
+        width: '100%',
+        height: '100%',
+    },
     cardIcon: {
         width: 56,
         height: 56,
@@ -244,7 +269,6 @@ const styles = StyleSheet.create({
         backgroundColor: '#EFF6FF',
         justifyContent: 'center',
         alignItems: 'center',
-        alignSelf: 'center',
     },
     cardContent: {
         gap: 4,
