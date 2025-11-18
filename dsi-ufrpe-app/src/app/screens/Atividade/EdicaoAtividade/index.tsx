@@ -51,6 +51,20 @@ const EditarAtividade: React.FC = () => {
             processedValue = limited.slice(0, 2) + correctedMonth + limited.slice(4);
         }
 
+        // Valida e corrige o ano (1900-2100)
+        if (processedValue.length === 8) {
+            const year = parseInt(processedValue.slice(4, 8));
+            let correctedYear = processedValue.slice(4, 8);
+
+            if (year < 1900) {
+                correctedYear = '1900';
+            } else if (year > 2100) {
+                correctedYear = '2100';
+            }
+
+            processedValue = processedValue.slice(0, 4) + correctedYear;
+        }
+
         // Formata conforme o usuário digita
         let formatted = processedValue;
         if (processedValue.length >= 3) {
@@ -106,16 +120,16 @@ const EditarAtividade: React.FC = () => {
         try {
             setLoading(true);
             const data = await buscarAtividadePorId(id as string);
-            
+
             if (!data) {
                 showError('Atividade não encontrada.');
                 return;
             }
-            
+
             setNome(data.nome || '');
             setDescricao(data.descricao || '');
             setLocal(data.local || '');
-            
+
             // Salva a imagem original para comparação
             // Só atualiza se o usuário não alterou a imagem manualmente
             if (!imagemAlterada) {
@@ -125,7 +139,7 @@ const EditarAtividade: React.FC = () => {
             } else {
                 console.log('🖼️ [EdicaoAtividade] Imagem já foi alterada pelo usuário, mantendo a nova');
             }
-            
+
             // Converte data_hora (timestamp) para data e hora separados
             if (data.data_hora) {
                 const dateTime = new Date(data.data_hora);
@@ -133,12 +147,12 @@ const EditarAtividade: React.FC = () => {
                 const month = String(dateTime.getMonth() + 1).padStart(2, '0');
                 const year = dateTime.getFullYear();
                 setDataAtividade(`${day}/${month}/${year}`);
-                
+
                 const hours = String(dateTime.getHours()).padStart(2, '0');
                 const minutes = String(dateTime.getMinutes()).padStart(2, '0');
                 setHorario(`${hours}:${minutes}`);
             }
-            
+
             setAtiva(data.status === 'ativa');
         } catch (error) {
             console.error('Erro ao carregar atividade:', error);
@@ -229,7 +243,7 @@ const EditarAtividade: React.FC = () => {
                 imagemOriginalLength: imagemOriginal?.length || 0,
                 saoIguais: imagemUri === imagemOriginal
             });
-            
+
             if (imagemAlterada && imagemUri !== imagemOriginal) {
                 if (!imagemUri && imagemOriginal) {
                     // Imagem foi removida
@@ -255,7 +269,7 @@ const EditarAtividade: React.FC = () => {
             }
 
             showSuccess(getSuccessMessage('update'));
-            
+
             setTimeout(() => {
                 router.back();
             }, 1500);

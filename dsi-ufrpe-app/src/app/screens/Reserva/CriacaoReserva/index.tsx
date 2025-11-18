@@ -44,7 +44,7 @@ const CriarReserva: React.FC = () => {
 
         const [dayIn, monthIn, yearIn] = checkIn.split('/').map(Number);
         const dateIn = new Date(yearIn, monthIn - 1, dayIn);
-        
+
         const [dayOut, monthOut, yearOut] = checkOut.split('/').map(Number);
         const dateOut = new Date(yearOut, monthOut - 1, dayOut);
 
@@ -83,23 +83,23 @@ const CriarReserva: React.FC = () => {
         try {
             setLoadingQuartos(true);
             const quartos = await listarQuartos();
-            
+
             // Filtra apenas quartos com status "disponível"
             const quartosDisponiveisLista = quartos.filter(
                 q => q.status?.toLowerCase() === 'disponível'
             );
-            
+
             // Salva os dados completos dos quartos
             setQuartosData(quartosDisponiveisLista);
-            
+
             // Mapeia para o formato do SelectOption
             const options: SelectOption[] = quartosDisponiveisLista.map(q => ({
                 label: `Quarto ${q.numero_quarto} - ${q.tipo} (R$ ${q.preco_diario?.toFixed(2).replace('.', ',')}/dia)`,
                 value: q.numero_quarto
             }));
-            
+
             setQuartosDisponiveis(options);
-            
+
             if (options.length === 0) {
                 showError('Não há quartos disponíveis no momento.');
             }
@@ -123,12 +123,41 @@ const CriarReserva: React.FC = () => {
         const numbersOnly = text.replace(/\D/g, '');
         const limited = numbersOnly.slice(0, 8);
 
-        let formatted = limited;
-        if (limited.length >= 3) {
-            formatted = `${limited.slice(0, 2)}/${limited.slice(2)}`;
+        // Valida e corrige o mês (1-12)
+        let processedValue = limited;
+        if (limited.length >= 4) {
+            const month = parseInt(limited.slice(2, 4));
+            let correctedMonth = limited.slice(2, 4);
+
+            if (month > 12) {
+                correctedMonth = '12';
+            } else if (month === 0 && limited.length >= 4) {
+                correctedMonth = '01';
+            }
+
+            processedValue = limited.slice(0, 2) + correctedMonth + limited.slice(4);
         }
-        if (limited.length >= 5) {
-            formatted = `${limited.slice(0, 2)}/${limited.slice(2, 4)}/${limited.slice(4)}`;
+
+        // Valida e corrige o ano (1900-2100)
+        if (processedValue.length === 8) {
+            const year = parseInt(processedValue.slice(4, 8));
+            let correctedYear = processedValue.slice(4, 8);
+
+            if (year < 1900) {
+                correctedYear = '1900';
+            } else if (year > 2100) {
+                correctedYear = '2100';
+            }
+
+            processedValue = processedValue.slice(0, 4) + correctedYear;
+        }
+
+        let formatted = processedValue;
+        if (processedValue.length >= 3) {
+            formatted = `${processedValue.slice(0, 2)}/${processedValue.slice(2)}`;
+        }
+        if (processedValue.length >= 5) {
+            formatted = `${processedValue.slice(0, 2)}/${processedValue.slice(2, 4)}/${processedValue.slice(4)}`;
         }
 
         setter(formatted);
@@ -300,7 +329,7 @@ const CriarReserva: React.FC = () => {
             // 1. Buscar cliente pelo CPF para obter o UUID
             const cpfLimpo = clienteCpf.replace(/\D/g, '');
             const cliente = await buscarClientePorCPF(cpfLimpo);
-            
+
             if (!cliente) {
                 showError('Cliente não encontrado. Verifique o CPF informado.');
                 setLoading(false);
@@ -310,7 +339,7 @@ const CriarReserva: React.FC = () => {
             // 2. Buscar quarto pelo número para obter o UUID
             const quartos = await listarQuartos();
             const quarto = quartos.find(q => q.numero_quarto === numeroQuarto.trim());
-            
+
             if (!quarto) {
                 showError('Quarto não encontrado. Verifique o número informado.');
                 setLoading(false);
@@ -320,7 +349,7 @@ const CriarReserva: React.FC = () => {
             // 3. Converter datas de DD/MM/AAAA para AAAA-MM-DD
             const [diaIn, mesIn, anoIn] = checkIn.split('/');
             const dataCheckinFormatada = `${anoIn}-${mesIn}-${diaIn}`;
-            
+
             const [diaOut, mesOut, anoOut] = checkOut.split('/');
             const dataCheckoutFormatada = `${anoOut}-${mesOut}-${diaOut}`;
 
