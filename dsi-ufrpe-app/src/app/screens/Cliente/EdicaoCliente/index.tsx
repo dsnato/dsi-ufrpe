@@ -1,14 +1,15 @@
 import { ActionButton } from '@/src/components/ActionButton';
 import { FormInput } from '@/src/components/FormInput';
+import { ImagePicker } from '@/src/components/ImagePicker';
 import { InfoHeader } from '@/src/components/InfoHeader';
 import { Separator } from '@/src/components/Separator';
 import { useToast } from '@/src/components/ToastContext';
-import { atualizarCliente, buscarClientePorId } from '@/src/services/clientesService';
+import { atualizarCliente, buscarClientePorId, Cliente, removerImagemCliente, uploadImagemCliente } from '@/src/services/clientesService';
 import { getSuccessMessage, getValidationMessage } from '@/src/utils/errorMessages';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const EditarCliente: React.FC = () => {
@@ -23,7 +24,24 @@ const EditarCliente: React.FC = () => {
     const [email, setEmail] = useState('');
     const [dataNascimento, setDataNascimento] = useState('');
     const [endereco, setEndereco] = useState('');
-    const [ativo, setAtivo] = useState(true);
+    const [imagemUri, setImagemUri] = useState<string | null>(null);
+    const [imagemOriginal, setImagemOriginal] = useState<string | null>(null);
+
+    // Handler para mudança de imagem com log
+    const handleImagemSelecionada = (uri: string) => {
+        console.log('🎯 [EdicaoCliente] handleImagemSelecionada chamado');
+        console.log('🎯 [EdicaoCliente] Nova URI recebida:', uri);
+        console.log('🎯 [EdicaoCliente] URI original era:', imagemOriginal);
+        setImagemUri(uri);
+        console.log('🎯 [EdicaoCliente] Estado imagemUri atualizado para:', uri);
+    };
+
+    const handleImagemRemovida = () => {
+        console.log('🗑️ [EdicaoCliente] handleImagemRemovida chamado');
+        console.log('🗑️ [EdicaoCliente] Removendo imagem. Original era:', imagemOriginal);
+        setImagemUri(null);
+        console.log('🗑️ [EdicaoCliente] Estado imagemUri atualizado para: null');
+    };
 
     // Formata CPF automaticamente (000.000.000-00)
     const handleCpfChange = (text: string) => {
@@ -119,6 +137,26 @@ const EditarCliente: React.FC = () => {
         return true;
     };
 
+    // Formata CPF para exibição (adiciona pontos e hífen)
+    const formatCpfForDisplay = (cpf: string): string => {
+        if (!cpf) return '';
+        const numbersOnly = cpf.replace(/\D/g, '');
+        
+        if (numbersOnly.length !== 11) return cpf; // Retorna como está se não tiver 11 dígitos
+        
+        return `${numbersOnly.slice(0, 3)}.${numbersOnly.slice(3, 6)}.${numbersOnly.slice(6, 9)}-${numbersOnly.slice(9)}`;
+    };
+
+    // Formata telefone para exibição
+    const formatPhoneForDisplay = (phone: string): string => {
+        if (!phone) return '';
+        const numbersOnly = phone.replace(/\D/g, '');
+        
+        if (numbersOnly.length !== 11) return phone; // Retorna como está se não tiver 11 dígitos
+        
+        return `(${numbersOnly.slice(0, 2)}) ${numbersOnly.slice(2, 7)}-${numbersOnly.slice(7)}`;
+    };
+
     // Carrega os dados do cliente
     const loadCliente = useCallback(async () => {
         if (!id) return;
@@ -132,13 +170,21 @@ const EditarCliente: React.FC = () => {
                 return;
             }
             
+            console.log('📋 [EdicaoCliente] Dados brutos do banco:', data);
+            console.log('📋 [EdicaoCliente] CPF do banco:', data.cpf);
+            console.log('📋 [EdicaoCliente] Telefone do banco:', data.telefone);
+            
             setNome(data.nome_completo || '');
-            setCpf(data.cpf || '');
-            setCelular(data.telefone || '');
+            setCpf(formatCpfForDisplay(data.cpf || ''));
+            setCelular(formatPhoneForDisplay(data.telefone || ''));
             setEmail(data.email || '');
             setDataNascimento(data.data_nascimento || '');
             setEndereco(data.endereco || '');
-            setAtivo(data.ativo ?? true);
+            setImagemUri(data.imagem_url || null);
+            setImagemOriginal(data.imagem_url || null);
+            
+            console.log('✅ [EdicaoCliente] CPF formatado:', formatCpfForDisplay(data.cpf || ''));
+            console.log('✅ [EdicaoCliente] Telefone formatado:', formatPhoneForDisplay(data.telefone || ''));
         } catch (error) {
             console.error('Erro ao carregar cliente:', error);
             showError('Não foi possível carregar os dados do cliente.');
@@ -227,16 +273,51 @@ const EditarCliente: React.FC = () => {
         try {
             setLoading(true);
 
-            const clienteData = {
+            const clienteData: Partial<Cliente> = {
                 nome_completo: nome.trim(),
                 cpf: cpf.replace(/\D/g, ''),
                 telefone: celular.replace(/\D/g, ''),
                 email: email.trim().toLowerCase(),
-                data_nascimento: dataNascimento.trim() || null,
-                endereco: endereco.trim() || null,
+                data_nascimento: dataNascimento.trim() || undefined,
+                endereco: endereco.trim() || undefined,
             };
 
             await atualizarCliente(id as string, clienteData);
+
+            // Gerenciar imagem
+            console.log('🖼️ [EdicaoCliente] Verificando mudanças na imagem...');
+            console.log('🖼️ [EdicaoCliente] imagemUri:', imagemUri);
+            console.log('🖼️ [EdicaoCliente] imagemOriginal:', imagemOriginal);
+            console.log('🖼️ [EdicaoCliente] São diferentes?', imagemUri !== imagemOriginal);
+            
+            // Verifica se é uma nova imagem local (começa com file://)
+            const isNewLocalImage = imagemUri && imagemUri.startsWith('file://');
+            const imagemFoiAlterada = imagemUri !== imagemOriginal;
+            
+            console.log('🖼️ [EdicaoCliente] É imagem local?', isNewLocalImage);
+            console.log('🖼️ [EdicaoCliente] Imagem foi alterada?', imagemFoiAlterada);
+            
+            if (isNewLocalImage && imagemFoiAlterada) {
+                // Nova imagem selecionada - fazer upload
+                try {
+                    console.log('🖼️ [EdicaoCliente] Upload de nova imagem...');
+                    await uploadImagemCliente(id as string, imagemUri);
+                    console.log('✅ [EdicaoCliente] Imagem atualizada com sucesso!');
+                } catch (error) {
+                    console.error('❌ [EdicaoCliente] Erro ao atualizar imagem:', error);
+                    showError('Cliente atualizado, mas houve erro ao enviar a imagem.');
+                }
+            } else if (!imagemUri && imagemOriginal) {
+                // Imagem foi removida
+                try {
+                    console.log('🗑️ [EdicaoCliente] Removendo imagem...');
+                    await removerImagemCliente(id as string);
+                    console.log('✅ [EdicaoCliente] Imagem removida com sucesso!');
+                } catch (error) {
+                    console.error('❌ [EdicaoCliente] Erro ao remover imagem:', error);
+                    // Não mostra erro ao usuário pois o cliente já foi atualizado
+                }
+            }
 
             showSuccess(getSuccessMessage('update'));
 
@@ -272,6 +353,17 @@ const EditarCliente: React.FC = () => {
                     </Text>
 
                     <Separator marginTop={16} marginBottom={24} />
+
+                    {/* Imagem do Cliente */}
+                    <View style={styles.fieldGroup}>
+                        <Text style={styles.label}>Foto do Cliente</Text>
+                        <ImagePicker
+                            imageUri={imagemUri}
+                            onImageSelected={handleImagemSelecionada}
+                            onImageRemoved={handleImagemRemovida}
+                            disabled={loading}
+                        />
+                    </View>
 
                     {/* Formulário */}
                     <View style={styles.form}>
@@ -362,29 +454,6 @@ const EditarCliente: React.FC = () => {
                             />
                         </View>
 
-                        {/* Status do Cliente */}
-                        <View style={styles.switchContainer}>
-                            <View style={styles.switchLabel}>
-                                <Ionicons
-                                    name={ativo ? "checkmark-circle" : "close-circle"}
-                                    size={24}
-                                    color={ativo ? "#10B981" : "#6B7280"}
-                                />
-                                <View style={styles.switchTextContainer}>
-                                    <Text style={styles.switchTitle}>Cliente Ativo</Text>
-                                    <Text style={styles.switchDescription}>
-                                        {ativo ? 'Este cliente está ativo no sistema' : 'Este cliente está inativo'}
-                                    </Text>
-                                </View>
-                            </View>
-                            <Switch
-                                value={ativo}
-                                onValueChange={setAtivo}
-                                trackColor={{ false: '#D1D5DB', true: '#10B981' }}
-                                thumbColor={ativo ? '#FFFFFF' : '#F3F4F6'}
-                                disabled={loading}
-                            />
-                        </View>
                     </View>
 
                     <Separator marginTop={24} marginBottom={16} />

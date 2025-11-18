@@ -5,13 +5,13 @@ import { InfoRow } from '@/src/components/InfoRow';
 import { Loading } from '@/src/components/Loading';
 import { ProfileSection } from '@/src/components/ProfileSection';
 import { Separator } from '@/src/components/Separator';
+import { useToast } from '@/src/components/ToastContext';
 import { buscarClientePorId, Cliente, excluirCliente } from '@/src/services/clientesService';
 import { formatCPF, formatPhone, withPlaceholder } from '@/src/utils/formatters';
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, Platform } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useToast } from '@/src/components/ToastContext';
 
 export default function InfoCliente() {
     const router = useRouter();
@@ -46,6 +46,9 @@ export default function InfoCliente() {
             return;
         }
 
+        console.log('📋 [InfoCliente] Dados do cliente recebidos:', JSON.stringify(data, null, 2));
+        console.log('🖼️ [InfoCliente] URL da imagem do cliente:', data.imagem_url);
+        
         setCliente(data);
         setLoading(false);
     }, [id]);
@@ -127,6 +130,10 @@ export default function InfoCliente() {
         );
     }
 
+    // Log para debug da imagem
+    console.log('🎨 [InfoCliente] Renderizando com imagem_url:', cliente.imagem_url);
+    console.log('🎨 [InfoCliente] ImageSource será:', cliente.imagem_url ? { uri: cliente.imagem_url } : 'undefined (imagem padrão)');
+
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
             {/* ✅ REQUISITO 9: Breadcrumb/indicador de navegação */}
@@ -136,6 +143,7 @@ export default function InfoCliente() {
             <ProfileSection
                 name={withPlaceholder(cliente.nome_completo, 'Nome não informado')}
                 subtitle="Cliente"
+                imageSource={cliente.imagem_url ? { uri: cliente.imagem_url } : undefined}
             />
 
             {/* Container branco com informações */}

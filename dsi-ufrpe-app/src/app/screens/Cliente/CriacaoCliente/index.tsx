@@ -1,10 +1,11 @@
 import { ActionButton } from '@/src/components/ActionButton';
 import { FormInput } from '@/src/components/FormInput';
 import { FormSelect } from '@/src/components/FormSelect';
+import { ImagePicker } from '@/src/components/ImagePicker';
 import { InfoHeader } from '@/src/components/InfoHeader';
 import { Separator } from '@/src/components/Separator';
 import { useToast } from '@/src/components/ToastContext';
-import { Cliente, criarCliente } from '@/src/services/clientesService';
+import { Cliente, criarCliente, uploadImagemCliente } from '@/src/services/clientesService';
 import type { ClienteFormData } from '@/src/types/cliente';
 import { getSuccessMessage, getValidationMessage } from '@/src/utils/errorMessages';
 import { estadosBrasileiros } from '@/src/utils/estadosBrasileiros';
@@ -29,6 +30,7 @@ const CriarCliente: React.FC = () => {
     const [city, setCity] = useState('');
     const [state, setState] = useState('');
     const [zipCode, setZipCode] = useState('');
+    const [imagemUri, setImagemUri] = useState<string | null>(null);
 
     // Formata CPF (000.000.000-00)
     const handleCpfChange = (text: string) => {
@@ -202,6 +204,19 @@ const CriarCliente: React.FC = () => {
 
             console.log('✅ [CriacaoCliente] Cliente criado com sucesso:', resultado);
 
+            // Se houver imagem selecionada, faz o upload
+            if (imagemUri && resultado.id) {
+                try {
+                    console.log('🖼️ [CriacaoCliente] Iniciando upload de imagem...');
+                    const imageUrl = await uploadImagemCliente(resultado.id, imagemUri);
+                    console.log('✅ [CriacaoCliente] Imagem enviada com sucesso!');
+                } catch (error) {
+                    console.error('❌ [CriacaoCliente] ERRO ao enviar imagem:', error);
+                    // Não bloqueia a criação se o upload falhar
+                    showError('Cliente criado, mas houve erro ao enviar a imagem.');
+                }
+            }
+
             showSuccess(getSuccessMessage('create'));
 
             setTimeout(() => {
@@ -238,6 +253,17 @@ const CriarCliente: React.FC = () => {
                     </Text>
 
                     <Separator marginTop={16} marginBottom={24} />
+
+                    {/* Imagem do Cliente */}
+                    <View style={styles.fieldGroup}>
+                        <Text style={styles.label}>Foto do Cliente</Text>
+                        <ImagePicker
+                            imageUri={imagemUri}
+                            onImageSelected={setImagemUri}
+                            onImageRemoved={() => setImagemUri(null)}
+                            disabled={loading}
+                        />
+                    </View>
 
                     {/* Formulário */}
                     <View style={styles.form}>
