@@ -5,9 +5,10 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 type InfoHeaderProps = {
     entity: string; // "Quartos", "Clientes", "Funcionários", etc
     onBackPress: () => void;
+    action?: string; // "Detalhes", "Adição", "Edição"
 };
 
-export function InfoHeader({ entity, onBackPress }: InfoHeaderProps) {
+export function InfoHeader({ entity, onBackPress, action = 'Detalhes' }: InfoHeaderProps) {
     return (
         <View style={styles.header}>
             <TouchableOpacity onPress={onBackPress} style={styles.backButton}>
@@ -16,7 +17,7 @@ export function InfoHeader({ entity, onBackPress }: InfoHeaderProps) {
             <View style={styles.breadcrumb}>
                 <Text style={styles.breadcrumbText}>{entity}</Text>
                 <Ionicons name="chevron-forward" size={16} color="#E0F2FE" />
-                <Text style={styles.breadcrumbTextActive}>Detalhes</Text>
+                <Text style={styles.breadcrumbTextActive}>{action}</Text>
             </View>
         </View>
     );

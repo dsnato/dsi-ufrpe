@@ -4,13 +4,13 @@ import { FormSelect, SelectOption } from '@/src/components/FormSelect';
 import { InfoHeader } from '@/src/components/InfoHeader';
 import { Separator } from '@/src/components/Separator';
 import { useToast } from '@/src/components/ToastContext';
-import { getSuccessMessage, getValidationMessage } from '@/src/utils/errorMessages';
-import { criarReserva } from '@/src/services/reservasService';
 import { buscarClientePorCPF } from '@/src/services/clientesService';
 import { listarQuartos } from '@/src/services/quartosService';
+import { criarReserva } from '@/src/services/reservasService';
+import { getSuccessMessage, getValidationMessage } from '@/src/utils/errorMessages';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -24,45 +24,99 @@ const CriarReserva: React.FC = () => {
     const [clienteCpf, setClienteCpf] = useState('');
     const [checkIn, setCheckIn] = useState('');
     const [checkOut, setCheckOut] = useState('');
-    const [valorTotal, setValorTotal] = useState('');
     const [observacoes, setObservacoes] = useState('');
     const [confirmada, setConfirmada] = useState(true);
+    const [quartosDisponiveis, setQuartosDisponiveis] = useState<SelectOption[]>([]);
+    const [quartosData, setQuartosData] = useState<any[]>([]);
+    const [loadingQuartos, setLoadingQuartos] = useState(false);
 
-    // TODO: Buscar quartos disponíveis do banco de dados via Supabase
-    // Implementação futura:
-    // const [quartosDisponiveis, setQuartosDisponiveis] = useState<SelectOption[]>([]);
-    // useEffect(() => {
-    //     const fetchQuartos = async () => {
-    //         const { data, error } = await supabase
-    //             .from('quartos')
-    //             .select('numero, tipo')
-    //             .eq('disponivel', true)
-    //             .order('numero', { ascending: true });
-    //         
-    //         if (data) {
-    //             const options = data.map(q => ({
-    //                 label: `Quarto ${q.numero} - ${q.tipo}`,
-    //                 value: q.numero.toString()
-    //             }));
-    //             setQuartosDisponiveis(options);
-    //         }
-    //     };
-    //     fetchQuartos();
-    // }, []);
+    // Calcula o valor total baseado nas datas e no quarto selecionado
+    const calcularValorTotal = useCallback(() => {
+        if (!checkIn || !checkOut || !numeroQuarto) {
+            return 0;
+        }
 
-    // Lista mockada de quartos disponíveis (substituir pela query do Supabase)
-    const quartosDisponiveis: SelectOption[] = [
-        { label: 'Quarto 101 - Standard', value: '101' },
-        { label: 'Quarto 102 - Standard', value: '102' },
-        { label: 'Quarto 103 - Luxo', value: '103' },
-        { label: 'Quarto 201 - Standard', value: '201' },
-        { label: 'Quarto 202 - Luxo', value: '202' },
-        { label: 'Quarto 203 - Suíte', value: '203' },
-        { label: 'Quarto 301 - Standard', value: '301' },
-        { label: 'Quarto 302 - Luxo', value: '302' },
-        { label: 'Quarto 303 - Suíte', value: '303' },
-        { label: 'Quarto 304 - Suíte Presidencial', value: '304' },
-    ];
+        // Valida as datas
+        const dateRegex = /^\d{2}\/\d{2}\/\d{4}$/;
+        if (!dateRegex.test(checkIn) || !dateRegex.test(checkOut)) {
+            return 0;
+        }
+
+        const [dayIn, monthIn, yearIn] = checkIn.split('/').map(Number);
+        const dateIn = new Date(yearIn, monthIn - 1, dayIn);
+        
+        const [dayOut, monthOut, yearOut] = checkOut.split('/').map(Number);
+        const dateOut = new Date(yearOut, monthOut - 1, dayOut);
+
+        // Valida se são datas válidas
+        if (
+            dateIn.getDate() !== dayIn ||
+            dateIn.getMonth() !== monthIn - 1 ||
+            dateOut.getDate() !== dayOut ||
+            dateOut.getMonth() !== monthOut - 1 ||
+            dateOut <= dateIn
+        ) {
+            return 0;
+        }
+
+        // Calcula quantidade de dias
+        const diffTime = Math.abs(dateOut.getTime() - dateIn.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        // Busca o preço do quarto selecionado
+        const quartoSelecionado = quartosData.find(q => q.numero_quarto === numeroQuarto);
+        if (!quartoSelecionado || !quartoSelecionado.preco_diario) {
+            return 0;
+        }
+
+        return diffDays * quartoSelecionado.preco_diario;
+    }, [checkIn, checkOut, numeroQuarto, quartosData]);
+
+    // Formata valor para exibição
+    const valorTotalFormatado = calcularValorTotal().toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    });
+
+    // Carrega quartos disponíveis do banco de dados
+    const carregarQuartosDisponiveis = useCallback(async () => {
+        try {
+            setLoadingQuartos(true);
+            const quartos = await listarQuartos();
+            
+            // Filtra apenas quartos com status "disponível"
+            const quartosDisponiveisLista = quartos.filter(
+                q => q.status?.toLowerCase() === 'disponível'
+            );
+            
+            // Salva os dados completos dos quartos
+            setQuartosData(quartosDisponiveisLista);
+            
+            // Mapeia para o formato do SelectOption
+            const options: SelectOption[] = quartosDisponiveisLista.map(q => ({
+                label: `Quarto ${q.numero_quarto} - ${q.tipo} (R$ ${q.preco_diario?.toFixed(2).replace('.', ',')}/dia)`,
+                value: q.numero_quarto
+            }));
+            
+            setQuartosDisponiveis(options);
+            
+            if (options.length === 0) {
+                showError('Não há quartos disponíveis no momento.');
+            }
+        } catch (error) {
+            console.error('Erro ao carregar quartos:', error);
+            showError('Não foi possível carregar os quartos disponíveis.');
+        } finally {
+            setLoadingQuartos(false);
+        }
+    }, [showError]);
+
+    // Carrega quartos ao abrir a tela
+    useFocusEffect(
+        useCallback(() => {
+            carregarQuartosDisponiveis();
+        }, [carregarQuartosDisponiveis])
+    );
 
     // Formata data automaticamente (DD/MM/AAAA)
     const handleDateChange = (text: string, setter: (value: string) => void) => {
@@ -97,24 +151,6 @@ const CriarReserva: React.FC = () => {
         }
 
         setClienteCpf(formatted);
-    };
-
-    // Formata valor monetário (R$ 0.000,00)
-    const handleValorChange = (text: string) => {
-        const numbersOnly = text.replace(/\D/g, '');
-        const numberValue = parseInt(numbersOnly) / 100;
-
-        if (isNaN(numberValue)) {
-            setValorTotal('');
-            return;
-        }
-
-        const formatted = numberValue.toLocaleString('pt-BR', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-        });
-
-        setValorTotal(formatted);
     };
 
     // Valida CPF
@@ -213,6 +249,14 @@ const CriarReserva: React.FC = () => {
             return;
         }
 
+        // Valida se a data de check-in não está muito distante (máximo 2 anos no futuro)
+        const maxFutureDate = new Date();
+        maxFutureDate.setFullYear(maxFutureDate.getFullYear() + 2);
+        if (checkInDate > maxFutureDate) {
+            showError('A data de check-in não pode ser superior a 2 anos no futuro.');
+            return;
+        }
+
         if (!checkOut.trim()) {
             showError(getValidationMessage('check_out', 'required'));
             return;
@@ -229,14 +273,24 @@ const CriarReserva: React.FC = () => {
             return;
         }
 
-        if (!valorTotal.trim()) {
-            showError(getValidationMessage('valor_total', 'required'));
+        // Valida duração máxima da reserva (por exemplo, 365 dias)
+        const diffTime = Math.abs(checkOutDate.getTime() - checkInDate.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        if (diffDays > 365) {
+            showError('A reserva não pode ter duração superior a 365 dias.');
             return;
         }
 
-        const valorNumerico = parseFloat(valorTotal.replace(/\./g, '').replace(',', '.'));
+        // Calcula o valor total
+        const valorNumerico = calcularValorTotal();
         if (valorNumerico <= 0) {
-            showError('O valor total deve ser maior que zero.');
+            showError('Não foi possível calcular o valor total. Verifique as datas e o quarto selecionado.');
+            return;
+        }
+
+        // Valida se o valor total não excede o limite do banco (10^8 com 2 casas decimais = 99.999.999,99)
+        if (valorNumerico > 99999999.99) {
+            showError('O valor total da reserva excede o limite permitido. Reduza o período da reserva.');
             return;
         }
 
@@ -278,7 +332,7 @@ const CriarReserva: React.FC = () => {
                 data_checkout: dataCheckoutFormatada,
                 numero_hospedes: 1,
                 valor_total: valorNumerico,
-                observacoes: observacoes.trim() || null,
+                observacoes: observacoes.trim() || undefined,
                 status: confirmada ? 'confirmada' : 'pendente',
             };
 
@@ -299,7 +353,7 @@ const CriarReserva: React.FC = () => {
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
-            <InfoHeader entity="Reservas" onBackPress={() => router.push('/screens/Reserva/ListagemReserva')} />
+            <InfoHeader entity="Reservas" action="Adição" onBackPress={() => router.push('/screens/Reserva/ListagemReserva')} />
 
             <View style={styles.content}>
                 <ScrollView
@@ -327,12 +381,12 @@ const CriarReserva: React.FC = () => {
                             </Text>
                             <FormSelect
                                 icon="home-outline"
-                                placeholder="Selecione um quarto disponível"
+                                placeholder={loadingQuartos ? "Carregando quartos..." : "Selecione um quarto disponível"}
                                 value={numeroQuarto}
                                 options={quartosDisponiveis}
                                 onSelect={setNumeroQuarto}
-                                disabled={loading}
-                                helperText="Apenas quartos disponíveis são listados"
+                                disabled={loading || loadingQuartos}
+                                helperText={`${quartosDisponiveis.length} quarto(s) disponível(is)`}
                             />
                         </View>
 
@@ -400,19 +454,23 @@ const CriarReserva: React.FC = () => {
                             </View>
                         </View>
 
+                        {/* Valor Total Calculado */}
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>
-                                Valor Total <Text style={styles.required}>*</Text>
-                            </Text>
-                            <FormInput
-                                icon="cash-outline"
-                                placeholder="0.000,00"
-                                value={valorTotal}
-                                onChangeText={handleValorChange}
-                                editable={!loading}
-                                keyboardType="numeric"
-                                helperText="Valor total da hospedagem"
-                            />
+                            <Text style={styles.label}>Valor Total</Text>
+                            <View style={styles.valorTotalContainer}>
+                                <Ionicons name="cash-outline" size={24} color="#10B981" />
+                                <View style={styles.valorTotalContent}>
+                                    <Text style={styles.valorTotalLabel}>Total da Reserva</Text>
+                                    <Text style={styles.valorTotalValue}>
+                                        R$ {valorTotalFormatado}
+                                    </Text>
+                                    {calcularValorTotal() > 0 && (
+                                        <Text style={styles.valorTotalHelper}>
+                                            Calculado automaticamente baseado nas diárias
+                                        </Text>
+                                    )}
+                                </View>
+                            </View>
                         </View>
 
                         <View style={styles.fieldGroup}>
@@ -572,6 +630,37 @@ const styles = StyleSheet.create({
     },
     actions: {
         gap: 12,
+    },
+    valorTotalContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#F0FDF4',
+        padding: 16,
+        borderRadius: 12,
+        borderWidth: 2,
+        borderColor: '#10B981',
+        gap: 12,
+    },
+    valorTotalContent: {
+        flex: 1,
+        gap: 4,
+    },
+    valorTotalLabel: {
+        fontSize: 12,
+        color: '#059669',
+        fontWeight: '600',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+    },
+    valorTotalValue: {
+        fontSize: 24,
+        color: '#047857',
+        fontWeight: '700',
+    },
+    valorTotalHelper: {
+        fontSize: 11,
+        color: '#10B981',
+        fontStyle: 'italic',
     },
 });
 
