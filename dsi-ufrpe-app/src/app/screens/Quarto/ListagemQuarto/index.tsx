@@ -135,7 +135,7 @@ const ListagemQuarto: React.FC = () => {
                 {filteredItems.length > 0 ? (
                     <FlatList
                         data={filteredItems}
-                        keyExtractor={(item) => item.id}
+                        keyExtractor={(item, index) => item.id ?? String(index)}
                         renderItem={renderQuartoCard}
                         numColumns={2}
                         columnWrapperStyle={styles.row}
@@ -257,6 +257,7 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: '#132F3B',
         fontFamily: 'monospace',
+        textAlign: 'center',
     },
     cardFooter: {
         flexDirection: 'row',
@@ -268,6 +269,12 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#64748B',
         fontWeight: '500',
+    },
+    cardStatus: {
+        fontSize: 12,
+        color: '#10B981',
+        fontWeight: '600',
+        textAlign: 'center',
     },
     emptyContainer: {
         flex: 1,

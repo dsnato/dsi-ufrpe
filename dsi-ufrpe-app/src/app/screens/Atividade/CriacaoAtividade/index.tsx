@@ -1,15 +1,15 @@
 import { ActionButton } from '@/src/components/ActionButton';
 import { FormInput } from '@/src/components/FormInput';
+import { ImagePicker } from '@/src/components/ImagePicker';
 import { InfoHeader } from '@/src/components/InfoHeader';
 import { Separator } from '@/src/components/Separator';
 import { useToast } from '@/src/components/ToastContext';
-import { ImagePicker } from '@/src/components/ImagePicker';
-import { getSuccessMessage, getValidationMessage } from '@/src/utils/errorMessages';
 import { criarAtividade, uploadImagemAtividade } from '@/src/services/atividadesService';
+import { getSuccessMessage, getValidationMessage } from '@/src/utils/errorMessages';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Switch, Text, View, Platform } from 'react-native';
+import { Platform, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const CriarAtividade: React.FC = () => {
@@ -193,7 +193,7 @@ const CriarAtividade: React.FC = () => {
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
-            <InfoHeader entity="Atividades" onBackPress={() => router.push('/screens/Atividade/ListagemAtividade')} />
+            <InfoHeader entity="Atividades" action="Adição" onBackPress={() => router.push('/screens/Atividade/ListagemAtividade')} />
 
             <View style={styles.content}>
                 <ScrollView

@@ -219,7 +219,7 @@ const CriarCliente: React.FC = () => {
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
-            <InfoHeader entity="Clientes" onBackPress={() => router.push('/screens/Cliente/ListagemCliente')} />
+            <InfoHeader entity="Clientes" action="Adição" onBackPress={() => router.push('/screens/Cliente/ListagemCliente')} />
 
             <View style={styles.content}>
                 <ScrollView
