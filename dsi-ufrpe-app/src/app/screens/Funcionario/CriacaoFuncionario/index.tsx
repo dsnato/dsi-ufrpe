@@ -80,12 +80,41 @@ const CriarFuncionario: React.FC = () => {
         const numbersOnly = text.replace(/\D/g, '');
         const limited = numbersOnly.slice(0, 8);
 
-        let formatted = limited;
-        if (limited.length >= 3) {
-            formatted = `${limited.slice(0, 2)}/${limited.slice(2)}`;
+        // Valida e corrige o mês (1-12)
+        let processedValue = limited;
+        if (limited.length >= 4) {
+            const month = parseInt(limited.slice(2, 4));
+            let correctedMonth = limited.slice(2, 4);
+
+            if (month > 12) {
+                correctedMonth = '12';
+            } else if (month === 0 && limited.length >= 4) {
+                correctedMonth = '01';
+            }
+
+            processedValue = limited.slice(0, 2) + correctedMonth + limited.slice(4);
         }
-        if (limited.length >= 5) {
-            formatted = `${limited.slice(0, 2)}/${limited.slice(2, 4)}/${limited.slice(4)}`;
+
+        // Valida e corrige o ano (1900-2100)
+        if (processedValue.length === 8) {
+            const year = parseInt(processedValue.slice(4, 8));
+            let correctedYear = processedValue.slice(4, 8);
+
+            if (year < 1900) {
+                correctedYear = '1900';
+            } else if (year > 2100) {
+                correctedYear = '2100';
+            }
+
+            processedValue = processedValue.slice(0, 4) + correctedYear;
+        }
+
+        let formatted = processedValue;
+        if (processedValue.length >= 3) {
+            formatted = `${processedValue.slice(0, 2)}/${processedValue.slice(2)}`;
+        }
+        if (processedValue.length >= 5) {
+            formatted = `${processedValue.slice(0, 2)}/${processedValue.slice(2, 4)}/${processedValue.slice(4)}`;
         }
 
         setDataAdmissao(formatted);
