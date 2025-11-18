@@ -1,13 +1,13 @@
 import { ActionButton } from '@/src/components/ActionButton';
 import { Separator } from '@/src/components/Separator';
 import TextInputRounded from '@/src/components/TextInputRounded';
+import { useToast } from '@/src/components/ToastContext';
+import { listarReservas, Reserva } from '@/src/services/reservasService';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { listarReservas, Reserva } from '@/src/services/reservasService';
-import { useToast } from '@/src/components/ToastContext';
 
 const ListagemReserva: React.FC = () => {
     const router = useRouter();
@@ -70,10 +70,12 @@ const ListagemReserva: React.FC = () => {
                 <Ionicons name="bed" size={32} color="#0162B3" />
             </View>
             <View style={styles.cardContent}>
-                <View style={styles.cardHeader}>
-                    <Text style={styles.cardLabel}>Reserva #{item.id?.substring(0, 8)}</Text>
-                    {item.status && <Text style={styles.cardStatus}>{item.status}</Text>}
-                </View>
+                <Text style={styles.cardLabel}>Reserva #{item.id?.substring(0, 8)}</Text>
+                {item.status && (
+                    <View style={styles.statusBadge}>
+                        <Text style={styles.statusText}>{item.status}</Text>
+                    </View>
+                )}
                 <View style={styles.cardFooter}>
                     <Ionicons name="calendar-outline" size={14} color="#64748B" />
                     <Text style={styles.cardDate} numberOfLines={1}>
@@ -252,16 +254,27 @@ const styles = StyleSheet.create({
     cardContent: {
         gap: 8,
     },
-    cardHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 8,
-    },
     cardLabel: {
         fontSize: 13,
         color: '#64748B',
         fontWeight: '500',
+        textAlign: 'center',
+    },
+    statusBadge: {
+        backgroundColor: '#EFF6FF',
+        borderRadius: 12,
+        paddingVertical: 4,
+        paddingHorizontal: 12,
+        alignSelf: 'center',
+        borderWidth: 1,
+        borderColor: '#BFDBFE',
+    },
+    statusText: {
+        fontSize: 11,
+        fontWeight: '700',
+        color: '#0162B3',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
     },
     cardNumber: {
         fontSize: 20,

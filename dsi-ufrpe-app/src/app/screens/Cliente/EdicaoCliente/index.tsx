@@ -3,8 +3,8 @@ import { FormInput } from '@/src/components/FormInput';
 import { InfoHeader } from '@/src/components/InfoHeader';
 import { Separator } from '@/src/components/Separator';
 import { useToast } from '@/src/components/ToastContext';
+import { atualizarCliente, buscarClientePorId } from '@/src/services/clientesService';
 import { getSuccessMessage, getValidationMessage } from '@/src/utils/errorMessages';
-import { buscarClientePorId, atualizarCliente, Cliente } from '@/src/services/clientesService';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
@@ -253,7 +253,7 @@ const EditarCliente: React.FC = () => {
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
-            <InfoHeader entity="Clientes" onBackPress={() => router.push('/screens/Cliente/ListagemCliente')} />
+            <InfoHeader entity="Clientes" action="Edição" onBackPress={() => router.push('/screens/Cliente/ListagemCliente')} />
 
             <View style={styles.content}>
                 <ScrollView

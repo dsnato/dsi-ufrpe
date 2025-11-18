@@ -3,8 +3,8 @@ import { FormInput } from '@/src/components/FormInput';
 import { InfoHeader } from '@/src/components/InfoHeader';
 import { Separator } from '@/src/components/Separator';
 import { useToast } from '@/src/components/ToastContext';
+import { atualizarQuarto, buscarQuartoPorId } from '@/src/services/quartosService';
 import { getSuccessMessage, getValidationMessage } from '@/src/utils/errorMessages';
-import { buscarQuartoPorId, atualizarQuarto, Quarto } from '@/src/services/quartosService';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
@@ -115,7 +115,7 @@ const EditarQuarto: React.FC = () => {
         }
 
         // Valida se o preço é maior que zero
-        const precoNum = parseFloat(preco.replace(',', '.'));
+        const precoNum = parseFloat(preco.replace(/\./g, '').replace(',', '.'));
         if (precoNum <= 0) {
             showError(getValidationMessage('preco', 'invalid'));
             return;
@@ -125,10 +125,10 @@ const EditarQuarto: React.FC = () => {
             setLoading(true);
 
             const quartoData = {
-                numero_quarto: parseInt(numero),
+                numero_quarto: numero.trim(),
                 tipo: tipo.trim(),
                 capacidade_pessoas: parseInt(capacidade),
-                preco_diario: parseFloat(preco.replace(',', '.')),
+                preco_diario: parseFloat(preco.replace(/\./g, '').replace(',', '.')),
                 status: disponivel ? 'disponível' : 'ocupado',
             };
 
@@ -149,7 +149,7 @@ const EditarQuarto: React.FC = () => {
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
-            <InfoHeader entity="Quartos" onBackPress={() => router.push('/screens/Quarto/ListagemQuarto')} />
+            <InfoHeader entity="Quartos" action="Edição" onBackPress={() => router.push('/screens/Quarto/ListagemQuarto')} />
 
             <View style={styles.content}>
                 <ScrollView

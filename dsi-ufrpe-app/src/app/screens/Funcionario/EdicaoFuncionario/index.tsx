@@ -3,8 +3,8 @@ import { FormInput } from '@/src/components/FormInput';
 import { InfoHeader } from '@/src/components/InfoHeader';
 import { Separator } from '@/src/components/Separator';
 import { useToast } from '@/src/components/ToastContext';
+import { atualizarFuncionario, buscarFuncionarioPorId } from '@/src/services/funcionariosService';
 import { getSuccessMessage, getValidationMessage } from '@/src/utils/errorMessages';
-import { buscarFuncionarioPorId, atualizarFuncionario, Funcionario } from '@/src/services/funcionariosService';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
@@ -253,7 +253,7 @@ const EditarFuncionario: React.FC = () => {
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
-            <InfoHeader entity="Funcionários" onBackPress={() => router.push('/screens/Funcionario/ListagemFuncionario')} />
+            <InfoHeader entity="Funcionários" action="Edição" onBackPress={() => router.push('/screens/Funcionario/ListagemFuncionario')} />
 
             <View style={styles.content}>
                 <ScrollView
