@@ -5,7 +5,13 @@ export function formatDate(dateString: string | null | undefined): string {
     if (!dateString) return '-';
 
     try {
-        const date = new Date(dateString);
+        // Se a string vier no formato YYYY-MM-DD, adiciona T00:00:00 para forçar horário local
+        let dateToFormat = dateString;
+        if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            dateToFormat = dateString + 'T00:00:00';
+        }
+        
+        const date = new Date(dateToFormat);
         return date.toLocaleDateString('pt-BR', {
             day: '2-digit',
             month: '2-digit',
