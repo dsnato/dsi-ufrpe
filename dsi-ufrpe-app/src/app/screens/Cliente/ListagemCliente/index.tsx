@@ -147,7 +147,7 @@ const ListagemCliente: React.FC = () => {
                 {filteredItems.length > 0 ? (
                     <FlatList
                         data={filteredItems}
-                        keyExtractor={(item) => item.id}
+                        keyExtractor={(item, index) => item.id ?? index.toString()}
                         renderItem={renderClienteCard}
                         numColumns={2}
                         columnWrapperStyle={styles.row}
