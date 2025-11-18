@@ -9,6 +9,7 @@
 CREATE TABLE IF NOT EXISTS public.profiles (
     id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
     username TEXT,
+    role TEXT DEFAULT 'user' CHECK (role IN ('user', 'admin')),
     funcionario_id UUID REFERENCES public.funcionarios(id) ON DELETE SET NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -16,6 +17,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 
 -- 2. CRIAR ÍNDICES
 CREATE INDEX IF NOT EXISTS idx_profiles_funcionario ON public.profiles(funcionario_id);
+CREATE INDEX IF NOT EXISTS idx_profiles_role ON public.profiles(role);
 
 -- 3. HABILITAR RLS
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
@@ -37,10 +39,11 @@ CREATE POLICY "Permitir DELETE em profiles" ON public.profiles FOR DELETE USING 
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-    INSERT INTO public.profiles (id, username)
+    INSERT INTO public.profiles (id, username, role)
     VALUES (
         NEW.id,
-        COALESCE(NEW.raw_user_meta_data->>'display_name', split_part(NEW.email, '@', 1))
+        COALESCE(NEW.raw_user_meta_data->>'display_name', split_part(NEW.email, '@', 1)),
+        'user'
     );
     RETURN NEW;
 END;
@@ -65,6 +68,12 @@ CREATE TRIGGER update_profiles_updated_at
 -- =====================================================
 -- Agora a tabela profiles será criada automaticamente
 -- quando um novo usuário se cadastrar.
+-- 
+-- ROLE PADRÃO: 'user'
+-- Todos os novos usuários são criados com role 'user' por padrão.
+-- 
+-- Para promover um usuário a ADMIN:
+-- UPDATE profiles SET role = 'admin' WHERE id = '<id_do_usuario>';
 -- 
 -- Para vincular um usuário a um funcionário:
 -- UPDATE profiles SET funcionario_id = '<id_do_funcionario>' WHERE id = '<id_do_usuario>';
