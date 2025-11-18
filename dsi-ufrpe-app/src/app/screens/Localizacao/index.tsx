@@ -103,7 +103,52 @@ export default function LocalizacaoScreen() {
         setShowEditModal(true);
     };
 
-    const handleSaveEdit = async () => {
+    const geocodeAddress = async (endereco: string, cidade: string, estado: string) => {
+        try {
+            const query = `${endereco}, ${cidade}, ${estado}, Brasil`;
+            console.log('� Iniciando geocodificação...');
+            console.log('📍 Endereço completo:', query);
+            
+            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
+            console.log('🌐 URL da API:', url);
+            
+            const response = await fetch(url, {
+                headers: {
+                    'User-Agent': 'DSI-UFRPE-App/1.0'
+                }
+            });
+            
+            console.log('📡 Status da resposta:', response.status);
+            
+            if (!response.ok) {
+                console.error('❌ Erro na requisição:', response.status, response.statusText);
+                return null;
+            }
+            
+            const data = await response.json();
+            console.log('📦 Dados recebidos:', JSON.stringify(data, null, 2));
+            
+            if (data && data.length > 0) {
+                const coords = {
+                    latitude: parseFloat(data[0].lat),
+                    longitude: parseFloat(data[0].lon)
+                };
+                console.log('✅ Coordenadas encontradas:', coords);
+                console.log('📌 Nome do local:', data[0].display_name);
+                return coords;
+            }
+            
+            console.warn('⚠️ Nenhum resultado encontrado para o endereço');
+            return null;
+        } catch (error) {
+            console.error('❌ Erro na geocodificação:', error);
+            if (error instanceof Error) {
+                console.error('📄 Mensagem do erro:', error.message);
+                console.error('📚 Stack trace:', error.stack);
+            }
+            return null;
+        }
+    };    const handleSaveEdit = async () => {
         try {
             setSaving(true);
 
@@ -113,10 +158,30 @@ export default function LocalizacaoScreen() {
                 return;
             }
 
-            if (isNaN(editData.latitude) || isNaN(editData.longitude)) {
-                showError('Latitude e longitude devem ser números válidos.');
+            if (!editData.cidade.trim() || !editData.estado.trim()) {
+                showError('Cidade e estado são obrigatórios para localizar no mapa.');
                 return;
             }
+
+            // Buscar coordenadas automaticamente
+            console.log('💾 Tentando salvar com dados:', editData);
+            showSuccess('Buscando coordenadas do endereço...');
+            const coords = await geocodeAddress(editData.endereco, editData.cidade, editData.estado);
+            
+            if (!coords) {
+                console.error('🚫 Falha ao obter coordenadas');
+                showError('Não foi possível encontrar este endereço. Tente usar um endereço mais completo (ex: Rua, Número, Bairro).');
+                return;
+            }
+            
+            console.log('🎯 Coordenadas obtidas com sucesso:', coords);
+
+            // Atualiza os dados com as coordenadas encontradas
+            const dataToSave = {
+                ...editData,
+                latitude: coords.latitude,
+                longitude: coords.longitude
+            };
 
             // Verifica se já existe configuração
             const { data: existing } = await supabase
@@ -130,14 +195,14 @@ export default function LocalizacaoScreen() {
                 result = await supabase
                     .from('hotel_config')
                     .update({
-                        nome: editData.nome,
-                        endereco: editData.endereco,
-                        cidade: editData.cidade,
-                        estado: editData.estado,
-                        cep: editData.cep,
-                        telefone: editData.telefone,
-                        latitude: editData.latitude,
-                        longitude: editData.longitude,
+                        nome: dataToSave.nome,
+                        endereco: dataToSave.endereco,
+                        cidade: dataToSave.cidade,
+                        estado: dataToSave.estado,
+                        cep: dataToSave.cep,
+                        telefone: dataToSave.telefone,
+                        latitude: dataToSave.latitude,
+                        longitude: dataToSave.longitude,
                     })
                     .eq('id', existing.id);
             } else {
@@ -145,14 +210,14 @@ export default function LocalizacaoScreen() {
                 result = await supabase
                     .from('hotel_config')
                     .insert([{
-                        nome: editData.nome,
-                        endereco: editData.endereco,
-                        cidade: editData.cidade,
-                        estado: editData.estado,
-                        cep: editData.cep,
-                        telefone: editData.telefone,
-                        latitude: editData.latitude,
-                        longitude: editData.longitude,
+                        nome: dataToSave.nome,
+                        endereco: dataToSave.endereco,
+                        cidade: dataToSave.cidade,
+                        estado: dataToSave.estado,
+                        cep: dataToSave.cep,
+                        telefone: dataToSave.telefone,
+                        latitude: dataToSave.latitude,
+                        longitude: dataToSave.longitude,
                     }]);
             }
 
@@ -160,7 +225,7 @@ export default function LocalizacaoScreen() {
                 throw result.error;
             }
 
-            setHotelInfo({ ...editData });
+            setHotelInfo({ ...dataToSave });
             setShowEditModal(false);
             showSuccess('Informações do hotel atualizadas com sucesso!');
         } catch (error: any) {
@@ -362,34 +427,10 @@ export default function LocalizacaoScreen() {
                                 />
                             </View>
 
-                            <View style={styles.formRow}>
-                                <View style={[styles.formGroup, { flex: 1 }]}>
-                                    <Text style={styles.label}>Latitude *</Text>
-                                    <TextInput
-                                        style={styles.input}
-                                        value={String(editData.latitude)}
-                                        onChangeText={(text) => setEditData({ ...editData, latitude: parseFloat(text) || 0 })}
-                                        placeholder="-8.1177"
-                                        keyboardType="numeric"
-                                    />
-                                </View>
-
-                                <View style={[styles.formGroup, { flex: 1 }]}>
-                                    <Text style={styles.label}>Longitude *</Text>
-                                    <TextInput
-                                        style={styles.input}
-                                        value={String(editData.longitude)}
-                                        onChangeText={(text) => setEditData({ ...editData, longitude: parseFloat(text) || 0 })}
-                                        placeholder="-34.8964"
-                                        keyboardType="numeric"
-                                    />
-                                </View>
-                            </View>
-
                             <View style={styles.helperText}>
-                                <Ionicons name="information-circle" size={16} color="#666" />
+                                <Ionicons name="information-circle" size={16} color="#10B981" />
                                 <Text style={styles.helperTextContent}>
-                                    Dica: Use o Google Maps para encontrar as coordenadas exatas. Clique com botão direito no local e copie as coordenadas.
+                                    As coordenadas para o mapa serão obtidas automaticamente a partir do endereço informado.
                                 </Text>
                             </View>
                         </ScrollView>
