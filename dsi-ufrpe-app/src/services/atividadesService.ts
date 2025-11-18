@@ -257,44 +257,66 @@ export const uploadImagemAtividade = async (
 
     // Gera nome único para o arquivo
     const timestamp = new Date().getTime();
-    const fileExt = fileName?.split('.').pop() || 'jpg';
+    const fileExt = fileName?.split('.').pop() || uri.split('.').pop() || 'jpg';
     const filePath = `atividades/${atividadeId}/${timestamp}.${fileExt}`;
 
-    // Converte a URI para formato compatível com Supabase
-    let fileData: Blob | ArrayBuffer;
+    console.log('🔵 [atividadesService] FilePath:', filePath);
+
+    // Converte a URI para ArrayBuffer compatível com React Native
+    let arrayBuffer: ArrayBuffer;
     
     if (uri.startsWith('data:')) {
       // Base64
+      console.log('🔵 [atividadesService] Processando imagem Base64...');
       const base64Data = uri.split(',')[1];
       const binaryString = atob(base64Data);
       const bytes = new Uint8Array(binaryString.length);
       for (let i = 0; i < binaryString.length; i++) {
         bytes[i] = binaryString.charCodeAt(i);
       }
-      fileData = bytes.buffer;
+      arrayBuffer = bytes.buffer;
     } else {
-      // Fetch da URI (funciona para file:// e http://)
-      const response = await fetch(uri);
-      const blob = await response.blob();
-      fileData = blob;
+      // Fetch da URI local (file://)
+      console.log('🔵 [atividadesService] Fazendo fetch da URI local...');
+      try {
+        const response = await fetch(uri);
+        console.log('🔵 [atividadesService] Fetch status:', response.status);
+        console.log('🔵 [atividadesService] Fetch headers:', response.headers);
+        
+        if (!response.ok) {
+          throw new Error(`Fetch failed with status ${response.status}`);
+        }
+        
+        arrayBuffer = await response.arrayBuffer();
+        console.log('🔵 [atividadesService] ArrayBuffer size:', arrayBuffer.byteLength);
+      } catch (fetchError: any) {
+        console.error('🔴 [atividadesService] Erro no fetch:', fetchError);
+        throw new Error(`Erro ao ler arquivo: ${fetchError.message}`);
+      }
+    }
+
+    if (!arrayBuffer || arrayBuffer.byteLength === 0) {
+      throw new Error('Arquivo vazio ou inválido');
     }
 
     console.log('🔵 [atividadesService] Enviando arquivo para storage...');
+    console.log('🔵 [atividadesService] Tamanho do arquivo:', arrayBuffer.byteLength, 'bytes');
 
-    // Upload para o Supabase Storage
+    // Upload para o Supabase Storage usando ArrayBuffer
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('atividades-images2')
-      .upload(filePath, fileData, {
+      .upload(filePath, arrayBuffer, {
         contentType: 'image/jpeg',
         upsert: true,
       });
 
     if (uploadError) {
       console.error('🔴 [atividadesService] Erro no upload:', uploadError);
-      throw new Error(uploadError.message);
+      console.error('🔴 [atividadesService] Erro detalhes:', JSON.stringify(uploadError, null, 2));
+      throw new Error(uploadError.message || 'Erro desconhecido no upload');
     }
 
-    console.log('✅ [atividadesService] Upload concluído:', uploadData.path);
+    console.log('✅ [atividadesService] Upload concluído:', uploadData?.path);
 
     // Obtém a URL pública da imagem
     const { data: publicUrlData } = supabase.storage
@@ -328,6 +350,7 @@ export const uploadImagemAtividade = async (
     return imageUrl;
   } catch (error: any) {
     console.error('🔴 [atividadesService] Erro geral no upload:', error);
+    console.error('🔴 [atividadesService] Stack:', error.stack);
     throw new Error(`Erro ao fazer upload da imagem: ${error.message}`);
   }
 };
