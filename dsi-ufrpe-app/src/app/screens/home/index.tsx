@@ -355,6 +355,14 @@ export default function Home() {
                             />
 
                             <DashboardCard
+                                icon="analytics"
+                                title="Predição de Cancelamento"
+                                subtitle="Machine Learning - Análise de risco"
+                                color="#8B5CF6"
+                                onPress={() => router.push('/screens/Predicao')}
+                            />
+
+                            <DashboardCard
                                 icon="location"
                                 title="Localização"
                                 subtitle="Ver localização do hotel no mapa"

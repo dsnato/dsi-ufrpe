@@ -1,0 +1,319 @@
+{
+  "model_info": {
+    "type": "HotelCancellationPredictor",
+    "version": "1.0",
+    "description": "Preditor de cancelamento de reservas de hotel usando Random Forest",
+    "accuracy": 0.85,
+    "f1_score": 0.83,
+    "training_samples": 40060
+  },
+  "features": {
+    "top": [
+      "lead_time",
+      "adr",
+      "previous_cancellations",
+      "total_of_special_requests",
+      "deposit_type",
+      "booking_changes",
+      "is_repeated_guest",
+      "market_segment",
+      "total_nights",
+      "arrival_date_month",
+      "reserved_room_type",
+      "distribution_channel",
+      "customer_type",
+      "total_guests",
+      "assigned_room_type"
+    ],
+    "importances": {
+      "lead_time": 0.18,
+      "adr": 0.15,
+      "previous_cancellations": 0.12,
+      "total_of_special_requests": 0.10,
+      "deposit_type": 0.09,
+      "booking_changes": 0.08,
+      "is_repeated_guest": 0.07,
+      "market_segment": 0.06,
+      "total_nights": 0.05,
+      "arrival_date_month": 0.04,
+      "reserved_room_type": 0.03,
+      "distribution_channel": 0.02,
+      "customer_type": 0.01,
+      "total_guests": 0.01,
+      "assigned_room_type": 0.01
+    },
+    "all": [
+      "hotel",
+      "lead_time",
+      "arrival_date_month",
+      "arrival_date_week_number",
+      "arrival_date_day_of_month",
+      "stays_in_weekend_nights",
+      "stays_in_week_nights",
+      "adults",
+      "children",
+      "babies",
+      "market_segment",
+      "distribution_channel",
+      "is_repeated_guest",
+      "previous_cancellations",
+      "previous_bookings_not_canceled",
+      "reserved_room_type",
+      "assigned_room_type",
+      "booking_changes",
+      "deposit_type",
+      "adr",
+      "required_car_parking_spaces",
+      "total_of_special_requests",
+      "total_guests",
+      "total_nights",
+      "has_special_request",
+      "is_family"
+    ]
+  },
+  "stats": {
+    "lead_time": {
+      "min": 0,
+      "max": 737,
+      "mean": 104.01,
+      "std": 106.86
+    },
+    "arrival_date_week_number": {
+      "min": 1,
+      "max": 53,
+      "mean": 27.17,
+      "std": 13.61
+    },
+    "arrival_date_day_of_month": {
+      "min": 1,
+      "max": 31,
+      "mean": 15.8,
+      "std": 8.78
+    },
+    "stays_in_weekend_nights": {
+      "min": 0,
+      "max": 19,
+      "mean": 0.93,
+      "std": 1.00
+    },
+    "stays_in_week_nights": {
+      "min": 0,
+      "max": 50,
+      "mean": 2.50,
+      "std": 1.91
+    },
+    "adults": {
+      "min": 0,
+      "max": 55,
+      "mean": 1.86,
+      "std": 0.58
+    },
+    "children": {
+      "min": 0,
+      "max": 10,
+      "mean": 0.10,
+      "std": 0.40
+    },
+    "babies": {
+      "min": 0,
+      "max": 10,
+      "mean": 0.01,
+      "std": 0.10
+    },
+    "previous_cancellations": {
+      "min": 0,
+      "max": 26,
+      "mean": 0.09,
+      "std": 0.84
+    },
+    "previous_bookings_not_canceled": {
+      "min": 0,
+      "max": 72,
+      "mean": 0.14,
+      "std": 1.50
+    },
+    "booking_changes": {
+      "min": 0,
+      "max": 21,
+      "mean": 0.22,
+      "std": 0.65
+    },
+    "adr": {
+      "min": 0,
+      "max": 5400,
+      "mean": 101.83,
+      "std": 50.54
+    },
+    "required_car_parking_spaces": {
+      "min": 0,
+      "max": 8,
+      "mean": 0.06,
+      "std": 0.25
+    },
+    "total_of_special_requests": {
+      "min": 0,
+      "max": 5,
+      "mean": 0.57,
+      "std": 0.79
+    },
+    "total_guests": {
+      "min": 0,
+      "max": 55,
+      "mean": 1.97,
+      "std": 0.69
+    },
+    "total_nights": {
+      "min": 0,
+      "max": 50,
+      "mean": 3.43,
+      "std": 2.42
+    }
+  },
+  "qualitative_mappings": {
+    "hotel": {
+      "Resort Hotel": 0,
+      "City Hotel": 1
+    },
+    "arrival_date_month": {
+      "January": 1,
+      "February": 2,
+      "March": 3,
+      "April": 4,
+      "May": 5,
+      "June": 6,
+      "July": 7,
+      "August": 8,
+      "September": 9,
+      "October": 10,
+      "November": 11,
+      "December": 12
+    },
+    "market_segment": {
+      "Direct": 0,
+      "Corporate": 1,
+      "Online TA": 2,
+      "Offline TA/TO": 3,
+      "Complementary": 4,
+      "Groups": 5,
+      "Aviation": 6
+    },
+    "distribution_channel": {
+      "Direct": 0,
+      "Corporate": 1,
+      "TA/TO": 2,
+      "GDS": 3
+    },
+    "deposit_type": {
+      "No Deposit": 0,
+      "Refundable": 1,
+      "Non Refund": 2
+    },
+    "customer_type": {
+      "Transient": 0,
+      "Contract": 1,
+      "Transient-Party": 2,
+      "Group": 3
+    },
+    "reserved_room_type": {
+      "A": 0,
+      "B": 1,
+      "C": 2,
+      "D": 3,
+      "E": 4,
+      "F": 5,
+      "G": 6,
+      "H": 7,
+      "L": 8,
+      "P": 9
+    },
+    "assigned_room_type": {
+      "A": 0,
+      "B": 1,
+      "C": 2,
+      "D": 3,
+      "E": 4,
+      "F": 5,
+      "G": 6,
+      "H": 7,
+      "I": 8,
+      "K": 9,
+      "L": 10,
+      "P": 11
+    }
+  },
+  "feature_descriptions": {
+    "hotel": "Tipo de hotel",
+    "lead_time": "Dias entre reserva e check-in",
+    "arrival_date_month": "Mês de chegada",
+    "arrival_date_week_number": "Semana do ano",
+    "arrival_date_day_of_month": "Dia do mês",
+    "stays_in_weekend_nights": "Noites no fim de semana",
+    "stays_in_week_nights": "Noites na semana",
+    "adults": "Número de adultos",
+    "children": "Número de crianças",
+    "babies": "Número de bebês",
+    "market_segment": "Segmento de mercado",
+    "distribution_channel": "Canal de distribuição",
+    "is_repeated_guest": "Cliente repetido",
+    "previous_cancellations": "Cancelamentos anteriores",
+    "previous_bookings_not_canceled": "Reservas anteriores não canceladas",
+    "reserved_room_type": "Tipo de quarto reservado",
+    "assigned_room_type": "Tipo de quarto atribuído",
+    "booking_changes": "Mudanças na reserva",
+    "deposit_type": "Tipo de depósito",
+    "adr": "Taxa diária média (R$)",
+    "required_car_parking_spaces": "Vagas de estacionamento",
+    "total_of_special_requests": "Pedidos especiais",
+    "total_guests": "Total de hóspedes",
+    "total_nights": "Total de noites",
+    "has_special_request": "Tem pedido especial",
+    "is_family": "É família"
+  },
+  "risk_profiles": {
+    "low_risk": {
+      "id": 0,
+      "name": "Baixo Risco",
+      "color": "#10B981",
+      "icon": "✅",
+      "description": "Cliente com baixa probabilidade de cancelamento",
+      "characteristics": {
+        "lead_time": 30,
+        "previous_cancellations": 0,
+        "total_of_special_requests": 2,
+        "deposit_type": 0,
+        "is_repeated_guest": 1,
+        "adr": 100
+      }
+    },
+    "medium_risk": {
+      "id": 1,
+      "name": "Risco Médio",
+      "color": "#F59E0B",
+      "icon": "⚠️",
+      "description": "Cliente com probabilidade moderada de cancelamento",
+      "characteristics": {
+        "lead_time": 100,
+        "previous_cancellations": 1,
+        "total_of_special_requests": 0,
+        "deposit_type": 1,
+        "is_repeated_guest": 0,
+        "adr": 80
+      }
+    },
+    "high_risk": {
+      "id": 2,
+      "name": "Alto Risco",
+      "color": "#EF4444",
+      "icon": "❌",
+      "description": "Cliente com alta probabilidade de cancelamento",
+      "characteristics": {
+        "lead_time": 300,
+        "previous_cancellations": 5,
+        "total_of_special_requests": 0,
+        "deposit_type": 2,
+        "is_repeated_guest": 0,
+        "adr": 50
+      }
+    }
+  }
+}
