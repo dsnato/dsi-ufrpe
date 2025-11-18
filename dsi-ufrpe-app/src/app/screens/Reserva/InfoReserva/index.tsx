@@ -5,13 +5,13 @@ import { InfoRow } from '@/src/components/InfoRow';
 import { Loading } from '@/src/components/Loading';
 import { StatusBadge } from '@/src/components/StatusBadge';
 import { TitleSection } from '@/src/components/TitleSection';
+import { useToast } from '@/src/components/ToastContext';
 import { buscarReservaPorId, excluirReserva, Reserva } from '@/src/services/reservasService';
 import { formatCurrency, formatDate, withPlaceholder } from '@/src/utils/formatters';
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, Platform } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useToast } from '@/src/components/ToastContext';
 
 const InfoReserva: React.FC = () => {
     const router = useRouter();
@@ -139,8 +139,8 @@ const InfoReserva: React.FC = () => {
                 <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
                     {/* Título da reserva com badge de status */}
                     <TitleSection
-                        title={`Reserva ${withPlaceholder(reserva.id, 'S/N')}`}
-                        subtitle="Número da reserva"
+                        title={`Quarto ${withPlaceholder(reserva.quartos?.numero_quarto, 'S/N')}`}
+                        subtitle="Número do quarto"
                         badge={
                             <StatusBadge
                                 text={reserva.status || 'Pendente'}
@@ -165,7 +165,7 @@ const InfoReserva: React.FC = () => {
                     <InfoRow
                         icon="bed-outline"
                         label="QUARTO"
-                        value={withPlaceholder(reserva.id_quarto, 'Não informado')}
+                            value={withPlaceholder(reserva.quartos?.numero_quarto, 'Não informado')}
                     />
 
                     <InfoRow
