@@ -268,13 +268,17 @@ const CriarFuncionario: React.FC = () => {
         try {
             setLoading(true);
 
+            // Converte data de DD/MM/AAAA para YYYY-MM-DD
+            const [day, month, year] = dataAdmissao.split('/');
+            const dataAdmissaoFormatada = `${year}-${month}-${day}`;
+
             const funcionarioData = {
                 nome_completo: nome.trim(),
                 cpf: cpf.replace(/\D/g, ''),
                 telefone: celular.replace(/\D/g, ''),
                 email: email.trim().toLowerCase(),
                 cargo: cargo,
-                data_admissao: dataAdmissao,
+                data_admissao: dataAdmissaoFormatada,
                 salario: salarioNumerico,
                 status: ativo ? 'ativo' : 'inativo',
             };
