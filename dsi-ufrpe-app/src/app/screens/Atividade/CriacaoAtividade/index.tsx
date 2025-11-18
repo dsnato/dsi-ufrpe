@@ -31,12 +31,41 @@ const CriarAtividade: React.FC = () => {
         const numbersOnly = text.replace(/\D/g, '');
         const limited = numbersOnly.slice(0, 8);
 
-        let formatted = limited;
+        // Valida e corrige o mês (1-12)
+        let processedValue = limited;
+        if (limited.length >= 4) {
+            const month = parseInt(limited.slice(2, 4));
+            let correctedMonth = limited.slice(2, 4);
+
+            if (month > 12) {
+                correctedMonth = '12';
+            } else if (month === 0 && limited.length >= 4) {
+                correctedMonth = '01';
+            }
+
+            processedValue = limited.slice(0, 2) + correctedMonth + limited.slice(4);
+        }
+
+        // Valida e corrige o ano (1900-2100)
+        if (processedValue.length === 8) {
+            const year = parseInt(processedValue.slice(4, 8));
+            let correctedYear = processedValue.slice(4, 8);
+
+            if (year < 1900) {
+                correctedYear = '1900';
+            } else if (year > 2100) {
+                correctedYear = '2100';
+            }
+
+            processedValue = processedValue.slice(0, 4) + correctedYear;
+        }
+
+        let formatted = processedValue;
         if (limited.length >= 3) {
-            formatted = `${limited.slice(0, 2)}/${limited.slice(2)}`;
+            formatted = `${processedValue.slice(0, 2)}/${processedValue.slice(2)}`;
         }
         if (limited.length >= 5) {
-            formatted = `${limited.slice(0, 2)}/${limited.slice(2, 4)}/${limited.slice(4)}`;
+            formatted = `${processedValue.slice(0, 2)}/${processedValue.slice(2, 4)}/${processedValue.slice(4)}`;
         }
 
         setData(formatted);
@@ -143,12 +172,17 @@ const CriarAtividade: React.FC = () => {
             const [hours, minutes] = hora.split(':').map(Number);
             const dataHora = new Date(year, month - 1, day, hours, minutes);
 
+            // Converte capacidade de forma segura
+            const capacidadeMaxima = capacidade.trim()
+                ? parseInt(capacidade.trim())
+                : undefined;
+
             const atividadeData = {
                 nome: nome.trim(),
-                descricao: descricao.trim() || null,
+                descricao: descricao.trim() || undefined,
                 local: local.trim(),
                 data_hora: dataHora.toISOString(),
-                capacidade_maxima: capacidade ? parseInt(capacidade) : null,
+                capacidade_maxima: capacidadeMaxima,
                 status: ativa ? 'ativa' : 'inativa',
             };
 
@@ -160,9 +194,9 @@ const CriarAtividade: React.FC = () => {
                     console.log('🖼️ [CriacaoAtividade] Iniciando upload de imagem...');
                     console.log('🖼️ [CriacaoAtividade] Atividade ID:', novaAtividade.id);
                     console.log('🖼️ [CriacaoAtividade] Image URI length:', imagemUri.length);
-                    
+
                     const imageUrl = await uploadImagemAtividade(novaAtividade.id, imagemUri);
-                    
+
                     console.log('✅ [CriacaoAtividade] Imagem enviada com sucesso!');
                     console.log('✅ [CriacaoAtividade] URL da imagem:', imageUrl);
                 } catch (error) {
