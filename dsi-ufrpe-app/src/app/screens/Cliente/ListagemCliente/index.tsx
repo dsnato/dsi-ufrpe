@@ -1,14 +1,14 @@
 import { ActionButton } from '@/src/components/ActionButton';
 import { Separator } from '@/src/components/Separator';
 import TextInputRounded from '@/src/components/TextInputRounded';
+import { useToast } from '@/src/components/ToastContext';
+import { Cliente, listarClientes } from '@/src/services/clientesService';
+import { formatCPF } from '@/src/utils/formatters';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, Image } from 'react-native';
+import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { listarClientes, Cliente } from '@/src/services/clientesService';
-import { useToast } from '@/src/components/ToastContext';
-import { formatCPF } from '@/src/utils/formatters';
 
 type Client = Cliente;
 
