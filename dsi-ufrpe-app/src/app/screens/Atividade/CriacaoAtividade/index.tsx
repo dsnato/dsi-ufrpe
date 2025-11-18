@@ -172,12 +172,17 @@ const CriarAtividade: React.FC = () => {
             const [hours, minutes] = hora.split(':').map(Number);
             const dataHora = new Date(year, month - 1, day, hours, minutes);
 
+            // Converte capacidade de forma segura
+            const capacidadeMaxima = capacidade.trim()
+                ? parseInt(capacidade.trim())
+                : undefined;
+
             const atividadeData = {
                 nome: nome.trim(),
                 descricao: descricao.trim() || undefined,
                 local: local.trim(),
                 data_hora: dataHora.toISOString(),
-                capacidade_maxima: capacidade ? parseInt(capacidade) : undefined,
+                capacidade_maxima: capacidadeMaxima,
                 status: ativa ? 'ativa' : 'inativa',
             };
 
