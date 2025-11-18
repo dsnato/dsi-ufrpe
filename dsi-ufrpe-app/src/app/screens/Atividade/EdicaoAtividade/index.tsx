@@ -1,9 +1,10 @@
 import { ActionButton } from '@/src/components/ActionButton';
 import { FormInput } from '@/src/components/FormInput';
+import { ImagePicker } from '@/src/components/ImagePicker';
 import { InfoHeader } from '@/src/components/InfoHeader';
 import { Separator } from '@/src/components/Separator';
 import { useToast } from '@/src/components/ToastContext';
-import { atualizarAtividade, buscarAtividadePorId } from '@/src/services/atividadesService';
+import { atualizarAtividade, buscarAtividadePorId, removerImagemAtividade, uploadImagemAtividade } from '@/src/services/atividadesService';
 import { getSuccessMessage } from '@/src/utils/errorMessages';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
@@ -23,6 +24,9 @@ const EditarAtividade: React.FC = () => {
     const [dataAtividade, setDataAtividade] = useState('');
     const [horario, setHorario] = useState('');
     const [ativa, setAtiva] = useState(true);
+    const [imagemUri, setImagemUri] = useState<string | null>(null);
+    const [imagemOriginal, setImagemOriginal] = useState<string | null>(null);
+    const [imagemAlterada, setImagemAlterada] = useState(false);
 
     // Formata a data automaticamente para DD/MM/AAAA
     const handleDateChange = (text: string) => {
@@ -111,6 +115,16 @@ const EditarAtividade: React.FC = () => {
             setNome(data.nome || '');
             setDescricao(data.descricao || '');
             setLocal(data.local || '');
+            
+            // Salva a imagem original para comparação
+            // Só atualiza se o usuário não alterou a imagem manualmente
+            if (!imagemAlterada) {
+                console.log('🖼️ [EdicaoAtividade] Carregando imagem da atividade:', data.imagem_url);
+                setImagemUri(data.imagem_url || null);
+                setImagemOriginal(data.imagem_url || null);
+            } else {
+                console.log('🖼️ [EdicaoAtividade] Imagem já foi alterada pelo usuário, mantendo a nova');
+            }
             
             // Converte data_hora (timestamp) para data e hora separados
             if (data.data_hora) {
@@ -208,8 +222,40 @@ const EditarAtividade: React.FC = () => {
 
             await atualizarAtividade(id as string, atividadeData);
 
-            showSuccess(getSuccessMessage('update'));
+            // Gerenciar imagem
+            console.log('🖼️ [EdicaoAtividade] Verificando alteração de imagem:', {
+                imagemAlterada,
+                imagemUriLength: imagemUri?.length || 0,
+                imagemOriginalLength: imagemOriginal?.length || 0,
+                saoIguais: imagemUri === imagemOriginal
+            });
+            
+            if (imagemAlterada && imagemUri !== imagemOriginal) {
+                if (!imagemUri && imagemOriginal) {
+                    // Imagem foi removida
+                    try {
+                        console.log('🗑️ [EdicaoAtividade] Removendo imagem...');
+                        await removerImagemAtividade(id as string);
+                        console.log('✅ [EdicaoAtividade] Imagem removida');
+                    } catch (error) {
+                        console.error('❌ [EdicaoAtividade] Erro ao remover imagem:', error);
+                        showError('Atividade atualizada, mas houve erro ao remover a imagem.');
+                    }
+                } else if (imagemUri && imagemUri !== imagemOriginal) {
+                    // Imagem foi alterada ou adicionada
+                    try {
+                        console.log('🖼️ [EdicaoAtividade] Fazendo upload da nova imagem...');
+                        await uploadImagemAtividade(id as string, imagemUri);
+                        console.log('✅ [EdicaoAtividade] Imagem atualizada');
+                    } catch (error) {
+                        console.error('❌ [EdicaoAtividade] Erro ao fazer upload:', error);
+                        showError('Atividade atualizada, mas houve erro ao enviar a imagem.');
+                    }
+                }
+            }
 
+            showSuccess(getSuccessMessage('update'));
+            
             setTimeout(() => {
                 router.back();
             }, 1500);
@@ -223,7 +269,7 @@ const EditarAtividade: React.FC = () => {
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
-            <InfoHeader entity="Atividades" action="Edição" onBackPress={() => router.push("/screens/Atividade/ListagemAtividade")} />
+            <InfoHeader entity="Atividades" onBackPress={() => router.push("/screens/Atividade/ListagemAtividade")} />
 
             <View style={styles.content}>
                 <ScrollView
@@ -242,6 +288,25 @@ const EditarAtividade: React.FC = () => {
                     </Text>
 
                     <Separator marginTop={16} marginBottom={24} />
+
+                    {/* Imagem da Atividade */}
+                    <View style={styles.fieldGroup}>
+                        <Text style={styles.label}>Imagem da Atividade</Text>
+                        <ImagePicker
+                            imageUri={imagemUri}
+                            onImageSelected={(uri) => {
+                                console.log('🖼️ [EdicaoAtividade] Nova imagem selecionada:', uri.substring(0, 50) + '...');
+                                setImagemUri(uri);
+                                setImagemAlterada(true);
+                            }}
+                            onImageRemoved={() => {
+                                console.log('🗑️ [EdicaoAtividade] Imagem removida pelo usuário');
+                                setImagemUri(null);
+                                setImagemAlterada(true);
+                            }}
+                            disabled={loading}
+                        />
+                    </View>
 
                     {/* Formulário */}
                     <View style={styles.form}>
