@@ -6,7 +6,7 @@ import { Loading } from '@/src/components/Loading';
 import { StatusBadge } from '@/src/components/StatusBadge';
 import { TitleSection } from '@/src/components/TitleSection';
 import { useToast } from '@/src/components/ToastContext';
-import { buscarReservaPorId, excluirReserva, Reserva } from '@/src/services/reservasService';
+import { buscarReservaPorId, excluirReserva, realizarCheckin, realizarCheckout, Reserva } from '@/src/services/reservasService';
 import { formatCurrency, formatDate, withPlaceholder } from '@/src/utils/formatters';
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useState } from 'react';
@@ -84,6 +84,42 @@ const InfoReserva: React.FC = () => {
 
     const cancelDelete = () => {
         setShowDeleteConfirm(false);
+    };
+
+    /**
+     * Realizar check-in
+     */
+    const handleCheckin = async () => {
+        if (!reserva?.id || !reserva?.id_quarto) return;
+
+        try {
+            setLoading(true);
+            await realizarCheckin(reserva.id, reserva.id_quarto);
+            showSuccess('Check-in realizado com sucesso!');
+            await loadReserva();
+        } catch (error: any) {
+            showError(`Erro ao realizar check-in: ${error?.message || 'Erro desconhecido'}`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    /**
+     * Realizar check-out
+     */
+    const handleCheckout = async () => {
+        if (!reserva?.id || !reserva?.id_quarto) return;
+
+        try {
+            setLoading(true);
+            await realizarCheckout(reserva.id, reserva.id_quarto);
+            showSuccess('Check-out realizado com sucesso!');
+            await loadReserva();
+        } catch (error: any) {
+            showError(`Erro ao realizar check-out: ${error?.message || 'Erro desconhecido'}`);
+        } finally {
+            setLoading(false);
+        }
     };
 
     /**
@@ -214,6 +250,8 @@ const InfoReserva: React.FC = () => {
                         <ActionButton
                             variant="success"
                             icon="log-in-outline"
+                            onPress={handleCheckin}
+                            disabled={loading}
                         >
                             Confirmar Check-in
                         </ActionButton>
@@ -223,6 +261,8 @@ const InfoReserva: React.FC = () => {
                         <ActionButton
                             variant="warning"
                             icon="log-out-outline"
+                            onPress={handleCheckout}
+                            disabled={loading}
                         >
                             Confirmar Check-out
                         </ActionButton>
