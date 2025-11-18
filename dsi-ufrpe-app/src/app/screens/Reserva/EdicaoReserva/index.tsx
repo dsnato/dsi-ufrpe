@@ -23,6 +23,7 @@ const EditarReserva: React.FC = () => {
     const [quartoId, setQuartoId] = useState('');
     const [clienteNome, setClienteNome] = useState('');
     const [quartoNumero, setQuartoNumero] = useState('');
+    const [precoDiario, setPrecoDiario] = useState(0);
     const [valorTotal, setValorTotal] = useState('');
     const [status, setStatus] = useState('confirmada');
     const [ativa, setAtiva] = useState(true);
@@ -58,16 +59,41 @@ const EditarReserva: React.FC = () => {
         setter(formatted);
     };
 
-    // Formata o valor total automaticamente para formato monetário
-    const handleValorChange = (text: string) => {
-        const numbersOnly = text.replace(/\D/g, '');
-        const numberValue = parseInt(numbersOnly || '0') / 100;
-        const formatted = numberValue.toLocaleString('pt-BR', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-        });
-        setValorTotal(formatted);
-    };
+    // Calcula o valor total baseado nas datas e preço diário
+    const calcularValorTotal = useCallback(() => {
+        if (!dataCheckin || !dataCheckout || !precoDiario) {
+            return;
+        }
+
+        const dateRegex = /^\d{2}\/\d{2}\/\d{4}$/;
+        if (!dateRegex.test(dataCheckin) || !dateRegex.test(dataCheckout)) {
+            return;
+        }
+
+        const [dayIn, monthIn, yearIn] = dataCheckin.split('/').map(Number);
+        const [dayOut, monthOut, yearOut] = dataCheckout.split('/').map(Number);
+
+        const checkin = new Date(yearIn, monthIn - 1, dayIn);
+        const checkout = new Date(yearOut, monthOut - 1, dayOut);
+
+        if (checkout > checkin) {
+            const diferencaDias = Math.ceil((checkout.getTime() - checkin.getTime()) / (1000 * 60 * 60 * 24));
+            const total = diferencaDias * precoDiario;
+            
+            // Validação de overflow
+            if (total > 999999.99) {
+                showError('O valor total excede o limite máximo permitido.');
+                return;
+            }
+            
+            setValorTotal(total.toFixed(2).replace('.', ','));
+        }
+    }, [dataCheckin, dataCheckout, precoDiario, showError]);
+
+    // Recalcula o valor quando as datas mudarem
+    React.useEffect(() => {
+        calcularValorTotal();
+    }, [calcularValorTotal]);
 
     // Carrega os dados da reserva
     const loadReserva = useCallback(async () => {
@@ -83,12 +109,19 @@ const EditarReserva: React.FC = () => {
             }
             
             // Converte as datas de YYYY-MM-DD para DD/MM/YYYY
+            // Usa Date com parsing local para evitar problema de timezone
             if (data.data_checkin) {
-                const [ano, mes, dia] = data.data_checkin.split('-');
+                const dateCheckin = new Date(data.data_checkin + 'T00:00:00');
+                const dia = String(dateCheckin.getDate()).padStart(2, '0');
+                const mes = String(dateCheckin.getMonth() + 1).padStart(2, '0');
+                const ano = dateCheckin.getFullYear();
                 setDataCheckin(`${dia}/${mes}/${ano}`);
             }
             if (data.data_checkout) {
-                const [ano, mes, dia] = data.data_checkout.split('-');
+                const dateCheckout = new Date(data.data_checkout + 'T00:00:00');
+                const dia = String(dateCheckout.getDate()).padStart(2, '0');
+                const mes = String(dateCheckout.getMonth() + 1).padStart(2, '0');
+                const ano = dateCheckout.getFullYear();
                 setDataCheckout(`${dia}/${mes}/${ano}`);
             }
             
@@ -105,13 +138,17 @@ const EditarReserva: React.FC = () => {
             if (data.quartos) {
                 const quartoInfo = `Quarto ${data.quartos.numero_quarto} - ${data.quartos.tipo}`;
                 setQuartoNumero(quartoInfo);
+                setPrecoDiario(data.quartos.preco_diario || 0);
             } else {
                 setQuartoNumero('Quarto não encontrado');
+                setPrecoDiario(0);
             }
             
             setValorTotal(data.valor_total?.toFixed(2).replace('.', ',') || '');
             setStatus(data.status || 'confirmada');
-            setAtiva(data.ativa ?? true);
+            
+            // Define ativa baseado no status
+            setAtiva(data.status !== 'Cancelada' && data.status !== 'cancelada');
         } catch (error) {
             console.error('Erro ao carregar reserva:', error);
             showError('Não foi possível carregar os dados da reserva.');
@@ -203,7 +240,7 @@ const EditarReserva: React.FC = () => {
                 data_checkin: dataCheckinFormatada,
                 data_checkout: dataCheckoutFormatada,
                 valor_total: parseFloat(valorTotal.replace(/\./g, '').replace(',', '.')),
-                status,
+                status: ativa ? (status === 'Cancelada' || status === 'cancelada' ? 'Confirmada' : status) : 'Cancelada',
             };
 
             await atualizarReserva(id as string, reservaData);
@@ -313,10 +350,10 @@ const EditarReserva: React.FC = () => {
                                 icon="cash-outline"
                                 placeholder="0,00"
                                 value={valorTotal}
-                                onChangeText={handleValorChange}
-                                editable={!loading}
+                                onChangeText={() => {}}
+                                editable={false}
                                 keyboardType="numeric"
-                                helperText="Valor total da reserva em reais (R$)"
+                                helperText="Calculado automaticamente (dias × preço diário)"
                             />
                         </View>
 
