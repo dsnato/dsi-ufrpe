@@ -3,11 +3,11 @@ import { DashboardCard } from "@/src/components/DashboardCard";
 import { QuickActionButton } from "@/src/components/QuickActionButton";
 import { Separator } from "@/src/components/Separator";
 import { StatCard } from "@/src/components/StatCard";
+import { listarAtividades } from "@/src/services/atividadesService";
 import { listarClientes } from "@/src/services/clientesService";
 import { listarFuncionarios } from "@/src/services/funcionariosService";
 import { listarQuartos } from "@/src/services/quartosService";
 import { listarReservas } from "@/src/services/reservasService";
-import { listarAtividades } from "@/src/services/atividadesService";
 import { Ionicons } from '@expo/vector-icons';
 import { Session } from "@supabase/supabase-js";
 import { useRouter } from "expo-router";
@@ -98,12 +98,44 @@ export default function Home() {
             ]);
 
             // Processa reservas
-            const today = new Date().toISOString().split('T')[0];
-            const reservasHoje = reservas.filter((r) => 
-                r.data_checkin?.startsWith(today)
-            ).length;
-            const reservasConfirmadas = reservas.filter((r) => 
-                r.status === 'confirmada'
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Reseta para início do dia
+            
+            // Filtra apenas reservas não finalizadas e não canceladas
+            const reservasAtivas = reservas.filter((r) => 
+                r.status !== 'Finalizada' && r.status !== 'finalizada' && 
+                r.status !== 'Cancelada' && r.status !== 'cancelada'
+            );
+            
+            const reservasHoje = reservasAtivas.filter((r) => {
+                if (!r.data_checkin) return false;
+                
+                // Converte data de check-in para Date
+                const checkinDate = new Date(r.data_checkin);
+                checkinDate.setHours(0, 0, 0, 0);
+                
+                // Converte data de check-out para Date (se existir)
+                let checkoutDate = null;
+                if (r.data_checkout) {
+                    checkoutDate = new Date(r.data_checkout);
+                    checkoutDate.setHours(0, 0, 0, 0);
+                }
+                
+                // Check-in é hoje
+                if (checkinDate.getTime() === today.getTime()) {
+                    return true;
+                }
+                
+                // Reserva ativa hoje (hoje está entre check-in e check-out)
+                if (checkoutDate && checkinDate < today && today < checkoutDate) {
+                    return true;
+                }
+                
+                return false;
+            }).length;
+            
+            const reservasConfirmadas = reservasAtivas.filter((r) => 
+                r.status === 'Confirmada' || r.status === 'confirmada'
             ).length;
 
             // Processa quartos
