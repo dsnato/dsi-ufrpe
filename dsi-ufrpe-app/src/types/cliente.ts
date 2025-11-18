@@ -10,6 +10,7 @@ export interface Cliente {
     zipCode: string;
     phone: string;
     email: string;
+    imagem_url?: string;
     created_at?: string;
     updated_at?: string;
 }
