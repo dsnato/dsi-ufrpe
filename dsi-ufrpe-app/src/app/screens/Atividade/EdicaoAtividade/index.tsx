@@ -3,12 +3,12 @@ import { FormInput } from '@/src/components/FormInput';
 import { InfoHeader } from '@/src/components/InfoHeader';
 import { Separator } from '@/src/components/Separator';
 import { useToast } from '@/src/components/ToastContext';
+import { atualizarAtividade, buscarAtividadePorId } from '@/src/services/atividadesService';
 import { getSuccessMessage } from '@/src/utils/errorMessages';
-import { buscarAtividadePorId, atualizarAtividade, AtividadeRecreativa } from '@/src/services/atividadesService';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const EditarAtividade: React.FC = () => {
@@ -208,19 +208,14 @@ const EditarAtividade: React.FC = () => {
 
             await atualizarAtividade(id as string, atividadeData);
 
-            Alert.alert(
-                'Sucesso',
-                'Atividade atualizada com sucesso!',
-                [
-                    {
-                        text: 'OK',
-                        onPress: () => router.back(),
-                    },
-                ]
-            );
+            showSuccess(getSuccessMessage('update'));
+
+            setTimeout(() => {
+                router.back();
+            }, 1500);
         } catch (error) {
             console.error('Erro ao salvar atividade:', error);
-            Alert.alert('Erro', 'Ocorreu um erro ao salvar. Tente novamente.');
+            showError('Ocorreu um erro ao salvar. Tente novamente.');
         } finally {
             setLoading(false);
         }
@@ -228,7 +223,7 @@ const EditarAtividade: React.FC = () => {
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
-            <InfoHeader entity="Atividades" onBackPress={() => router.push("/screens/Atividade/ListagemAtividade")} />
+            <InfoHeader entity="Atividades" action="Edição" onBackPress={() => router.push("/screens/Atividade/ListagemAtividade")} />
 
             <View style={styles.content}>
                 <ScrollView
