@@ -1,8 +1,10 @@
 import { supabase } from "@/lib/supabase";
 import { DashboardCard } from "@/src/components/DashboardCard";
+import { LogoutModal } from "@/src/components/ImagePickerModal";
 import { QuickActionButton } from "@/src/components/QuickActionButton";
 import { Separator } from "@/src/components/Separator";
 import { StatCard } from "@/src/components/StatCard";
+import { useToast } from "@/src/components/ToastContext";
 import { listarAtividades } from "@/src/services/atividadesService";
 import { listarClientes } from "@/src/services/clientesService";
 import { listarFuncionarios } from "@/src/services/funcionariosService";
@@ -12,7 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Session } from "@supabase/supabase-js";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
-import { Alert, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 interface DashboardStats {
@@ -25,10 +27,12 @@ interface DashboardStats {
 
 export default function Home() {
     const router = useRouter();
+    const { showError } = useToast();
 
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [username, setUsername] = useState('Usuário');
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
     const [session, setSession] = useState<Session | null>(null);
     const [stats, setStats] = useState<DashboardStats>({
         reservations: { total: 0, today: 0, confirmed: 0 },
@@ -176,7 +180,7 @@ export default function Home() {
             });
         } catch (error) {
             console.error('Erro ao carregar estatísticas:', error);
-            Alert.alert('Erro', 'Não foi possível carregar as estatísticas do dashboard.');
+            showError('Não foi possível carregar as estatísticas do dashboard.');
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -209,21 +213,12 @@ export default function Home() {
     };
 
     const handleLogout = async () => {
-        Alert.alert(
-            'Sair',
-            'Deseja realmente sair do aplicativo?',
-            [
-                { text: 'Cancelar', style: 'cancel' },
-                {
-                    text: 'Sair',
-                    style: 'destructive',
-                    onPress: async () => {
-                        await supabase.auth.signOut();
-                        router.replace('/screens/Login');
-                    },
-                },
-            ]
-        );
+        setShowLogoutModal(true);
+    };
+
+    const confirmLogout = async () => {
+        await supabase.auth.signOut();
+        router.replace('/screens/Login');
     };
 
     return (
@@ -372,6 +367,12 @@ export default function Home() {
                         </View>
                     </ScrollView>
                 </View>
+
+                <LogoutModal
+                    visible={showLogoutModal}
+                    onClose={() => setShowLogoutModal(false)}
+                    onConfirm={confirmLogout}
+                />
             </SafeAreaView>
         </SafeAreaProvider>
     );
