@@ -1,9 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
     ActivityIndicator,
-    Alert,
     ScrollView,
     StyleSheet,
     Text,
@@ -12,19 +11,23 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useToast } from '@/src/components/ToastContext';
+
 import { ButtonSelector } from '@/src/components/ButtonSelector';
 import { FormInput } from '@/src/components/FormInput';
 import { RiskCard } from '@/src/components/RiskCard';
 import { Separator } from '@/src/components/Separator';
 import {
-    predictCancellationRisk,
     getRiskProfileInfo,
+    predictCancellationRisk,
     type PredictionResult,
 } from '@/src/services/bookingPredictor';
 import { convertUserInputToFeatures } from '@/src/utils/bookingFeatureMapping';
 
 export default function PredicaoScreen() {
     const router = useRouter();
+    const scrollViewRef = useRef<ScrollView>(null);
+    const { showError } = useToast();
     const [loading, setLoading] = useState(false);
     const [showResults, setShowResults] = useState(false);
     const [predictionResult, setPredictionResult] = useState<PredictionResult | null>(null);
@@ -38,15 +41,41 @@ export default function PredicaoScreen() {
         total_of_special_requests: '',
         is_repeated_guest: '',
         market_segment: '',
-        adults: '2',
-        children: '0',
-        stays_in_weekend_nights: '0',
-        stays_in_week_nights: '3',
+        adults: '',
+        children: '',
+        stays_in_weekend_nights: '',
+        stays_in_week_nights: '',
     });
 
+    // Funções de formatação
+    const formatLeadTime = (value: string) => {
+        const numbers = value.replace(/\D/g, '');
+        return numbers ? `${numbers} dias` : '';
+    };
+
+    const formatCurrency = (value: string) => {
+        const numbers = value.replace(/\D/g, '');
+        if (!numbers) return '';
+        const amount = parseFloat(numbers) / 100;
+        return `R$ ${amount.toFixed(2).replace('.', ',')}`;
+    };
+
+    const parseLeadTime = (formatted: string): string => {
+        return formatted.replace(/\D/g, '');
+    };
+
+    const parseCurrency = (formatted: string): string => {
+        const numbers = formatted.replace(/\D/g, '');
+        if (!numbers) return '';
+        return (parseFloat(numbers) / 100).toFixed(2);
+    };
+
     const handlePredict = async () => {
-        if (!formData.hotel || !formData.lead_time || !formData.adr || !formData.deposit_type || !formData.market_segment) {
-            Alert.alert('Atenção', 'Preencha todos os campos obrigatórios (*)');
+        const leadTimeValue = parseLeadTime(formData.lead_time);
+        const adrValue = parseCurrency(formData.adr);
+
+        if (!formData.hotel || !leadTimeValue || !adrValue || !formData.deposit_type || !formData.market_segment) {
+            showError('Preencha todos os campos obrigatórios (*)');
             return;
         }
 
@@ -54,8 +83,8 @@ export default function PredicaoScreen() {
         try {
             const numericFeatures = convertUserInputToFeatures({
                 hotel: formData.hotel,
-                lead_time: parseInt(formData.lead_time),
-                adr: parseFloat(formData.adr),
+                lead_time: parseInt(leadTimeValue),
+                adr: parseFloat(adrValue),
                 previous_cancellations: parseInt(formData.previous_cancellations || '0'),
                 deposit_type: formData.deposit_type,
                 total_of_special_requests: parseInt(formData.total_of_special_requests || '0'),
@@ -81,9 +110,14 @@ export default function PredicaoScreen() {
             const result = predictCancellationRisk(numericFeatures);
             setPredictionResult(result);
             setShowResults(true);
+            
+            // Scroll para o topo após mostrar resultados
+            setTimeout(() => {
+                scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+            }, 100);
         } catch (error) {
             console.error('Erro:', error);
-            Alert.alert('Erro', 'Não foi possível realizar a predição');
+            showError('Não foi possível realizar a predição');
         } finally {
             setLoading(false);
         }
@@ -115,17 +149,17 @@ export default function PredicaoScreen() {
                     <Ionicons name="arrow-back" size={24} color="#132F3B" />
                 </TouchableOpacity>
                 <View style={styles.headerContent}>
-                    <Ionicons name="analytics" size={24} color="#8B5CF6" />
+                    <Ionicons name="analytics" size={24} color="#0162B3" />
                     <Text style={styles.headerTitle}>Predição ML</Text>
                 </View>
                 {showResults && (
                     <TouchableOpacity onPress={handleReset}>
-                        <Ionicons name="refresh" size={24} color="#8B5CF6" />
+                        <Ionicons name="refresh" size={24} color="#0162B3" />
                     </TouchableOpacity>
                 )}
             </View>
 
-            <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+            <ScrollView ref={scrollViewRef} style={styles.scrollView} showsVerticalScrollIndicator={false}>
                 {!showResults ? (
                     <View style={styles.formContainer}>
                         {/* Seção 1: Tipo de Hotel */}
@@ -153,7 +187,10 @@ export default function PredicaoScreen() {
                                 icon="calendar"
                                 placeholder="Ex: 30"
                                 value={formData.lead_time}
-                                onChangeText={(value) => setFormData({ ...formData, lead_time: value })}
+                                onChangeText={(value) => {
+                                    const numbers = value.replace(/\D/g, '');
+                                    setFormData({ ...formData, lead_time: formatLeadTime(numbers) });
+                                }}
                                 keyboardType="numeric"
                             />
                         </View>
@@ -163,10 +200,13 @@ export default function PredicaoScreen() {
                             <Text style={styles.fieldHelper}>Valor médio da diária cobrada</Text>
                             <FormInput
                                 icon="cash"
-                                placeholder="Ex: 150.00"
+                                placeholder="Ex: 150,00"
                                 value={formData.adr}
-                                onChangeText={(value) => setFormData({ ...formData, adr: value })}
-                                keyboardType="decimal-pad"
+                                onChangeText={(value) => {
+                                    const numbers = value.replace(/\D/g, '');
+                                    setFormData({ ...formData, adr: formatCurrency(numbers) });
+                                }}
+                                keyboardType="numeric"
                             />
                         </View>
 
@@ -330,7 +370,7 @@ export default function PredicaoScreen() {
                                         {predictionResult.statistics && (
                                             <View style={styles.statsGrid}>
                                                 <View style={styles.statBox}>
-                                                    <Ionicons name="bar-chart" size={24} color="#8B5CF6" />
+                                                    <Ionicons name="bar-chart" size={24} color="#0162B3" />
                                                     <Text style={styles.statValue}>{predictionResult.statistics.totalFeatures}</Text>
                                                     <Text style={styles.statLabel}>Features Analisadas</Text>
                                                 </View>
@@ -444,7 +484,7 @@ export default function PredicaoScreen() {
                                     )}
 
                                     <TouchableOpacity style={styles.newAnalysisButton} onPress={handleReset}>
-                                        <Ionicons name="add-circle-outline" size={24} color="#8B5CF6" />
+                                        <Ionicons name="add-circle-outline" size={24} color="#0162B3" />
                                         <Text style={styles.newAnalysisButtonText}>Nova Análise</Text>
                                     </TouchableOpacity>
                                 </>
@@ -527,7 +567,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#8B5CF6',
+        backgroundColor: '#0162B3',
         padding: 16,
         borderRadius: 12,
         gap: 8,
@@ -730,7 +770,7 @@ const styles = StyleSheet.create({
     },
     importanceBarFill: {
         height: '100%',
-        backgroundColor: '#8B5CF6',
+        backgroundColor: '#0162B3',
         borderRadius: 3,
     },
     importanceText: {
@@ -747,12 +787,12 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         gap: 8,
         borderWidth: 2,
-        borderColor: '#8B5CF6',
+        borderColor: '#0162B3',
         marginTop: 8,
     },
     newAnalysisButtonText: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: '#8B5CF6',
+        color: '#0162B3',
     },
 });
