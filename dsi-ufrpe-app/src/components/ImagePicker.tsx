@@ -1,7 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePickerExpo from 'expo-image-picker';
 import React, { useState } from 'react';
-import { ActivityIndicator, Alert, Image, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ImagePickerModal, RemoveImageModal } from './ImagePickerModal';
+import { useToast } from './ToastContext';
 
 interface ImagePickerProps {
   imageUri?: string | null;
@@ -17,6 +19,9 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
   disabled = false,
 }) => {
   const [loading, setLoading] = useState(false);
+  const [showPickerModal, setShowPickerModal] = useState(false);
+  const [showRemoveModal, setShowRemoveModal] = useState(false);
+  const { showError } = useToast();
 
   console.log('🖼️ ImagePicker renderizado:', { imageUri, disabled, platform: Platform.OS });
 
@@ -24,10 +29,7 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
     if (Platform.OS !== 'web') {
       const { status } = await ImagePickerExpo.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert(
-          'Permissão necessária',
-          'Precisamos de permissão para acessar suas fotos.'
-        );
+        showError('Precisamos de permissão para acessar suas fotos.');
         return false;
       }
     }
@@ -60,7 +62,7 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
       }
     } catch (error) {
       console.error('Erro ao selecionar imagem:', error);
-      Alert.alert('Erro', 'Não foi possível selecionar a imagem.');
+      showError('Não foi possível selecionar a imagem.');
     } finally {
       setLoading(false);
     }
@@ -70,10 +72,7 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
     try {
       const { status } = await ImagePickerExpo.requestCameraPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert(
-          'Permissão necessária',
-          'Precisamos de permissão para acessar sua câmera.'
-        );
+        showError('Precisamos de permissão para acessar sua câmera.');
         return;
       }
 
@@ -90,7 +89,7 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
       }
     } catch (error) {
       console.error('Erro ao tirar foto:', error);
-      Alert.alert('Erro', 'Não foi possível tirar a foto.');
+      showError('Não foi possível tirar a foto.');
     } finally {
       setLoading(false);
     }
@@ -102,25 +101,7 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
       return;
     }
 
-    Alert.alert(
-      'Selecionar Imagem',
-      'Escolha uma opção:',
-      [
-        {
-          text: 'Galeria',
-          onPress: pickImage,
-        },
-        {
-          text: 'Câmera',
-          onPress: takePhoto,
-        },
-        {
-          text: 'Cancelar',
-          style: 'cancel',
-        },
-      ],
-      { cancelable: true }
-    );
+    setShowPickerModal(true);
   };
 
   const handleRemoveImage = () => {
@@ -131,21 +112,7 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
       return;
     }
 
-    Alert.alert(
-      'Remover Imagem',
-      'Tem certeza que deseja remover esta imagem?',
-      [
-        {
-          text: 'Cancelar',
-          style: 'cancel',
-        },
-        {
-          text: 'Remover',
-          style: 'destructive',
-          onPress: onImageRemoved,
-        },
-      ]
-    );
+    setShowRemoveModal(true);
   };
 
   return (
@@ -195,6 +162,19 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
           )}
         </TouchableOpacity>
       )}
+
+      <ImagePickerModal
+        visible={showPickerModal}
+        onClose={() => setShowPickerModal(false)}
+        onGallery={pickImage}
+        onCamera={takePhoto}
+      />
+
+      <RemoveImageModal
+        visible={showRemoveModal}
+        onClose={() => setShowRemoveModal(false)}
+        onConfirm={() => onImageRemoved?.()}
+      />
     </View>
   );
 };
