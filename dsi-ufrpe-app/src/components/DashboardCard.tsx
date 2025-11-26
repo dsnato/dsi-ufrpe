@@ -9,22 +9,30 @@ interface DashboardCardProps {
     subtitle?: string;
     color: string;
     onPress: () => void;
+    backgroundColor?: string;
+    iconBackground?: string;
+    countColor?: string;
+    titleColor?: string;
+    subtitleColor?: string;
+    chevronColor?: string;
 }
+
+const hexToRgba = (hexColor: string, alpha = 0.15) => {
+    const hex = hexColor.replace('#', '');
+
+    if (hex.length !== 6) {
+        return hexColor;
+    }
+
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
 
 /**
  * DashboardCard - Card moderno para dashboard com ícone, contador e navegação
- * 
- * @example
- * ```tsx
- * <DashboardCard
- *   icon="calendar"
- *   title="Reservas"
- *   count={25}
- *   subtitle="5 confirmadas"
- *   color="#0162B3"
- *   onPress={() => navigate('/reservas')}
- * />
- * ```
  */
 export const DashboardCard: React.FC<DashboardCardProps> = ({
     icon,
@@ -33,24 +41,42 @@ export const DashboardCard: React.FC<DashboardCardProps> = ({
     subtitle,
     color,
     onPress,
+    backgroundColor,
+    iconBackground,
+    countColor,
+    titleColor,
+    subtitleColor,
+    chevronColor,
 }) => {
+    const resolvedIconBackground = iconBackground || hexToRgba(color, 0.15);
+
     return (
         <TouchableOpacity
-            style={[styles.card, { borderLeftColor: color }]}
+            style={[
+                styles.card,
+                { borderLeftColor: color },
+                backgroundColor && { backgroundColor },
+            ]}
             onPress={onPress}
             activeOpacity={0.7}
         >
-            <View style={[styles.iconContainer, { backgroundColor: color + '15' }]}>
+            <View style={[styles.iconContainer, { backgroundColor: resolvedIconBackground }]}>
                 <Ionicons name={icon} size={28} color={color} />
             </View>
 
             <View style={styles.content}>
-                {count !== undefined && <Text style={styles.count}>{count}</Text>}
-                <Text style={styles.title}>{title}</Text>
-                {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+                {count !== undefined && (
+                    <Text style={[styles.count, countColor && { color: countColor }]}>{count}</Text>
+                )}
+                <Text style={[styles.title, titleColor && { color: titleColor }]}>{title}</Text>
+                {subtitle && (
+                    <Text style={[styles.subtitle, subtitleColor && { color: subtitleColor }]}>
+                        {subtitle}
+                    </Text>
+                )}
             </View>
 
-            <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
+            <Ionicons name="chevron-forward" size={20} color={chevronColor || '#94A3B8'} />
         </TouchableOpacity>
     );
 };
@@ -100,3 +126,4 @@ const styles = StyleSheet.create({
         marginTop: 2,
     },
 });
+
