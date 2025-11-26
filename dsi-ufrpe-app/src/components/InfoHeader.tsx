@@ -2,22 +2,39 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
+type InfoHeaderColors = {
+    background?: string;
+    breadcrumb?: string;
+    accent?: string;
+    backIcon?: string;
+};
+
 type InfoHeaderProps = {
     entity: string; // "Quartos", "Clientes", "Funcionários", etc
     onBackPress: () => void;
     action?: string; // "Detalhes", "Adição", "Edição"
+    colors?: InfoHeaderColors;
 };
 
-export function InfoHeader({ entity, onBackPress, action = 'Detalhes' }: InfoHeaderProps) {
+const DEFAULT_COLORS: Required<InfoHeaderColors> = {
+    background: '#132F3B',
+    breadcrumb: '#E0F2FE',
+    accent: '#FFE157',
+    backIcon: '#FFFFFF',
+};
+
+export function InfoHeader({ entity, onBackPress, action = 'Detalhes', colors }: InfoHeaderProps) {
+    const palette = { ...DEFAULT_COLORS, ...colors };
+    
     return (
-        <View style={styles.header}>
+        <View style={[styles.header, { backgroundColor: palette.background }]}>
             <TouchableOpacity onPress={onBackPress} style={styles.backButton}>
-                <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
+                <Ionicons name="chevron-back" size={24} color={palette.backIcon}/>
             </TouchableOpacity>
             <View style={styles.breadcrumb}>
-                <Text style={styles.breadcrumbText}>{entity}</Text>
-                <Ionicons name="chevron-forward" size={16} color="#E0F2FE" />
-                <Text style={styles.breadcrumbTextActive}>{action}</Text>
+                <Text style={[styles.breadcrumbText, { color: palette.breadcrumb }]}>{entity}</Text>
+                <Ionicons name="chevron-forward" size={16} color={palette.breadcrumb} />
+                <Text style={[styles.breadcrumbTextActive, { color: palette.accent }]}>{action}</Text>
             </View>
         </View>
     );
@@ -30,7 +47,6 @@ const styles = StyleSheet.create({
         paddingTop: 50,
         paddingBottom: 16,
         paddingHorizontal: 16,
-        backgroundColor: '#132F3B',
     },
     backButton: {
         marginRight: 16,
@@ -43,12 +59,10 @@ const styles = StyleSheet.create({
     },
     breadcrumbText: {
         fontSize: 14,
-        color: '#E0F2FE',
         opacity: 0.7,
     },
     breadcrumbTextActive: {
         fontSize: 14,
-        color: '#FFE157',
         fontWeight: '600',
     },
 });
