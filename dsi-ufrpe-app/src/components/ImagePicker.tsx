@@ -5,23 +5,61 @@ import { ActivityIndicator, Image, Platform, StyleSheet, Text, TouchableOpacity,
 import { ImagePickerModal, RemoveImageModal } from './ImagePickerModal';
 import { useToast } from './ToastContext';
 
+type ImagePickerTone = 'light' | 'dark';
+
 interface ImagePickerProps {
   imageUri?: string | null;
   onImageSelected: (uri: string) => void;
   onImageRemoved?: () => void;
   disabled?: boolean;
+  tone?: ImagePickerTone;
 }
+
+const appearanceTokens: Record<ImagePickerTone, {
+  container: string;
+  placeholderBackground: string;
+  placeholderBorder: string;
+  icon: string;
+  text: string;
+  subtext: string;
+  actionStrip: string;
+  primary: string;
+}> = {
+  light: {
+    container: '#F1F5F9',
+    placeholderBackground: '#F8FAFC',
+    placeholderBorder: '#E2E8F0',
+    icon: '#94A3B8',
+    text: '#475569',
+    subtext: '#94A3B8',
+    actionStrip: 'rgba(0, 0, 0, 0.05)',
+    primary: '#0162B3',
+  },
+  dark: {
+    container: '#192338',
+    placeholderBackground: 'rgba(15, 23, 42, 0.7)',
+    placeholderBorder: '#1E3A8A',
+    icon: '#7DD3FC',
+    text: '#E2E8F0',
+    subtext: '#94A3B8',
+    actionStrip: 'rgba(8, 21, 38, 0.8)',
+    primary: '#3B82F6',
+  },
+};
 
 export const ImagePicker: React.FC<ImagePickerProps> = ({
   imageUri,
   onImageSelected,
   onImageRemoved,
   disabled = false,
+  tone = 'light',
 }) => {
   const [loading, setLoading] = useState(false);
   const [showPickerModal, setShowPickerModal] = useState(false);
   const [showRemoveModal, setShowRemoveModal] = useState(false);
   const { showError } = useToast();
+
+  const palette = appearanceTokens[tone];
 
   console.log('🖼️ ImagePicker renderizado:', { imageUri, disabled, platform: Platform.OS });
 
@@ -51,7 +89,7 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
       });
 
       console.log('📸 [ImagePicker] Resultado da seleção:', result);
-      
+
       if (!result.canceled && result.assets[0]) {
         const selectedUri = result.assets[0].uri;
         console.log('✅ [ImagePicker] Imagem selecionada:', selectedUri);
@@ -118,10 +156,10 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
   return (
     <View style={styles.container}>
       {imageUri ? (
-        <View style={styles.imageContainer}>
+        <View style={[styles.imageContainer, { backgroundColor: palette.container }]}>
           <Image source={{ uri: imageUri }} style={styles.image} resizeMode="cover" />
           {!disabled && (
-            <View style={styles.imageActions}>
+            <View style={[styles.imageActions, { backgroundColor: palette.actionStrip }]}>
               <TouchableOpacity
                 style={[styles.actionButton, styles.changeButton]}
                 onPress={showImageOptions}
@@ -145,17 +183,23 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
         </View>
       ) : (
         <TouchableOpacity
-          style={styles.placeholder}
+          style={[
+            styles.placeholder,
+            {
+              borderColor: palette.placeholderBorder,
+              backgroundColor: palette.placeholderBackground,
+            },
+          ]}
           onPress={showImageOptions}
           disabled={disabled || loading}
         >
           {loading ? (
-            <ActivityIndicator size="large" color="#0162B3" />
+            <ActivityIndicator size="large" color={palette.primary} />
           ) : (
             <>
-              <Ionicons name="image-outline" size={48} color="#94A3B8" />
-              <Text style={styles.placeholderText}>Adicionar Imagem</Text>
-              <Text style={styles.placeholderSubtext}>
+              <Ionicons name="image-outline" size={48} color={palette.icon} />
+              <Text style={[styles.placeholderText, { color: palette.text }]}>Adicionar Imagem</Text>
+              <Text style={[styles.placeholderSubtext, { color: palette.subtext }]}>
                 Toque para selecionar da galeria ou tirar uma foto
               </Text>
             </>
@@ -246,3 +290,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+
