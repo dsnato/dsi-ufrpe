@@ -49,14 +49,14 @@ export default function PredicaoScreen() {
     // Funções de formatação
     const formatLeadTime = (value: string) => {
         const numbers = value.replace(/\D/g, '');
-        return numbers ? ${numbers} dias : '';
+        return numbers ? `${numbers} dias` : '';
     };
 
     const formatCurrency = (value: string) => {
         const numbers = value.replace(/\D/g, '');
         if (!numbers) return '';
         const amount = parseFloat(numbers) / 100;
-        return R$ ${amount.toFixed(2).replace('.', ',')};
+        return `R$ ${amount.toFixed(2).replace('.', ',')}`;
     };
 
     const parseLeadTime = (formatted: string): string => {
@@ -200,7 +200,7 @@ export default function PredicaoScreen() {
                                         value={formData.lead_time.replace(' dias', '')}
                                         onChangeText={(value) => {
                                             const numbers = value.replace(/\D/g, '');
-                                            setFormData({ ...formData, lead_time: numbers ? ${numbers} dias : '' });
+                                            setFormData({ ...formData, lead_time: numbers ? `${numbers} dias` : '' });
                                         }}
                                         keyboardType="numeric"
                                     />
@@ -436,7 +436,7 @@ export default function PredicaoScreen() {
                                                                 <View
                                                                     style={[
                                                                         styles.progressBarFill,
-                                                                        { width: ${dist.similarity}%, backgroundColor: colors[dist.profile] }
+                                                                        { width: `${dist.similarity}%`, backgroundColor: colors[dist.profile] }
                                                                     ]}
                                                                 />
                                                             </View>
@@ -489,7 +489,7 @@ export default function PredicaoScreen() {
                                                                     <View style={styles.importanceBar}>
                                                                         <View style={[
                                                                             styles.importanceBarFill,
-                                                                            { width: ${factor.importance * 100}% }
+                                                                            { width: `${factor.importance * 100}%` }
                                                                         ]} />
                                                                     </View>
                                                                     <Text style={styles.importanceText}>
