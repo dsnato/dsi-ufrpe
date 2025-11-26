@@ -8,6 +8,11 @@ interface StatCardProps {
     label: string;
     trend?: 'up' | 'down';
     trendValue?: string;
+    backgroundColor?: string;
+    iconBackground?: string;
+    iconColor?: string;
+    valueColor?: string;
+    labelColor?: string;
 }
 
 /**
@@ -30,15 +35,20 @@ export const StatCard: React.FC<StatCardProps> = ({
     label,
     trend,
     trendValue,
+    backgroundColor,
+    iconBackground,
+    iconColor,
+    valueColor,
+    labelColor,
 }) => {
     return (
-        <View style={styles.card}>
-            <View style={styles.iconContainer}>
-                <Ionicons name={icon} size={24} color="#0162B3" />
+        <View style={[styles.card, backgroundColor && { backgroundColor }]}>
+            <View style={[styles.iconContainer, iconBackground && { backgroundColor: iconBackground }]}>
+                <Ionicons name={icon} size={24} color={iconColor || '#0162B3'} />
             </View>
 
-            <Text style={styles.value}>{value}</Text>
-            <Text style={styles.label}>{label}</Text>
+            <Text style={[styles.value, valueColor && { color: valueColor }]}>{value}</Text>
+            <Text style={[styles.label, labelColor && { color: labelColor }]}>{label}</Text>
 
             {trend && trendValue && (
                 <View style={styles.trendContainer}>
