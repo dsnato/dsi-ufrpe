@@ -7,15 +7,24 @@ type InfoRowProps = {
     label: string;
     value: string;
     iconColor?: string;
+    labelColor?: string;
+    valueColor?: string;
 };
 
-export function InfoRow({ icon, label, value, iconColor = '#0162B3' }: InfoRowProps) {
+export function InfoRow({
+    icon,
+    label,
+    value,
+    iconColor = '#0162B3',
+    labelColor = '#64748B',
+    valueColor = '#1E293B'
+}: InfoRowProps) {
     return (
         <View style={styles.infoRow}>
             <Ionicons name={icon} size={20} color={iconColor} />
             <View style={styles.infoTextContainer}>
-                <Text style={styles.infoLabel}>{label}</Text>
-                <Text style={styles.infoValue}>{value}</Text>
+                <Text style={[styles.infoLabel, { color: labelColor }]}>{label}</Text>
+                <Text style={[styles.infoValue, { color: valueColor }]}>{value}</Text>
             </View>
         </View>
     );
@@ -34,7 +43,6 @@ const styles = StyleSheet.create({
     },
     infoLabel: {
         fontSize: 16,
-        color: '#64748B',
         fontWeight: '600',
         textTransform: 'uppercase',
         marginBottom: 4,
@@ -42,7 +50,6 @@ const styles = StyleSheet.create({
     },
     infoValue: {
         fontSize: 18,
-        color: '#1E293B',
         fontWeight: '500',
         lineHeight: 24,
     },
