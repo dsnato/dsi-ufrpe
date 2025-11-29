@@ -1,3 +1,4 @@
+import { supabase } from '@/lib/supabase';
 import { ActionButton } from '@/src/components/ActionButton';
 import { ErrorState } from '@/src/components/ErrorState';
 import { InfoHeader } from '@/src/components/InfoHeader';
@@ -6,14 +7,14 @@ import { Loading } from '@/src/components/Loading';
 import { Separator } from '@/src/components/Separator';
 import { StatusBadge } from '@/src/components/StatusBadge';
 import { TitleSection } from '@/src/components/TitleSection';
-import { buscarAtividadePorId, excluirAtividade, AtividadeRecreativa } from '@/src/services/atividadesService';
-import { formatDate, formatTime, withPlaceholder } from '@/src/utils/formatters';
-import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import React, { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, Platform } from "react-native";
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useToast } from '@/src/components/ToastContext';
+import { AtividadeRecreativa, buscarAtividadePorId, excluirAtividade } from '@/src/services/atividadesService';
+import { formatDate, withPlaceholder } from '@/src/utils/formatters';
 import { Image } from 'expo-image';
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import React, { useCallback, useMemo, useState } from 'react';
+import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const InfoAtividade: React.FC = () => {
     const router = useRouter();
@@ -25,6 +26,51 @@ const InfoAtividade: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [isDarkMode, setIsDarkMode] = useState(false);
+
+    // Paleta de cores
+    const palettes = useMemo(() => ({
+        light: {
+            background: '#132F3B',
+            content: '#F8FAFC',
+            text: '#132F3B',
+            textSecondary: '#64748B',
+            icon: '#0162B3',
+            breadcrumb: '#E0F2FE',
+            accent: '#FFE157',
+            backIcon: '#FFFFFF',
+            modalOverlay: 'rgba(0, 0, 0, 0.5)',
+            modalBg: '#FFFFFF',
+            modalText: '#132F3B',
+        },
+        dark: {
+            background: '#050C18',
+            content: '#0B1624',
+            text: '#F1F5F9',
+            textSecondary: '#94A3B8',
+            icon: '#60A5FA',
+            breadcrumb: '#94A3B8',
+            accent: '#FDE047',
+            backIcon: '#E2E8F0',
+            modalOverlay: 'rgba(0, 0, 0, 0.7)',
+            modalBg: '#1E293B',
+            modalText: '#F1F5F9',
+        }
+    }), []);
+
+    const theme = useMemo(() => palettes[isDarkMode ? 'dark' : 'light'], [isDarkMode, palettes]);
+
+    const loadThemePreference = useCallback(async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            const preferredTheme = user.user_metadata?.preferred_theme;
+            setIsDarkMode(preferredTheme === 'dark');
+        } catch (error) {
+            console.error('Erro ao carregar tema:', error);
+        }
+    }, []);
 
     /**
      * ✅ REQUISITO 1: Carregamento dos dados usando ID da URL
@@ -55,8 +101,9 @@ const InfoAtividade: React.FC = () => {
     // Recarrega os dados sempre que a tela receber foco
     useFocusEffect(
         useCallback(() => {
+            loadThemePreference();
             loadAtividade();
-        }, [loadAtividade])
+        }, [loadAtividade, loadThemePreference])
     );
 
     /**
@@ -70,11 +117,11 @@ const InfoAtividade: React.FC = () => {
         try {
             setShowDeleteConfirm(false);
             setLoading(true);
-            
+
             await excluirAtividade(id as string);
-            
+
             showSuccess('Atividade excluída com sucesso!');
-            
+
             setTimeout(() => {
                 router.push("/screens/Atividade/ListagemAtividade");
             }, 1500);
@@ -93,10 +140,19 @@ const InfoAtividade: React.FC = () => {
      */
     if (loading) {
         return (
-            <SafeAreaView style={styles.container} edges={['top']}>
-                <InfoHeader entity="Atividades" onBackPress={() => router.back()} />
-                <View style={styles.subContainer}>
-                    <Loading message="Carregando atividade..." />
+            <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
+                <InfoHeader
+                    colors={{
+                        background: theme.background,
+                        breadcrumb: theme.breadcrumb,
+                        accent: theme.accent,
+                        backIcon: theme.backIcon,
+                    }}
+                    entity="Atividades"
+                    onBackPress={() => router.back()}
+                />
+                <View style={[styles.subContainer, { backgroundColor: theme.content }]}>
+                    <Loading message="Carregando atividade..." isDarkMode={isDarkMode} />
                 </View>
             </SafeAreaView>
         );
@@ -107,13 +163,23 @@ const InfoAtividade: React.FC = () => {
      */
     if (error || !atividade) {
         return (
-            <SafeAreaView style={styles.container} edges={['top']}>
-                <InfoHeader entity="Atividades" onBackPress={() => router.back()} />
-                <View style={styles.subContainer}>
+            <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
+                <InfoHeader
+                    colors={{
+                        background: theme.background,
+                        breadcrumb: theme.breadcrumb,
+                        accent: theme.accent,
+                        backIcon: theme.backIcon,
+                    }}
+                    entity="Atividades"
+                    onBackPress={() => router.back()}
+                />
+                <View style={[styles.subContainer, { backgroundColor: theme.content }]}>
                     <ErrorState
                         message={error || 'Atividade não encontrada'}
                         onRetry={loadAtividade}
                         onGoBack={() => router.push("/screens/Atividade/ListagemAtividade")}
+                        isDarkMode={isDarkMode}
                     />
                 </View>
             </SafeAreaView>
@@ -121,12 +187,21 @@ const InfoAtividade: React.FC = () => {
     }
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
             {/* ✅ REQUISITO 9: Breadcrumb/indicador de navegação */}
-            <InfoHeader entity="Atividades" onBackPress={() => router.back()} />
+            <InfoHeader
+                colors={{
+                    background: theme.background,
+                    breadcrumb: theme.breadcrumb,
+                    accent: theme.accent,
+                    backIcon: theme.backIcon,
+                }}
+                entity="Atividades"
+                onBackPress={() => router.back()}
+            />
 
             {/* Container branco com informações */}
-            <View style={styles.subContainer}>
+            <View style={[styles.subContainer, { backgroundColor: theme.content }]}>
                 <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
                     {/* Imagem da atividade (se existir) */}
                     {atividade.imagem_url && (
@@ -145,6 +220,8 @@ const InfoAtividade: React.FC = () => {
                     <TitleSection
                         title={withPlaceholder(atividade.nome, 'Sem nome')}
                         subtitle="Atividade recreativa"
+                        titleColor={theme.text}
+                        subtitleColor={theme.textSecondary}
                         badge={
                             <StatusBadge
                                 text={atividade.status || 'Ativo'}
@@ -158,31 +235,46 @@ const InfoAtividade: React.FC = () => {
                         icon="document-text-outline"
                         label="DESCRIÇÃO"
                         value={withPlaceholder(atividade.descricao, 'Sem descrição')}
+                        iconColor={theme.icon}
+                        labelColor={theme.textSecondary}
+                        valueColor={theme.text}
                     />
 
                     <InfoRow
                         icon="calendar-outline"
                         label="DATA E HORA"
                         value={atividade.data_hora ? formatDate(atividade.data_hora) : 'Não informado'}
+                        iconColor={theme.icon}
+                        labelColor={theme.textSecondary}
+                        valueColor={theme.text}
                     />
 
                     <InfoRow
                         icon="location-outline"
                         label="LOCAL"
                         value={withPlaceholder(atividade.local, 'Local não informado')}
+                        iconColor={theme.icon}
+                        labelColor={theme.textSecondary}
+                        valueColor={theme.text}
                     />
-                    
+
                     <InfoRow
                         icon="people-outline"
                         label="CAPACIDADE MÁXIMA"
                         value={`${atividade.capacidade_maxima || 0} ${atividade.capacidade_maxima === 1 ? 'pessoa' : 'pessoas'}`}
+                        iconColor={theme.icon}
+                        labelColor={theme.textSecondary}
+                        valueColor={theme.text}
                     />
-                    
+
                     {atividade.preco !== undefined && (
                         <InfoRow
                             icon="cash-outline"
                             label="PREÇO"
                             value={`R$ ${atividade.preco.toFixed(2).replace('.', ',')}`}
+                            iconColor={theme.icon}
+                            labelColor={theme.textSecondary}
+                            valueColor={theme.text}
                         />
                     )}
                 </ScrollView>
@@ -197,6 +289,7 @@ const InfoAtividade: React.FC = () => {
                     <ActionButton
                         variant="primary"
                         icon="create-outline"
+                        tone={isDarkMode ? 'dark' : 'light'}
                         onPress={() => router.push({
                             pathname: "/screens/Atividade/EdicaoAtividade",
                             params: { id: atividade.id }
@@ -209,8 +302,9 @@ const InfoAtividade: React.FC = () => {
                     <ActionButton
                         variant="danger"
                         icon="trash-outline"
+                        tone={isDarkMode ? 'dark' : 'light'}
                         onPress={handleDelete}
-                    >>
+                    >
                         Excluir
                     </ActionButton>
                 </View>
@@ -218,15 +312,16 @@ const InfoAtividade: React.FC = () => {
 
             {/* Modal de Confirmação de Exclusão */}
             {showDeleteConfirm && (
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>Confirmar Exclusão</Text>
-                        <Text style={styles.modalMessage}>
+                <View style={[styles.modalOverlay, { backgroundColor: theme.modalOverlay }]}>
+                    <View style={[styles.modalContent, { backgroundColor: theme.modalBg }]}>
+                        <Text style={[styles.modalTitle, { color: theme.text }]}>Confirmar Exclusão</Text>
+                        <Text style={[styles.modalMessage, { color: theme.modalText }]}>
                             Tem certeza que deseja excluir esta atividade? Esta ação não pode ser desfeita.
                         </Text>
                         <View style={styles.modalButtons}>
                             <ActionButton
                                 variant="secondary"
+                                tone={isDarkMode ? 'dark' : 'light'}
                                 onPress={cancelDelete}
                                 style={styles.modalButton}
                             >
@@ -234,6 +329,7 @@ const InfoAtividade: React.FC = () => {
                             </ActionButton>
                             <ActionButton
                                 variant="danger"
+                                tone={isDarkMode ? 'dark' : 'light'}
                                 onPress={confirmDelete}
                                 style={styles.modalButton}
                             >
@@ -250,7 +346,6 @@ const InfoAtividade: React.FC = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#132F3B',
     },
     header: {
         flexDirection: 'row',
@@ -258,14 +353,12 @@ const styles = StyleSheet.create({
         paddingTop: 50,
         paddingBottom: 16,
         paddingHorizontal: 16,
-        backgroundColor: '#132F3B',
     },
     backButton: {
         marginRight: 16,
     },
     headerTitle: {
         fontSize: 18,
-        color: '#FFFFFF',
         fontWeight: '600',
     },
     breadcrumb: {
@@ -276,18 +369,15 @@ const styles = StyleSheet.create({
     },
     breadcrumbText: {
         fontSize: 14,
-        color: '#E0F2FE',
         opacity: 0.7,
     },
     breadcrumbTextActive: {
         fontSize: 14,
-        color: '#FFE157',
         fontWeight: '600',
     },
     subContainer: {
         flex: 1,
         width: '100%',
-        backgroundColor: '#FFFFFF',
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         paddingVertical: 24,
@@ -314,7 +404,6 @@ const styles = StyleSheet.create({
     },
     infoLabel: {
         fontSize: 16,
-        color: '#64748B',
         fontWeight: '600',
         textTransform: 'uppercase',
         marginBottom: 4,
@@ -322,7 +411,6 @@ const styles = StyleSheet.create({
     },
     infoValue: {
         fontSize: 18,
-        color: '#1E293B',
         fontWeight: '500',
         lineHeight: 24,
     },
@@ -335,7 +423,6 @@ const styles = StyleSheet.create({
     buttonPrimary: {
         width: '100%',
         height: 48,
-        backgroundColor: '#0162B3',
         borderRadius: 12,
         flexDirection: 'row',
         alignItems: 'center',
@@ -347,7 +434,6 @@ const styles = StyleSheet.create({
         shadowRadius: 3,
     },
     buttonPrimaryText: {
-        color: '#FFFFFF',
         fontSize: 16,
         fontWeight: '600',
     },
@@ -357,13 +443,11 @@ const styles = StyleSheet.create({
         backgroundColor: 'transparent',
         borderRadius: 12,
         borderWidth: 1.5,
-        borderColor: '#EF4444',
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
     },
     buttonDangerText: {
-        color: '#EF4444',
         fontSize: 16,
         fontWeight: '600',
     },
@@ -376,13 +460,11 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
         justifyContent: 'center',
         alignItems: 'center',
         zIndex: 1000,
     },
     modalContent: {
-        backgroundColor: 'white',
         borderRadius: 12,
         padding: 24,
         width: '90%',
@@ -396,12 +478,10 @@ const styles = StyleSheet.create({
     modalTitle: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#DC2626',
         marginBottom: 12,
     },
     modalMessage: {
         fontSize: 16,
-        color: '#64748B',
         marginBottom: 24,
         lineHeight: 24,
     },
