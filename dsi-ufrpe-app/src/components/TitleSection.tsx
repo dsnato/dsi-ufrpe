@@ -5,17 +5,27 @@ type TitleSectionProps = {
     title: string;
     subtitle: string;
     badge?: React.ReactNode;
+    titleColor?: string;
+    subtitleColor?: string;
+    separatorColor?: string;
 };
 
-export function TitleSection({ title, subtitle, badge }: TitleSectionProps) {
+export function TitleSection({
+    title,
+    subtitle,
+    badge,
+    titleColor = '#1E293B',
+    subtitleColor = '#64748B',
+    separatorColor = '#E2E8F0'
+}: TitleSectionProps) {
     return (
         <View style={styles.container}>
             <View style={styles.titleRow}>
-                <Text style={styles.title}>{title}</Text>
+                <Text style={[styles.title, { color: titleColor }]}>{title}</Text>
                 {badge}
             </View>
-            <Text style={styles.subtitle}>{subtitle}</Text>
-            <View style={styles.separator} />
+            <Text style={[styles.subtitle, { color: subtitleColor }]}>{subtitle}</Text>
+            <View style={[styles.separator, { backgroundColor: separatorColor }]} />
         </View>
     );
 }
@@ -33,18 +43,15 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 30,
         fontWeight: 'bold',
-        color: '#1E293B',
         flex: 1,
     },
     subtitle: {
         fontSize: 16,
-        color: '#64748B',
         textTransform: 'uppercase',
     },
     separator: {
         width: '100%',
         height: 1,
-        backgroundColor: '#E2E8F0',
         marginTop: 20,
     },
 });
