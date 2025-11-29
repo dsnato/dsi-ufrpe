@@ -43,7 +43,12 @@ export default function AppLayout() {
 
         {/* Home screen */}
         <Stack.Screen name="screens/home/index" options={{ headerShown: false }} />
+
+        {/* Perfil */}
+        <Stack.Screen name="screens/Perfil/index" options={{ headerShown: false }} />
+        <Stack.Screen name="screens/Perfil/EdicaoPerfil/index" options={{ headerShown: false }} />
       </Stack>
     </ToastProvider>
   );
-}
+} 
+
