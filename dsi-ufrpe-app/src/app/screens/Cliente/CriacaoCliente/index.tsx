@@ -1,3 +1,4 @@
+import { supabase } from '@/lib/supabase';
 import { ActionButton } from '@/src/components/ActionButton';
 import { FormInput } from '@/src/components/FormInput';
 import { FormSelect } from '@/src/components/FormSelect';
@@ -10,16 +11,38 @@ import type { ClienteFormData } from '@/src/types/cliente';
 import { getSuccessMessage, getValidationMessage } from '@/src/utils/errorMessages';
 import { estadosBrasileiros } from '@/src/utils/estadosBrasileiros';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+const palettes = {
+    light: {
+        background: '#132F3B',
+        content: '#F8FAFC',
+        text: '#132F3B',
+        textSecondary: '#64748B',
+        accent: '#0162B3',
+        breadcrumb: '#94A3B8',
+        backIcon: '#FFFFFF',
+    },
+    dark: {
+        background: '#050C18',
+        content: '#0B1624',
+        text: '#E2E8F0',
+        textSecondary: '#CBD5E1',
+        accent: '#4F9CF9',
+        breadcrumb: '#94A3B8',
+        backIcon: '#FACC15',
+    },
+} as const;
 
 const CriarCliente: React.FC = () => {
     const router = useRouter();
     const { showSuccess, showError } = useToast();
 
     const [loading, setLoading] = useState(false);
+    const [isDarkMode, setIsDarkMode] = useState(false);
     const [name, setName] = useState('');
     const [cpf, setCpf] = useState('');
     const [email, setEmail] = useState('');
@@ -31,6 +54,38 @@ const CriarCliente: React.FC = () => {
     const [state, setState] = useState('');
     const [zipCode, setZipCode] = useState('');
     const [imagemUri, setImagemUri] = useState<string | null>(null);
+
+    const theme = useMemo(() => (isDarkMode ? palettes.dark : palettes.light), [isDarkMode]);
+
+    const loadThemePreference = useCallback(async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            const preferredTheme = user.user_metadata?.preferred_theme;
+            setIsDarkMode(preferredTheme === 'dark');
+        } catch (error) {
+            console.error('Erro ao carregar preferência de tema:', error);
+        }
+    }, []);
+
+    useEffect(() => {
+        loadThemePreference();
+
+        const { data: authListener } = supabase.auth.onAuthStateChange(() => {
+            loadThemePreference();
+        });
+
+        return () => {
+            authListener?.subscription?.unsubscribe();
+        };
+    }, [loadThemePreference]);
+
+    useFocusEffect(
+        useCallback(() => {
+            loadThemePreference();
+        }, [loadThemePreference])
+    );
 
     // Formata CPF (000.000.000-00)
     const handleCpfChange = (text: string) => {
@@ -233,10 +288,20 @@ const CriarCliente: React.FC = () => {
     };
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
-            <InfoHeader entity="Clientes" action="Adição" onBackPress={() => router.push('/screens/Cliente/ListagemCliente')} />
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
+            <InfoHeader
+                entity="Clientes"
+                action="Adição"
+                onBackPress={() => router.push('/screens/Cliente/ListagemCliente')}
+                colors={{
+                    background: theme.background,
+                    breadcrumb: theme.breadcrumb,
+                    accent: theme.accent,
+                    backIcon: theme.backIcon,
+                }}
+            />
 
-            <View style={styles.content}>
+            <View style={[styles.content, { backgroundColor: theme.content }]}>
                 <ScrollView
                     style={styles.scrollView}
                     contentContainerStyle={styles.scrollContent}
@@ -244,11 +309,11 @@ const CriarCliente: React.FC = () => {
                 >
                     {/* Título da seção */}
                     <View style={styles.titleContainer}>
-                        <Ionicons name="add-circle-outline" size={24} color="#0162B3" />
-                        <Text style={styles.title}>Novo Cliente</Text>
+                        <Ionicons name="add-circle-outline" size={24} color={theme.accent} />
+                        <Text style={[styles.title, { color: theme.text }]}>Novo Cliente</Text>
                     </View>
 
-                    <Text style={styles.subtitle}>
+                    <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
                         Cadastre um novo cliente no sistema
                     </Text>
 
@@ -256,19 +321,20 @@ const CriarCliente: React.FC = () => {
 
                     {/* Imagem do Cliente */}
                     <View style={styles.fieldGroup}>
-                        <Text style={styles.label}>Foto do Cliente</Text>
+                        <Text style={[styles.label, { color: theme.text }]}>Foto do Cliente</Text>
                         <ImagePicker
                             imageUri={imagemUri}
                             onImageSelected={setImagemUri}
                             onImageRemoved={() => setImagemUri(null)}
                             disabled={loading}
+                            tone={isDarkMode ? 'dark' : 'light'}
                         />
                     </View>
 
                     {/* Formulário */}
                     <View style={styles.form}>
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>
+                            <Text style={[styles.label, { color: theme.text }]}>
                                 Nome Completo <Text style={styles.required}>*</Text>
                             </Text>
                             <FormInput
@@ -278,12 +344,13 @@ const CriarCliente: React.FC = () => {
                                 onChangeText={setName}
                                 editable={!loading}
                                 maxLength={100}
+                                isDarkMode={isDarkMode}
                             />
                         </View>
 
                         <View style={styles.row}>
                             <View style={[styles.fieldGroup, styles.halfWidth]}>
-                                <Text style={styles.label}>
+                                <Text style={[styles.label, { color: theme.text }]}>
                                     CPF <Text style={styles.required}>*</Text>
                                 </Text>
                                 <FormInput
@@ -294,11 +361,12 @@ const CriarCliente: React.FC = () => {
                                     editable={!loading}
                                     keyboardType="numeric"
                                     maxLength={14}
+                                    isDarkMode={isDarkMode}
                                 />
                             </View>
 
                             <View style={[styles.fieldGroup, styles.halfWidth]}>
-                                <Text style={styles.label}>
+                                <Text style={[styles.label, { color: theme.text }]}>
                                     Telefone <Text style={styles.required}>*</Text>
                                 </Text>
                                 <FormInput
@@ -309,12 +377,13 @@ const CriarCliente: React.FC = () => {
                                     editable={!loading}
                                     keyboardType="phone-pad"
                                     maxLength={15}
+                                    isDarkMode={isDarkMode}
                                 />
                             </View>
                         </View>
 
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>
+                            <Text style={[styles.label, { color: theme.text }]}>
                                 E-mail <Text style={styles.required}>*</Text>
                             </Text>
                             <FormInput
@@ -325,25 +394,27 @@ const CriarCliente: React.FC = () => {
                                 editable={!loading}
                                 keyboardType="email-address"
                                 autoCapitalize="none"
-                                maxLength={100}
+                                maxLength={60}
+                                isDarkMode={isDarkMode}
                             />
                         </View>
 
                         <View style={styles.row}>
                             <View style={[styles.fieldGroup, styles.halfWidth]}>
-                                <Text style={styles.label}>Rua</Text>
+                                <Text style={[styles.label, { color: theme.text }]}>Rua</Text>
                                 <FormInput
                                     icon="location-outline"
                                     placeholder="Nome da rua"
                                     value={street}
                                     onChangeText={setStreet}
                                     editable={!loading}
-                                    maxLength={100}
+                                    maxLength={60}
+                                    isDarkMode={isDarkMode}
                                 />
                             </View>
 
                             <View style={[styles.fieldGroup, styles.halfWidth]}>
-                                <Text style={styles.label}>Número</Text>
+                                <Text style={[styles.label, { color: theme.text }]}>Número</Text>
                                 <FormInput
                                     icon="keypad-outline"
                                     placeholder="Ex: 123"
@@ -351,37 +422,40 @@ const CriarCliente: React.FC = () => {
                                     onChangeText={setNumber}
                                     editable={!loading}
                                     maxLength={10}
+                                    isDarkMode={isDarkMode}
                                 />
                             </View>
                         </View>
 
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>Bairro</Text>
+                            <Text style={[styles.label, { color: theme.text }]}>Bairro</Text>
                             <FormInput
-                                icon="map-outline"
+                                icon="home-outline"
                                 placeholder="Nome do bairro"
                                 value={neighborhood}
                                 onChangeText={setNeighborhood}
                                 editable={!loading}
-                                maxLength={100}
+                                maxLength={60}
+                                isDarkMode={isDarkMode}
                             />
                         </View>
 
                         <View style={styles.row}>
                             <View style={[styles.fieldGroup, styles.halfWidth]}>
-                                <Text style={styles.label}>Cidade</Text>
+                                <Text style={[styles.label, { color: theme.text }]}>Cidade <Text style={styles.required}>*</Text></Text>
                                 <FormInput
                                     icon="business-outline"
-                                    placeholder="Ex: Recife"
+                                    placeholder="Nome da cidade"
                                     value={city}
                                     onChangeText={setCity}
                                     editable={!loading}
-                                    maxLength={100}
+                                    maxLength={50}
+                                    isDarkMode={isDarkMode}
                                 />
                             </View>
 
                             <View style={[styles.fieldGroup, styles.halfWidth]}>
-                                <Text style={styles.label}>Estado <Text style={styles.required}>*</Text></Text>
+                                <Text style={[styles.label, { color: theme.text }]}>Estado <Text style={styles.required}>*</Text></Text>
                                 <FormSelect
                                     icon="map-outline"
                                     placeholder="Selecione o estado"
@@ -390,12 +464,13 @@ const CriarCliente: React.FC = () => {
                                     onSelect={setState}
                                     disabled={loading}
                                     helperText="UF do estado"
+                                    isDarkMode={isDarkMode}
                                 />
                             </View>
                         </View>
 
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>CEP</Text>
+                            <Text style={[styles.label, { color: theme.text }]}>CEP</Text>
                             <FormInput
                                 icon="navigate-outline"
                                 placeholder="00000-000"
@@ -404,6 +479,7 @@ const CriarCliente: React.FC = () => {
                                 editable={!loading}
                                 keyboardType="numeric"
                                 maxLength={9}
+                                isDarkMode={isDarkMode}
                             />
                         </View>
                     </View>
@@ -417,6 +493,7 @@ const CriarCliente: React.FC = () => {
                             icon="checkmark-circle-outline"
                             onPress={handleSave}
                             disabled={loading}
+                            tone={isDarkMode ? 'dark' : 'light'}
                         >
                             {loading ? 'Criando...' : 'Criar Cliente'}
                         </ActionButton>
@@ -426,6 +503,7 @@ const CriarCliente: React.FC = () => {
                             icon="close-circle-outline"
                             onPress={() => router.push('/screens/Cliente/ListagemCliente')}
                             disabled={loading}
+                            tone={isDarkMode ? 'dark' : 'light'}
                         >
                             Cancelar
                         </ActionButton>
@@ -439,11 +517,9 @@ const CriarCliente: React.FC = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#132F3B',
     },
     content: {
         flex: 1,
-        backgroundColor: '#F8FAFC',
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
         overflow: 'hidden',
@@ -465,11 +541,9 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 24,
         fontWeight: '700',
-        color: '#132F3B',
     },
     subtitle: {
         fontSize: 14,
-        color: '#64748B',
         lineHeight: 20,
     },
     form: {
@@ -481,7 +555,6 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#334155',
         marginBottom: 4,
     },
     required: {
@@ -500,3 +573,4 @@ const styles = StyleSheet.create({
 });
 
 export default CriarCliente;
+
