@@ -1,3 +1,4 @@
+import { supabase } from '@/lib/supabase';
 import { ActionButton } from '@/src/components/ActionButton';
 import { FormInput } from '@/src/components/FormInput';
 import { ImagePicker } from '@/src/components/ImagePicker';
@@ -8,9 +9,30 @@ import { atualizarCliente, buscarClientePorId, Cliente, removerImagemCliente, up
 import { getSuccessMessage, getValidationMessage } from '@/src/utils/errorMessages';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+const palettes = {
+    light: {
+        background: '#132F3B',
+        content: '#F8FAFC',
+        text: '#132F3B',
+        textSecondary: '#64748B',
+        accent: '#0162B3',
+        breadcrumb: '#94A3B8',
+        backIcon: '#FFFFFF',
+    },
+    dark: {
+        background: '#050C18',
+        content: '#0B1624',
+        text: '#E2E8F0',
+        textSecondary: '#CBD5E1',
+        accent: '#4F9CF9',
+        breadcrumb: '#94A3B8',
+        backIcon: '#FACC15',
+    },
+} as const;
 
 const EditarCliente: React.FC = () => {
     const router = useRouter();
@@ -18,6 +40,7 @@ const EditarCliente: React.FC = () => {
     const { showSuccess, showError } = useToast();
 
     const [loading, setLoading] = useState(false);
+    const [isDarkMode, setIsDarkMode] = useState(false);
     const [nome, setNome] = useState('');
     const [cpf, setCpf] = useState('');
     const [celular, setCelular] = useState('');
@@ -26,6 +49,32 @@ const EditarCliente: React.FC = () => {
     const [endereco, setEndereco] = useState('');
     const [imagemUri, setImagemUri] = useState<string | null>(null);
     const [imagemOriginal, setImagemOriginal] = useState<string | null>(null);
+
+    const theme = useMemo(() => (isDarkMode ? palettes.dark : palettes.light), [isDarkMode]);
+
+    const loadThemePreference = useCallback(async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            const preferredTheme = user.user_metadata?.preferred_theme;
+            setIsDarkMode(preferredTheme === 'dark');
+        } catch (error) {
+            console.error('Erro ao carregar preferência de tema:', error);
+        }
+    }, []);
+
+    useEffect(() => {
+        loadThemePreference();
+
+        const { data: authListener } = supabase.auth.onAuthStateChange(() => {
+            loadThemePreference();
+        });
+
+        return () => {
+            authListener?.subscription?.unsubscribe();
+        };
+    }, [loadThemePreference]);
 
     // Handler para mudança de imagem com log
     const handleImagemSelecionada = (uri: string) => {
@@ -210,7 +259,8 @@ const EditarCliente: React.FC = () => {
     useFocusEffect(
         useCallback(() => {
             loadCliente();
-        }, [loadCliente])
+            loadThemePreference();
+        }, [loadCliente, loadThemePreference])
     );
 
     const handleSave = async () => {
@@ -347,10 +397,20 @@ const EditarCliente: React.FC = () => {
     };
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
-            <InfoHeader entity="Clientes" action="Edição" onBackPress={() => router.push('/screens/Cliente/ListagemCliente')} />
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
+            <InfoHeader
+                entity="Clientes"
+                action="Edição"
+                onBackPress={() => router.push('/screens/Cliente/ListagemCliente')}
+                colors={{
+                    background: theme.background,
+                    breadcrumb: theme.breadcrumb,
+                    accent: theme.accent,
+                    backIcon: theme.backIcon,
+                }}
+            />
 
-            <View style={styles.content}>
+            <View style={[styles.content, { backgroundColor: theme.content }]}>
                 <ScrollView
                     style={styles.scrollView}
                     contentContainerStyle={styles.scrollContent}
@@ -358,11 +418,11 @@ const EditarCliente: React.FC = () => {
                 >
                     {/* Título da seção */}
                     <View style={styles.titleContainer}>
-                        <Ionicons name="create-outline" size={24} color="#0162B3" />
-                        <Text style={styles.title}>Editar Cliente</Text>
+                        <Ionicons name="create-outline" size={24} color={theme.accent} />
+                        <Text style={[styles.title, { color: theme.text }]}>Editar Cliente</Text>
                     </View>
 
-                    <Text style={styles.subtitle}>
+                    <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
                         Atualize as informações do cliente
                     </Text>
 
@@ -370,19 +430,20 @@ const EditarCliente: React.FC = () => {
 
                     {/* Imagem do Cliente */}
                     <View style={styles.fieldGroup}>
-                        <Text style={styles.label}>Foto do Cliente</Text>
+                        <Text style={[styles.label, { color: theme.text }]}>Foto do Cliente</Text>
                         <ImagePicker
                             imageUri={imagemUri}
                             onImageSelected={handleImagemSelecionada}
                             onImageRemoved={handleImagemRemovida}
                             disabled={loading}
+                            tone={isDarkMode ? 'dark' : 'light'}
                         />
                     </View>
 
                     {/* Formulário */}
                     <View style={styles.form}>
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>
+                            <Text style={[styles.label, { color: theme.text }]}>
                                 Nome Completo <Text style={styles.required}>*</Text>
                             </Text>
                             <FormInput
@@ -391,11 +452,12 @@ const EditarCliente: React.FC = () => {
                                 value={nome}
                                 onChangeText={setNome}
                                 editable={!loading}
+                                isDarkMode={isDarkMode}
                             />
                         </View>
 
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>
+                            <Text style={[styles.label, { color: theme.text }]}>
                                 CPF <Text style={styles.required}>*</Text>
                             </Text>
                             <FormInput
@@ -407,11 +469,12 @@ const EditarCliente: React.FC = () => {
                                 keyboardType="numeric"
                                 maxLength={14}
                                 helperText="Formato: 000.000.000-00"
+                                isDarkMode={isDarkMode}
                             />
                         </View>
 
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>
+                            <Text style={[styles.label, { color: theme.text }]}>
                                 Celular <Text style={styles.required}>*</Text>
                             </Text>
                             <FormInput
@@ -423,11 +486,12 @@ const EditarCliente: React.FC = () => {
                                 keyboardType="numeric"
                                 maxLength={15}
                                 helperText="Formato: (00) 00000-0000"
+                                isDarkMode={isDarkMode}
                             />
                         </View>
 
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>
+                            <Text style={[styles.label, { color: theme.text }]}>
                                 E-mail <Text style={styles.required}>*</Text>
                             </Text>
                             <FormInput
@@ -438,11 +502,12 @@ const EditarCliente: React.FC = () => {
                                 editable={!loading}
                                 keyboardType="email-address"
                                 autoCapitalize="none"
+                                isDarkMode={isDarkMode}
                             />
                         </View>
 
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>Data de Nascimento</Text>
+                            <Text style={[styles.label, { color: theme.text }]}>Data de Nascimento</Text>
                             <FormInput
                                 icon="calendar-outline"
                                 placeholder="DD/MM/AAAA"
@@ -452,11 +517,12 @@ const EditarCliente: React.FC = () => {
                                 keyboardType="numeric"
                                 maxLength={10}
                                 helperText="Formato: dia/mês/ano"
+                                isDarkMode={isDarkMode}
                             />
                         </View>
 
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>Endereço</Text>
+                            <Text style={[styles.label, { color: theme.text }]}>Endereço</Text>
                             <FormInput
                                 icon="location-outline"
                                 placeholder="Rua, número, bairro, cidade"
@@ -465,6 +531,7 @@ const EditarCliente: React.FC = () => {
                                 editable={!loading}
                                 multiline
                                 numberOfLines={2}
+                                isDarkMode={isDarkMode}
                             />
                         </View>
 
@@ -479,6 +546,7 @@ const EditarCliente: React.FC = () => {
                             icon="checkmark-circle-outline"
                             onPress={handleSave}
                             disabled={loading}
+                            tone={isDarkMode ? 'dark' : 'light'}
                         >
                             {loading ? 'Salvando...' : 'Salvar Alterações'}
                         </ActionButton>
@@ -488,6 +556,7 @@ const EditarCliente: React.FC = () => {
                             icon="close-circle-outline"
                             onPress={() => router.push('/screens/Cliente/ListagemCliente')}
                             disabled={loading}
+                            tone={isDarkMode ? 'dark' : 'light'}
                         >
                             Cancelar
                         </ActionButton>
@@ -501,11 +570,9 @@ const EditarCliente: React.FC = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#132F3B',
     },
     content: {
         flex: 1,
-        backgroundColor: '#F8FAFC',
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
         overflow: 'hidden',
@@ -527,11 +594,9 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 24,
         fontWeight: '700',
-        color: '#132F3B',
     },
     subtitle: {
         fontSize: 14,
-        color: '#64748B',
         lineHeight: 20,
     },
     form: {
@@ -543,7 +608,6 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#334155',
         marginBottom: 4,
     },
     required: {
@@ -553,11 +617,9 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: '#FFFFFF',
         padding: 16,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: '#E2E8F0',
     },
     switchLabel: {
         flexDirection: 'row',
@@ -572,11 +634,9 @@ const styles = StyleSheet.create({
     switchTitle: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#132F3B',
     },
     switchDescription: {
         fontSize: 12,
-        color: '#64748B',
     },
     actions: {
         gap: 12,
@@ -584,3 +644,4 @@ const styles = StyleSheet.create({
 });
 
 export default EditarCliente;
+
