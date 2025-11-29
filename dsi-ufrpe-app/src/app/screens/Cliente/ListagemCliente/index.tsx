@@ -1,3 +1,4 @@
+import { supabase } from '@/lib/supabase';
 import { ActionButton } from '@/src/components/ActionButton';
 import { Separator } from '@/src/components/Separator';
 import TextInputRounded from '@/src/components/TextInputRounded';
@@ -6,9 +7,36 @@ import { Cliente, listarClientes } from '@/src/services/clientesService';
 import { formatCPF } from '@/src/utils/formatters';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+const palettes = {
+    light: {
+        background: '#132F3B',
+        content: '#F8FAFC',
+        card: '#FFFFFF',
+        text: '#132F3B',
+        textSecondary: '#64748B',
+        muted: '#94A3B8',
+        accent: '#0162B3',
+        accentSoft: '#EFF6FF',
+        border: '#E2E8F0',
+        icon: '#0162B3',
+    },
+    dark: {
+        background: '#050C18',
+        content: '#0B1624',
+        card: '#152238',
+        text: '#E2E8F0',
+        textSecondary: '#CBD5E1',
+        muted: '#94A3B8',
+        accent: '#4F9CF9',
+        accentSoft: '#1E2C44',
+        border: '#1F2B3C',
+        icon: '#FACC15',
+    },
+} as const;
 
 type Client = Cliente;
 
@@ -18,6 +46,39 @@ const ListagemCliente: React.FC = () => {
     const [items, setItems] = useState<Cliente[]>([]);
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(false);
+    const [isDarkMode, setIsDarkMode] = useState(false);
+
+    const theme = useMemo(() => (isDarkMode ? palettes.dark : palettes.light), [isDarkMode]);
+
+    const loadThemePreference = useCallback(async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            const preferredTheme = user.user_metadata?.preferred_theme;
+            setIsDarkMode(preferredTheme === 'dark');
+        } catch (error) {
+            console.error('Erro ao carregar preferência de tema:', error);
+        }
+    }, []);
+
+    useEffect(() => {
+        loadThemePreference();
+
+        const { data: authListener } = supabase.auth.onAuthStateChange(() => {
+            loadThemePreference();
+        });
+
+        return () => {
+            authListener?.subscription?.unsubscribe();
+        };
+    }, [loadThemePreference]);
+
+    useFocusEffect(
+        useCallback(() => {
+            loadThemePreference();
+        }, [loadThemePreference])
+    );
 
     // Filtra clientes por nome ou CPF
     const filteredItems = items.filter(
@@ -63,7 +124,7 @@ const ListagemCliente: React.FC = () => {
     // Renderiza cada card de cliente
     const renderClienteCard = ({ item }: { item: Client }) => (
         <TouchableOpacity
-            style={styles.clienteCard}
+            style={[styles.clienteCard, { backgroundColor: theme.card, borderColor: theme.border }]}
             onPress={() => handleClientePress(item.id!)}
             activeOpacity={0.7}
         >
@@ -76,21 +137,21 @@ const ListagemCliente: React.FC = () => {
                         resizeMode="cover"
                     />
                 ) : (
-                    <View style={styles.cardIcon}>
-                        <Ionicons name="person" size={32} color="#0162B3" />
+                    <View style={[styles.cardIcon, { backgroundColor: theme.accentSoft }]}>
+                        <Ionicons name="person" size={32} color={theme.accent} />
                     </View>
                 )}
             </View>
-            
+
             {/* Conteúdo do card */}
             <View style={styles.cardContent}>
-                <Text style={styles.cardTitle} numberOfLines={2}>
+                <Text style={[styles.cardTitle, { color: theme.text }]} numberOfLines={2}>
                     {item.nome_completo}
                 </Text>
-                <Text style={styles.cardSubtitle}>{formatCPF(item.cpf)}</Text>
+                <Text style={[styles.cardSubtitle, { color: theme.textSecondary }]}>{formatCPF(item.cpf)}</Text>
                 <View style={styles.cardFooter}>
-                    <Ionicons name="location-outline" size={14} color="#64748B" />
-                    <Text style={styles.cardLocation} numberOfLines={1}>
+                    <Ionicons name="location-outline" size={14} color={theme.muted} />
+                    <Text style={[styles.cardLocation, { color: theme.muted }]} numberOfLines={1}>
                         {item.cidade}/{item.estado}
                     </Text>
                 </View>
@@ -99,23 +160,23 @@ const ListagemCliente: React.FC = () => {
     );
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
             {/* Header customizado para listagem */}
-            <View style={styles.topHeader}>
+            <View style={[styles.topHeader, { backgroundColor: theme.background }]}>
                 <TouchableOpacity onPress={() => router.push('/screens/home')} style={styles.backButton}>
-                    <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
+                    <Ionicons name="chevron-back" size={24} color={theme.text} />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Clientes</Text>
+                <Text style={[styles.headerTitle, { color: theme.text }]}>Clientes</Text>
             </View>
 
-            <View style={styles.content}>
+            <View style={[styles.content, { backgroundColor: theme.content }]}>
                 {/* Header com título e botão */}
                 <View style={styles.header}>
                     <View style={styles.titleContainer}>
-                        <Ionicons name="people" size={24} color="#0162B3" />
-                        <Text style={styles.title}>Lista de Clientes</Text>
+                        <Ionicons name="people" size={24} color={theme.icon} />
+                        <Text style={[styles.title, { color: theme.text }]}>Lista de Clientes</Text>
                     </View>
-                    <Text style={styles.subtitle}>
+                    <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
                         {filteredItems.length}{' '}
                         {filteredItems.length === 1 ? 'cliente encontrado' : 'clientes encontrados'}
                     </Text>
@@ -129,6 +190,7 @@ const ListagemCliente: React.FC = () => {
                         variant="primary"
                         icon="add-circle-outline"
                         onPress={handleAddCliente}
+                        tone={isDarkMode ? 'dark' : 'light'}
                     >
                         Adicionar Novo Cliente
                     </ActionButton>
@@ -140,6 +202,7 @@ const ListagemCliente: React.FC = () => {
                         value={search}
                         onChangeText={setSearch}
                         placeholder="Buscar por nome ou CPF..."
+                        isDarkMode={isDarkMode}
                     />
                 </View>
 
@@ -156,9 +219,9 @@ const ListagemCliente: React.FC = () => {
                     />
                 ) : (
                     <View style={styles.emptyContainer}>
-                        <Ionicons name="search-outline" size={64} color="#CBD5E1" />
-                        <Text style={styles.emptyTitle}>Nenhum cliente encontrado</Text>
-                        <Text style={styles.emptySubtitle}>
+                        <Ionicons name="search-outline" size={64} color={theme.muted} />
+                        <Text style={[styles.emptyTitle, { color: theme.text }]}>Nenhum cliente encontrado</Text>
+                        <Text style={[styles.emptySubtitle, { color: theme.textSecondary }]}>
                             {search
                                 ? 'Tente buscar com outros termos'
                                 : 'Adicione um novo cliente para começar'}
@@ -175,7 +238,6 @@ export default ListagemCliente;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#132F3B',
     },
     topHeader: {
         flexDirection: 'row',
@@ -183,7 +245,6 @@ const styles = StyleSheet.create({
         paddingTop: 50,
         paddingBottom: 16,
         paddingHorizontal: 16,
-        backgroundColor: '#132F3B',
         gap: 16,
     },
     backButton: {
@@ -195,12 +256,10 @@ const styles = StyleSheet.create({
     headerTitle: {
         fontSize: 24,
         fontWeight: '700',
-        color: '#FFFFFF',
         flex: 1,
     },
     content: {
         flex: 1,
-        backgroundColor: '#F8FAFC',
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
         paddingHorizontal: 20,
@@ -217,11 +276,9 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 24,
         fontWeight: '700',
-        color: '#132F3B',
     },
     subtitle: {
         fontSize: 14,
-        color: '#64748B',
     },
     actionContainer: {
         marginBottom: 16,
@@ -239,11 +296,9 @@ const styles = StyleSheet.create({
     clienteCard: {
         flex: 1,
         maxWidth: '48%',
-        backgroundColor: '#FFFFFF',
         borderRadius: 16,
         padding: 16,
         borderWidth: 1.5,
-        borderColor: '#E2E8F0',
         gap: 12,
         elevation: 2,
         shadowColor: '#000',
@@ -266,7 +321,6 @@ const styles = StyleSheet.create({
         width: 56,
         height: 56,
         borderRadius: 28,
-        backgroundColor: '#EFF6FF',
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -276,12 +330,10 @@ const styles = StyleSheet.create({
     cardTitle: {
         fontSize: 16,
         fontWeight: '700',
-        color: '#132F3B',
         textAlign: 'center',
     },
     cardSubtitle: {
         fontSize: 13,
-        color: '#64748B',
         textAlign: 'center',
         fontFamily: 'monospace',
     },
@@ -294,7 +346,6 @@ const styles = StyleSheet.create({
     },
     cardLocation: {
         fontSize: 12,
-        color: '#64748B',
     },
     emptyContainer: {
         flex: 1,
@@ -306,11 +357,9 @@ const styles = StyleSheet.create({
     emptyTitle: {
         fontSize: 18,
         fontWeight: '600',
-        color: '#475569',
     },
     emptySubtitle: {
         fontSize: 14,
-        color: '#94A3B8',
         textAlign: 'center',
         paddingHorizontal: 32,
     },

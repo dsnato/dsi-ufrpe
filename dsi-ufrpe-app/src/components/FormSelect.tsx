@@ -16,6 +16,7 @@ type FormSelectProps = {
     error?: string;
     helperText?: string;
     disabled?: boolean;
+    isDarkMode?: boolean;
 };
 
 export const FormSelect: React.FC<FormSelectProps> = ({
@@ -27,6 +28,7 @@ export const FormSelect: React.FC<FormSelectProps> = ({
     error,
     helperText,
     disabled = false,
+    isDarkMode = false,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
 
@@ -43,6 +45,7 @@ export const FormSelect: React.FC<FormSelectProps> = ({
             <TouchableOpacity
                 style={[
                     styles.container,
+                    isDarkMode && styles.containerDark,
                     error && styles.containerError,
                     disabled && styles.containerDisabled
                 ]}
@@ -53,13 +56,14 @@ export const FormSelect: React.FC<FormSelectProps> = ({
                     <Ionicons
                         name={icon}
                         size={20}
-                        color={error ? '#EF4444' : disabled ? '#CBD5E1' : '#64748B'}
+                        color={error ? '#EF4444' : disabled ? '#CBD5E1' : isDarkMode ? '#94A3B8' : '#64748B'}
                         style={styles.icon}
                     />
                 )}
                 <Text
                     style={[
                         styles.text,
+                        isDarkMode && styles.textDark,
                         !selectedOption && styles.placeholder,
                         disabled && styles.textDisabled
                     ]}
@@ -70,7 +74,7 @@ export const FormSelect: React.FC<FormSelectProps> = ({
                 <Ionicons
                     name="chevron-down"
                     size={20}
-                    color={error ? '#EF4444' : disabled ? '#CBD5E1' : '#64748B'}
+                    color={error ? '#EF4444' : disabled ? '#CBD5E1' : isDarkMode ? '#94A3B8' : '#64748B'}
                 />
             </TouchableOpacity>
 
@@ -95,14 +99,14 @@ export const FormSelect: React.FC<FormSelectProps> = ({
                     activeOpacity={1}
                     onPress={() => setIsOpen(false)}
                 >
-                    <View style={styles.modalContent}>
-                        <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>Selecione uma opção</Text>
+                    <View style={[styles.modalContent, isDarkMode && styles.modalContentDark]}>
+                        <View style={[styles.modalHeader, isDarkMode && styles.modalHeaderDark]}>
+                            <Text style={[styles.modalTitle, isDarkMode && styles.modalTitleDark]}>Selecione uma opção</Text>
                             <TouchableOpacity
                                 onPress={() => setIsOpen(false)}
                                 style={styles.closeButton}
                             >
-                                <Ionicons name="close" size={24} color="#64748B" />
+                                <Ionicons name="close" size={24} color={isDarkMode ? '#94A3B8' : '#64748B'} />
                             </TouchableOpacity>
                         </View>
 
@@ -115,7 +119,8 @@ export const FormSelect: React.FC<FormSelectProps> = ({
                                     key={option.value}
                                     style={[
                                         styles.option,
-                                        option.value === value && styles.optionSelected
+                                        isDarkMode && styles.optionDark,
+                                        option.value === value && (isDarkMode ? styles.optionSelectedDark : styles.optionSelected)
                                     ]}
                                     onPress={() => handleSelect(option.value)}
                                     activeOpacity={0.7}
@@ -123,7 +128,8 @@ export const FormSelect: React.FC<FormSelectProps> = ({
                                     <Text
                                         style={[
                                             styles.optionText,
-                                            option.value === value && styles.optionTextSelected
+                                            isDarkMode && styles.optionTextDark,
+                                            option.value === value && (isDarkMode ? styles.optionTextSelectedDark : styles.optionTextSelected)
                                         ]}
                                     >
                                         {option.label}
@@ -132,7 +138,7 @@ export const FormSelect: React.FC<FormSelectProps> = ({
                                         <Ionicons
                                             name="checkmark-circle"
                                             size={22}
-                                            color="#0162B3"
+                                            color={isDarkMode ? '#60A5FA' : '#0162B3'}
                                         />
                                     )}
                                 </TouchableOpacity>
@@ -168,6 +174,10 @@ const styles = StyleSheet.create({
         backgroundColor: '#F8FAFC',
         opacity: 0.6,
     },
+    containerDark: {
+        backgroundColor: 'rgba(26, 35, 50, 0.4)',
+        borderColor: 'rgba(45, 59, 79, 0.6)',
+    },
     icon: {
         marginRight: 12,
     },
@@ -176,6 +186,9 @@ const styles = StyleSheet.create({
         fontSize: 15,
         color: '#1E293B',
         fontWeight: '500',
+    },
+    textDark: {
+        color: '#E2E8F0',
     },
     placeholder: {
         color: '#94A3B8',
@@ -263,4 +276,29 @@ const styles = StyleSheet.create({
         color: '#0162B3',
         fontWeight: '600',
     },
+    modalContentDark: {
+        backgroundColor: '#0B1624',
+        shadowColor: '#000',
+        shadowOpacity: 0.4,
+    },
+    modalHeaderDark: {
+        borderBottomColor: 'rgba(45, 59, 79, 0.6)',
+    },
+    modalTitleDark: {
+        color: '#F1F5F9',
+    },
+    optionDark: {
+        borderBottomColor: 'rgba(45, 59, 79, 0.3)',
+    },
+    optionSelectedDark: {
+        backgroundColor: 'rgba(96, 165, 250, 0.15)',
+    },
+    optionTextDark: {
+        color: '#E2E8F0',
+    },
+    optionTextSelectedDark: {
+        color: '#60A5FA',
+        fontWeight: '600',
+    },
 });
+
