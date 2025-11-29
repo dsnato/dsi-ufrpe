@@ -1,14 +1,15 @@
+import { supabase } from '@/lib/supabase';
 import { ActionButton } from '@/src/components/ActionButton';
 import { Separator } from '@/src/components/Separator';
 import TextInputRounded from '@/src/components/TextInputRounded';
-import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect, useRouter } from 'expo-router';
-import React, { useCallback, useState } from 'react';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { listarAtividades, AtividadeRecreativa } from '@/src/services/atividadesService';
 import { useToast } from '@/src/components/ToastContext';
+import { AtividadeRecreativa, listarAtividades } from '@/src/services/atividadesService';
+import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useMemo, useState } from 'react';
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type Atividade = AtividadeRecreativa;
 
@@ -18,6 +19,58 @@ const ListagemAtividade: React.FC = () => {
     const [items, setItems] = useState<Atividade[]>([]);
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(false);
+    const [isDarkMode, setIsDarkMode] = useState(false);
+
+    // Paleta de cores dark/light
+    const palettes = useMemo(() => ({
+        light: {
+            background: '#132F3B',
+            content: '#F8FAFC',
+            text: '#132F3B',
+            textSecondary: '#64748B',
+            icon: '#0162B3',
+            headerText: '#FFFFFF',
+            backIcon: '#FFFFFF',
+            cardBg: '#FFFFFF',
+            cardBorder: '#E2E8F0',
+            cardIcon: '#EFF6FF',
+            emptyIcon: '#CBD5E1',
+            emptyText: '#475569',
+            emptySubtext: '#94A3B8',
+        },
+        dark: {
+            background: '#050C18',
+            content: '#0B1624',
+            text: '#F1F5F9',
+            textSecondary: '#94A3B8',
+            icon: '#60A5FA',
+            headerText: '#F1F5F9',
+            backIcon: '#E2E8F0',
+            cardBg: '#1E293B',
+            cardBorder: '#334155',
+            cardIcon: '#1E3A8A',
+            emptyIcon: '#475569',
+            emptyText: '#E2E8F0',
+            emptySubtext: '#64748B',
+        },
+    }), []);
+
+    const theme = useMemo(() => {
+        return isDarkMode ? palettes.dark : palettes.light;
+    }, [isDarkMode, palettes]);
+
+    // Carrega preferência de tema
+    const loadThemePreference = useCallback(async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const preferredTheme = user.user_metadata?.preferred_theme;
+                setIsDarkMode(preferredTheme === 'dark');
+            }
+        } catch (error) {
+            console.error('Erro ao carregar preferência de tema:', error);
+        }
+    }, []);
 
     // Filtra atividades por nome, local ou status
     const filteredItems = items.filter(
@@ -34,9 +87,9 @@ const ListagemAtividade: React.FC = () => {
             const data = await listarAtividades();
             console.log('📋 [ListagemAtividade] Atividades carregadas:', data.length);
             console.log('📋 [ListagemAtividade] Primeira atividade:', data[0]);
-            console.log('📋 [ListagemAtividade] URLs das imagens:', data.map(a => ({ 
-                nome: a.nome, 
-                imagem_url: a.imagem_url 
+            console.log('📋 [ListagemAtividade] URLs das imagens:', data.map(a => ({
+                nome: a.nome,
+                imagem_url: a.imagem_url
             })));
             setItems(data);
         } catch (error) {
@@ -49,8 +102,9 @@ const ListagemAtividade: React.FC = () => {
 
     useFocusEffect(
         useCallback(() => {
+            loadThemePreference();
             loadAtividades();
-        }, [loadAtividades])
+        }, [loadAtividades, loadThemePreference])
     );
 
     // Navega para tela de informações da atividade
@@ -76,16 +130,22 @@ const ListagemAtividade: React.FC = () => {
                 urlLength: item.imagem_url.length
             });
         }
-        
+
         return (
             <TouchableOpacity
-                style={styles.atividadeCard}
+                style={[
+                    styles.atividadeCard,
+                    {
+                        backgroundColor: theme.cardBg,
+                        borderColor: theme.cardBorder,
+                    }
+                ]}
                 onPress={() => handleAtividadePress(item.id!)}
                 activeOpacity={0.7}
             >
                 {/* Imagem de thumbnail */}
                 {item.imagem_url ? (
-                    <Image 
+                    <Image
                         source={item.imagem_url}
                         style={styles.cardImage}
                         contentFit="cover"
@@ -104,63 +164,63 @@ const ListagemAtividade: React.FC = () => {
                         }}
                     />
                 ) : (
-                    <View style={styles.cardImagePlaceholder}>
-                        <Ionicons name="image-outline" size={32} color="#CBD5E1" />
+                    <View style={[styles.cardImagePlaceholder, { backgroundColor: isDarkMode ? '#0F172A' : '#F8FAFC' }]}>
+                        <Ionicons name="image-outline" size={32} color={isDarkMode ? '#475569' : '#CBD5E1'} />
                     </View>
                 )}
-            
-            <View style={styles.cardHeader}>
-                <View style={styles.cardIcon}>
-                    <Ionicons name="calendar" size={24} color="#0162B3" />
-                </View>
-                <View style={[styles.statusBadge, item.status === 'ativa' ? styles.statusActive : styles.statusInactive]}>
-                    <Text style={styles.statusText}>{item.status || 'Inativa'}</Text>
-                </View>
-            </View>
-            <View style={styles.cardContent}>
-                <Text style={styles.cardTitle} numberOfLines={1}>
-                    {item.nome}
-                </Text>
-                <View style={styles.cardInfo}>
-                    <Ionicons name="location-outline" size={14} color="#64748B" />
-                    <Text style={styles.cardLocation} numberOfLines={1}>
-                        {item.local}
-                    </Text>
-                </View>
-                <View style={styles.cardFooter}>
-                    <View style={styles.cardInfoItem}>
-                        <Ionicons name="calendar-outline" size={14} color="#64748B" />
-                        <Text style={styles.cardInfoText}>
-                            {item.data_hora ? new Date(item.data_hora).toLocaleString('pt-BR', { 
-                                dateStyle: 'short', 
-                                timeStyle: 'short' 
-                            }) : 'Data não disponível'}
-                        </Text>
+
+                <View style={styles.cardHeader}>
+                    <View style={[styles.cardIcon, { backgroundColor: theme.cardIcon }]}>
+                        <Ionicons name="calendar" size={24} color={theme.icon} />
+                    </View>
+                    <View style={[styles.statusBadge, item.status === 'ativa' ? styles.statusActive : styles.statusInactive]}>
+                        <Text style={[styles.statusText, { color: theme.text }]}>{item.status || 'Inativa'}</Text>
                     </View>
                 </View>
-            </View>
-        </TouchableOpacity>
+                <View style={styles.cardContent}>
+                    <Text style={[styles.cardTitle, { color: theme.text }]} numberOfLines={1}>
+                        {item.nome}
+                    </Text>
+                    <View style={styles.cardInfo}>
+                        <Ionicons name="location-outline" size={14} color={theme.textSecondary} />
+                        <Text style={[styles.cardLocation, { color: theme.textSecondary }]} numberOfLines={1}>
+                            {item.local}
+                        </Text>
+                    </View>
+                    <View style={styles.cardFooter}>
+                        <View style={styles.cardInfoItem}>
+                            <Ionicons name="calendar-outline" size={14} color={theme.textSecondary} />
+                            <Text style={[styles.cardInfoText, { color: theme.textSecondary }]}>
+                                {item.data_hora ? new Date(item.data_hora).toLocaleString('pt-BR', {
+                                    dateStyle: 'short',
+                                    timeStyle: 'short'
+                                }) : 'Data não disponível'}
+                            </Text>
+                        </View>
+                    </View>
+                </View>
+            </TouchableOpacity>
         );
     };
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
             {/* Header customizado para listagem */}
-            <View style={styles.topHeader}>
+            <View style={[styles.topHeader, { backgroundColor: theme.background }]}>
                 <TouchableOpacity onPress={() => router.push('/screens/home')} style={styles.backButton}>
-                    <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
+                    <Ionicons name="chevron-back" size={24} color={theme.backIcon} />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Atividades</Text>
+                <Text style={[styles.headerTitle, { color: theme.headerText }]}>Atividades</Text>
             </View>
 
-            <View style={styles.content}>
+            <View style={[styles.content, { backgroundColor: theme.content }]}>
                 {/* Header com título e botão */}
                 <View style={styles.header}>
                     <View style={styles.titleContainer}>
-                        <Ionicons name="calendar" size={24} color="#0162B3" />
-                        <Text style={styles.title}>Lista de Atividades</Text>
+                        <Ionicons name="calendar" size={24} color={theme.icon} />
+                        <Text style={[styles.title, { color: theme.text }]}>Lista de Atividades</Text>
                     </View>
-                    <Text style={styles.subtitle}>
+                    <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
                         {filteredItems.length}{' '}
                         {filteredItems.length === 1 ? 'atividade encontrada' : 'atividades encontradas'}
                     </Text>
@@ -173,6 +233,7 @@ const ListagemAtividade: React.FC = () => {
                     <ActionButton
                         variant="primary"
                         icon="add-circle-outline"
+                        tone={isDarkMode ? 'dark' : 'light'}
                         onPress={handleAddAtividade}
                     >
                         Adicionar Nova Atividade
@@ -185,6 +246,7 @@ const ListagemAtividade: React.FC = () => {
                         value={search}
                         onChangeText={setSearch}
                         placeholder="Buscar por nome, local ou data..."
+                        isDarkMode={isDarkMode}
                     />
                 </View>
 
@@ -192,7 +254,7 @@ const ListagemAtividade: React.FC = () => {
                 {filteredItems.length > 0 ? (
                     <FlatList
                         data={filteredItems}
-                        keyExtractor={(item) => item.id}
+                        keyExtractor={(item) => item.id || ''}
                         renderItem={renderAtividadeCard}
                         numColumns={2}
                         columnWrapperStyle={styles.row}
@@ -201,9 +263,9 @@ const ListagemAtividade: React.FC = () => {
                     />
                 ) : (
                     <View style={styles.emptyContainer}>
-                        <Ionicons name="search-outline" size={64} color="#CBD5E1" />
-                        <Text style={styles.emptyTitle}>Nenhuma atividade encontrada</Text>
-                        <Text style={styles.emptySubtitle}>
+                        <Ionicons name="search-outline" size={64} color={theme.emptyIcon} />
+                        <Text style={[styles.emptyTitle, { color: theme.emptyText }]}>Nenhuma atividade encontrada</Text>
+                        <Text style={[styles.emptySubtitle, { color: theme.emptySubtext }]}>
                             {search
                                 ? 'Tente buscar com outros termos'
                                 : 'Adicione uma nova atividade para começar'}
@@ -220,7 +282,6 @@ export default ListagemAtividade;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#132F3B',
     },
     topHeader: {
         flexDirection: 'row',
@@ -228,7 +289,6 @@ const styles = StyleSheet.create({
         paddingTop: 50,
         paddingBottom: 16,
         paddingHorizontal: 16,
-        backgroundColor: '#132F3B',
         gap: 16,
     },
     backButton: {
@@ -240,12 +300,10 @@ const styles = StyleSheet.create({
     headerTitle: {
         fontSize: 24,
         fontWeight: '700',
-        color: '#FFFFFF',
         flex: 1,
     },
     content: {
         flex: 1,
-        backgroundColor: '#F8FAFC',
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
         paddingHorizontal: 20,
@@ -262,11 +320,9 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 24,
         fontWeight: '700',
-        color: '#132F3B',
     },
     subtitle: {
         fontSize: 14,
-        color: '#64748B',
     },
     actionContainer: {
         marginBottom: 16,
@@ -284,11 +340,9 @@ const styles = StyleSheet.create({
     atividadeCard: {
         flex: 1,
         maxWidth: '48%',
-        backgroundColor: '#FFFFFF',
         borderRadius: 16,
         overflow: 'hidden',
         borderWidth: 1.5,
-        borderColor: '#E2E8F0',
         elevation: 2,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
@@ -303,7 +357,6 @@ const styles = StyleSheet.create({
     cardImagePlaceholder: {
         width: '100%',
         height: 120,
-        backgroundColor: '#F8FAFC',
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -318,7 +371,6 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: '#EFF6FF',
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -336,7 +388,6 @@ const styles = StyleSheet.create({
     statusText: {
         fontSize: 11,
         fontWeight: '600',
-        color: '#132F3B',
     },
     cardContent: {
         paddingHorizontal: 16,
@@ -346,7 +397,6 @@ const styles = StyleSheet.create({
     cardTitle: {
         fontSize: 15,
         fontWeight: '700',
-        color: '#132F3B',
     },
     cardInfo: {
         flexDirection: 'row',
@@ -355,7 +405,6 @@ const styles = StyleSheet.create({
     },
     cardLocation: {
         fontSize: 13,
-        color: '#64748B',
         flex: 1,
     },
     cardFooter: {
@@ -370,7 +419,6 @@ const styles = StyleSheet.create({
     },
     cardInfoText: {
         fontSize: 12,
-        color: '#64748B',
         fontFamily: 'monospace',
     },
     emptyContainer: {
@@ -383,11 +431,9 @@ const styles = StyleSheet.create({
     emptyTitle: {
         fontSize: 18,
         fontWeight: '600',
-        color: '#475569',
     },
     emptySubtitle: {
         fontSize: 14,
-        color: '#94A3B8',
         textAlign: 'center',
         paddingHorizontal: 32,
     },
