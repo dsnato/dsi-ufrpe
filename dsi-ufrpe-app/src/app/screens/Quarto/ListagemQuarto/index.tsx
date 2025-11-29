@@ -1,13 +1,43 @@
+import { supabase } from '@/lib/supabase';
 import { ActionButton } from '@/src/components/ActionButton';
 import { Separator } from '@/src/components/Separator';
 import TextInputRounded from '@/src/components/TextInputRounded';
+import { useToast } from '@/src/components/ToastContext';
+import { listarQuartos, Quarto } from '@/src/services/quartosService';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
-import React, { useCallback, useState } from 'react';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { listarQuartos, Quarto } from '@/src/services/quartosService';
-import { useToast } from '@/src/components/ToastContext';
+
+const palettes = {
+    light: {
+        background: '#132F3B',
+        content: '#F8FAFC',
+        card: '#FFFFFF',
+        text: '#132F3B',
+        textSecondary: '#64748B',
+        muted: '#94A3B8',
+        accent: '#0162B3',
+        accentSoft: '#EFF6FF',
+        border: '#E2E8F0',
+        shadow: '#000',
+        icon: '#0162B3',
+    },
+    dark: {
+        background: '#050C18',
+        content: '#0B1624',
+        card: '#152238',
+        text: '#E2E8F0',
+        textSecondary: '#CBD5E1',
+        muted: '#94A3B8',
+        accent: '#4F9CF9',
+        accentSoft: '#1E2C44',
+        border: '#1F2B3C',
+        shadow: '#000',
+        icon: '#FACC15',
+    },
+} as const;
 
 const ListagemQuarto: React.FC = () => {
     const router = useRouter();
@@ -15,6 +45,44 @@ const ListagemQuarto: React.FC = () => {
     const [items, setItems] = useState<Quarto[]>([]);
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(false);
+    const [isDarkMode, setIsDarkMode] = useState(false);
+
+    const theme = useMemo(() => palettes[isDarkMode ? 'dark' : 'light'], [isDarkMode]);
+
+    // Carrega a preferência de tema do Supabase
+    const loadThemePreference = useCallback(async () => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user?.user_metadata?.preferred_theme) {
+                setIsDarkMode(session.user.user_metadata.preferred_theme === 'dark');
+            }
+        } catch (error) {
+            console.error('Erro ao carregar tema:', error);
+        }
+    }, []);
+
+    // Carrega tema ao montar componente
+    useEffect(() => {
+        loadThemePreference();
+
+        // Listener para mudanças no tema
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            if (session?.user?.user_metadata?.preferred_theme) {
+                setIsDarkMode(session.user.user_metadata.preferred_theme === 'dark');
+            }
+        });
+
+        return () => {
+            subscription.unsubscribe();
+        };
+    }, [loadThemePreference]);
+
+    // Recarrega tema ao focar na tela
+    useFocusEffect(
+        useCallback(() => {
+            loadThemePreference();
+        }, [loadThemePreference])
+    );
 
     // Filtra quartos por número ou tipo
     const filteredItems = items.filter(
@@ -60,50 +128,50 @@ const ListagemQuarto: React.FC = () => {
     // Renderiza cada card de quarto
     const renderQuartoCard = ({ item }: { item: Quarto }) => (
         <TouchableOpacity
-            style={styles.quartoCard}
+            style={[styles.quartoCard, { backgroundColor: theme.card }]}
             onPress={() => handleQuartoPress(item.id!)}
             activeOpacity={0.7}
         >
-            <View style={styles.cardIcon}>
-                <Ionicons name="bed" size={32} color="#0162B3" />
+            <View style={[styles.cardIcon, { backgroundColor: theme.accentSoft }]}>
+                <Ionicons name="bed" size={32} color={theme.icon} />
             </View>
             <View style={styles.cardContent}>
-                <Text style={styles.cardNumber}>Quarto {item.numero_quarto}</Text>
+                <Text style={[styles.cardNumber, { color: theme.text }]}>Quarto {item.numero_quarto}</Text>
                 <View style={styles.cardFooter}>
                     <Ionicons
                         name="bed-outline"
                         size={14}
-                        color="#64748B"
+                        color={theme.textSecondary}
                     />
-                    <Text style={styles.cardType}>
+                    <Text style={[styles.cardType, { color: theme.textSecondary }]}>
                         {item.tipo}
                     </Text>
                 </View>
                 {item.status && (
-                    <Text style={styles.cardStatus}>{item.status}</Text>
+                    <Text style={[styles.cardStatus, { color: theme.accent }]}>{item.status}</Text>
                 )}
             </View>
         </TouchableOpacity>
     );
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
             {/* Header customizado para listagem */}
-            <View style={styles.topHeader}>
+            <View style={[styles.topHeader, { backgroundColor: theme.background }]}>
                 <TouchableOpacity onPress={() => router.push('/screens/home')} style={styles.backButton}>
                     <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Quartos</Text>
             </View>
 
-            <View style={styles.content}>
+            <View style={[styles.content, { backgroundColor: theme.content }]}>
                 {/* Header com título e botão */}
                 <View style={styles.header}>
                     <View style={styles.titleContainer}>
-                        <Ionicons name="home" size={24} color="#0162B3" />
-                        <Text style={styles.title}>Lista de Quartos</Text>
+                        <Ionicons name="home" size={24} color={theme.icon} />
+                        <Text style={[styles.title, { color: theme.text }]}>Lista de Quartos</Text>
                     </View>
-                    <Text style={styles.subtitle}>
+                    <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
                         {filteredItems.length}{' '}
                         {filteredItems.length === 1 ? 'quarto encontrado' : 'quartos encontrados'}
                     </Text>
@@ -117,6 +185,7 @@ const ListagemQuarto: React.FC = () => {
                         variant="primary"
                         icon="add-circle-outline"
                         onPress={handleAddQuarto}
+                        tone={isDarkMode ? 'dark' : 'light'}
                     >
                         Adicionar Novo Quarto
                     </ActionButton>
@@ -128,6 +197,7 @@ const ListagemQuarto: React.FC = () => {
                         value={search}
                         onChangeText={setSearch}
                         placeholder="Buscar por número ou tipo..."
+                        isDarkMode={isDarkMode}
                     />
                 </View>
 
@@ -144,9 +214,9 @@ const ListagemQuarto: React.FC = () => {
                     />
                 ) : (
                     <View style={styles.emptyContainer}>
-                        <Ionicons name="search-outline" size={64} color="#CBD5E1" />
-                        <Text style={styles.emptyTitle}>Nenhum quarto encontrado</Text>
-                        <Text style={styles.emptySubtitle}>
+                        <Ionicons name="search-outline" size={64} color={theme.muted} />
+                        <Text style={[styles.emptyTitle, { color: theme.text }]}>Nenhum quarto encontrado</Text>
+                        <Text style={[styles.emptySubtitle, { color: theme.textSecondary }]}>
                             {search
                                 ? 'Tente buscar com outros termos'
                                 : 'Adicione um novo quarto para começar'}
@@ -163,7 +233,6 @@ export default ListagemQuarto;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#132F3B',
     },
     topHeader: {
         flexDirection: 'row',
@@ -171,7 +240,6 @@ const styles = StyleSheet.create({
         paddingTop: 50,
         paddingBottom: 16,
         paddingHorizontal: 16,
-        backgroundColor: '#132F3B',
         gap: 16,
     },
     backButton: {
@@ -188,7 +256,6 @@ const styles = StyleSheet.create({
     },
     content: {
         flex: 1,
-        backgroundColor: '#F8FAFC',
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
         paddingHorizontal: 20,
@@ -205,11 +272,9 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 24,
         fontWeight: '700',
-        color: '#132F3B',
     },
     subtitle: {
         fontSize: 14,
-        color: '#64748B',
     },
     actionContainer: {
         marginBottom: 16,
@@ -227,11 +292,9 @@ const styles = StyleSheet.create({
     quartoCard: {
         flex: 1,
         maxWidth: '48%',
-        backgroundColor: '#FFFFFF',
         borderRadius: 16,
         padding: 16,
         borderWidth: 1.5,
-        borderColor: '#E2E8F0',
         gap: 12,
         elevation: 2,
         shadowColor: '#000',
@@ -243,7 +306,6 @@ const styles = StyleSheet.create({
         width: 56,
         height: 56,
         borderRadius: 28,
-        backgroundColor: '#EFF6FF',
         justifyContent: 'center',
         alignItems: 'center',
         alignSelf: 'center',
@@ -255,7 +317,6 @@ const styles = StyleSheet.create({
     cardNumber: {
         fontSize: 24,
         fontWeight: '700',
-        color: '#132F3B',
         fontFamily: 'monospace',
         textAlign: 'center',
     },
@@ -267,12 +328,10 @@ const styles = StyleSheet.create({
     },
     cardType: {
         fontSize: 14,
-        color: '#64748B',
         fontWeight: '500',
     },
     cardStatus: {
         fontSize: 12,
-        color: '#10B981',
         fontWeight: '600',
         textAlign: 'center',
     },
@@ -286,11 +345,9 @@ const styles = StyleSheet.create({
     emptyTitle: {
         fontSize: 18,
         fontWeight: '600',
-        color: '#475569',
     },
     emptySubtitle: {
         fontSize: 14,
-        color: '#94A3B8',
         textAlign: 'center',
         paddingHorizontal: 32,
     },
