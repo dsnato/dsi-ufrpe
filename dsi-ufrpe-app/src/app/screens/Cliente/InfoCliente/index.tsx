@@ -1,3 +1,4 @@
+import { supabase } from '@/lib/supabase';
 import { ActionButton } from '@/src/components/ActionButton';
 import { ErrorState } from '@/src/components/ErrorState';
 import { InfoHeader } from '@/src/components/InfoHeader';
@@ -9,9 +10,32 @@ import { useToast } from '@/src/components/ToastContext';
 import { buscarClientePorId, Cliente, excluirCliente } from '@/src/services/clientesService';
 import { formatCPF, formatPhone, withPlaceholder } from '@/src/utils/formatters';
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+const palettes = {
+    light: {
+        background: '#132F3B',
+        content: '#F8FAFC',
+        text: '#132F3B',
+        textSecondary: '#64748B',
+        accent: '#0162B3',
+        breadcrumb: '#94A3B8',
+        backIcon: '#FFFFFF',
+        icon: '#0162B3',
+    },
+    dark: {
+        background: '#050C18',
+        content: '#0B1624',
+        text: '#E2E8F0',
+        textSecondary: '#CBD5E1',
+        accent: '#4F9CF9',
+        breadcrumb: '#94A3B8',
+        backIcon: '#FACC15',
+        icon: '#FACC15',
+    },
+} as const;
 
 export default function InfoCliente() {
     const router = useRouter();
@@ -23,6 +47,33 @@ export default function InfoCliente() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [isDarkMode, setIsDarkMode] = useState(false);
+
+    const theme = useMemo(() => (isDarkMode ? palettes.dark : palettes.light), [isDarkMode]);
+
+    const loadThemePreference = useCallback(async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            const preferredTheme = user.user_metadata?.preferred_theme;
+            setIsDarkMode(preferredTheme === 'dark');
+        } catch (error) {
+            console.error('Erro ao carregar preferência de tema:', error);
+        }
+    }, []);
+
+    useEffect(() => {
+        loadThemePreference();
+
+        const { data: authListener } = supabase.auth.onAuthStateChange(() => {
+            loadThemePreference();
+        });
+
+        return () => {
+            authListener?.subscription?.unsubscribe();
+        };
+    }, [loadThemePreference]);
 
     /**
      * ✅ REQUISITO 1: Carregamento dos dados usando ID da URL
@@ -48,7 +99,7 @@ export default function InfoCliente() {
 
         console.log('📋 [InfoCliente] Dados do cliente recebidos:', JSON.stringify(data, null, 2));
         console.log('🖼️ [InfoCliente] URL da imagem do cliente:', data.imagem_url);
-        
+
         setCliente(data);
         setLoading(false);
     }, [id]);
@@ -57,7 +108,8 @@ export default function InfoCliente() {
     useFocusEffect(
         useCallback(() => {
             loadCliente();
-        }, [loadCliente])
+            loadThemePreference();
+        }, [loadCliente, loadThemePreference])
     );
 
     /**
@@ -67,7 +119,7 @@ export default function InfoCliente() {
         console.log('🟡 [InfoCliente] handleDelete chamado!');
         console.log('🟡 [InfoCliente] Cliente ID:', id);
         console.log('🟡 [InfoCliente] Cliente objeto:', cliente);
-        
+
         setShowDeleteConfirm(true);
     };
 
@@ -76,12 +128,12 @@ export default function InfoCliente() {
             console.log('🔴 [InfoCliente] Iniciando exclusão, ID:', id);
             setShowDeleteConfirm(false);
             setLoading(true);
-            
+
             await excluirCliente(id as string);
-            
+
             console.log('✅ [InfoCliente] Exclusão concluída com sucesso');
             showSuccess('Cliente excluído com sucesso!');
-            
+
             setTimeout(() => {
                 router.push("/screens/Cliente/ListagemCliente");
             }, 1500);
@@ -103,10 +155,19 @@ export default function InfoCliente() {
      */
     if (loading) {
         return (
-            <View style={styles.container}>
-                <InfoHeader entity="Clientes" onBackPress={() => router.back()} />
-                <View style={styles.subContainer}>
-                    <Loading message="Carregando cliente..." />
+            <View style={[styles.container, { backgroundColor: theme.background }]}>
+                <InfoHeader
+                    entity="Clientes"
+                    onBackPress={() => router.back()}
+                    colors={{
+                        background: theme.background,
+                        breadcrumb: theme.breadcrumb,
+                        accent: theme.accent,
+                        backIcon: theme.backIcon,
+                    }}
+                />
+                <View style={[styles.subContainer, { backgroundColor: theme.content }]}>
+                    <Loading message="Carregando cliente..." isDarkMode={isDarkMode} />
                 </View>
             </View>
         );
@@ -117,9 +178,18 @@ export default function InfoCliente() {
      */
     if (error || !cliente) {
         return (
-            <View style={styles.container}>
-                <InfoHeader entity="Clientes" onBackPress={() => router.push("/screens/Cliente/ListagemCliente")} />
-                <View style={styles.subContainer}>
+            <View style={[styles.container, { backgroundColor: theme.background }]}>
+                <InfoHeader
+                    entity="Clientes"
+                    onBackPress={() => router.push("/screens/Cliente/ListagemCliente")}
+                    colors={{
+                        background: theme.background,
+                        breadcrumb: theme.breadcrumb,
+                        accent: theme.accent,
+                        backIcon: theme.backIcon,
+                    }}
+                />
+                <View style={[styles.subContainer, { backgroundColor: theme.content }]}>
                     <ErrorState
                         message={error || 'Cliente não encontrado'}
                         onRetry={loadCliente}
@@ -135,21 +205,33 @@ export default function InfoCliente() {
     console.log('🎨 [InfoCliente] ImageSource será:', cliente.imagem_url ? { uri: cliente.imagem_url } : 'undefined (imagem padrão)');
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
             {/* ✅ REQUISITO 9: Breadcrumb/indicador de navegação */}
-            <InfoHeader entity="Clientes" onBackPress={() => router.back()} />
+            <InfoHeader
+                entity="Clientes"
+                onBackPress={() => router.back()}
+                colors={{
+                    background: theme.background,
+                    breadcrumb: theme.breadcrumb,
+                    accent: theme.accent,
+                    backIcon: theme.backIcon,
+                }}
+            />
 
             {/* Seção de foto e nome no fundo azul */}
             <ProfileSection
                 name={withPlaceholder(cliente.nome_completo, 'Nome não informado')}
                 subtitle="Cliente"
                 imageSource={cliente.imagem_url ? { uri: cliente.imagem_url } : undefined}
+                backgroundColor={theme.background}
+                nameColor={isDarkMode ? '#FDE047' : '#FFE157'}
+                subtitleColor={theme.textSecondary}
             />
 
             {/* Container branco com informações */}
-            <View style={styles.subContainer}>
+            <View style={[styles.subContainer, { backgroundColor: theme.content }]}>
                 <View style={styles.clientTitleContainer}>
-                    <Text style={styles.clientTitle}>Informações Pessoais</Text>
+                    <Text style={[styles.clientTitle, { color: theme.text }]}>Informações Pessoais</Text>
                 </View>
                 <Separator />
                 <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -159,6 +241,9 @@ export default function InfoCliente() {
                         icon="person-outline"
                         label="CPF"
                         value={formatCPF(cliente.cpf)}
+                        iconColor={theme.icon}
+                        labelColor={theme.textSecondary}
+                        valueColor={theme.text}
                     />
 
                     <InfoRow
@@ -167,18 +252,27 @@ export default function InfoCliente() {
                         value={cliente.endereco
                             ? `${cliente.endereco}, ${cliente.cidade} - ${cliente.estado}, ${cliente.pais || ''}`
                             : 'Endereço não informado'}
+                        iconColor={theme.icon}
+                        labelColor={theme.textSecondary}
+                        valueColor={theme.text}
                     />
 
                     <InfoRow
                         icon="call-outline"
                         label="CELULAR"
                         value={formatPhone(cliente.telefone)}
+                        iconColor={theme.icon}
+                        labelColor={theme.textSecondary}
+                        valueColor={theme.text}
                     />
 
                     <InfoRow
                         icon="mail-outline"
                         label="EMAIL"
                         value={withPlaceholder(cliente.email, 'Email não informado')}
+                        iconColor={theme.icon}
+                        labelColor={theme.textSecondary}
+                        valueColor={theme.text}
                     />
                 </ScrollView>
 
@@ -195,6 +289,7 @@ export default function InfoCliente() {
                             pathname: "/screens/Cliente/EdicaoCliente",
                             params: { id: cliente.id }
                         })}
+                        tone={isDarkMode ? 'dark' : 'light'}
                     >
                         Editar Cliente
                     </ActionButton>
@@ -204,6 +299,7 @@ export default function InfoCliente() {
                         variant="danger"
                         icon="trash-outline"
                         onPress={handleDelete}
+                        tone={isDarkMode ? 'dark' : 'light'}
                     >
                         Excluir
                     </ActionButton>
@@ -245,12 +341,10 @@ export default function InfoCliente() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#132F3B',
     },
     subContainer: {
         flex: 1,
         width: '100%',
-        backgroundColor: '#fafafa',
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         paddingVertical: 24,
@@ -271,11 +365,9 @@ const styles = StyleSheet.create({
     clientTitle: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#1E293B',
     },
     clientSubtitle: {
         fontSize: 16,
-        color: '#64748B',
         textTransform: 'uppercase',
     },
     options: {
@@ -327,3 +419,4 @@ const styles = StyleSheet.create({
         flex: 1,
     },
 });
+
