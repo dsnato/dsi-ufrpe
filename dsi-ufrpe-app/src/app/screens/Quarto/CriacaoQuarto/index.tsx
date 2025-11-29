@@ -1,3 +1,4 @@
+import { supabase } from '@/lib/supabase';
 import { ActionButton } from '@/src/components/ActionButton';
 import { FormInput } from '@/src/components/FormInput';
 import { FormSelect, SelectOption } from '@/src/components/FormSelect';
@@ -7,10 +8,37 @@ import { useToast } from '@/src/components/ToastContext';
 import { criarQuarto } from '@/src/services/quartosService';
 import { getSuccessMessage, getValidationMessage } from '@/src/utils/errorMessages';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+const palettes = {
+    light: {
+        background: '#132F3B',
+        content: '#F8FAFC',
+        card: '#FFFFFF',
+        text: '#132F3B',
+        textSecondary: '#64748B',
+        muted: '#94A3B8',
+        accent: '#0162B3',
+        border: '#E2E8F0',
+        switchTrack: '#CBD5E1',
+        switchThumb: '#FFFFFF',
+    },
+    dark: {
+        background: '#050C18',
+        content: '#0B1624',
+        card: '#152238',
+        text: '#E2E8F0',
+        textSecondary: '#CBD5E1',
+        muted: '#94A3B8',
+        accent: '#4F9CF9',
+        border: '#1F2B3C',
+        switchTrack: '#1F2B3C',
+        switchThumb: '#CBD5E1',
+    },
+} as const;
 
 const CriarQuarto: React.FC = () => {
     const router = useRouter();
@@ -23,6 +51,44 @@ const CriarQuarto: React.FC = () => {
     const [preco, setPreco] = useState('');
     const [descricao, setDescricao] = useState('');
     const [disponivel, setDisponivel] = useState(true);
+    const [isDarkMode, setIsDarkMode] = useState(false);
+
+    const theme = useMemo(() => palettes[isDarkMode ? 'dark' : 'light'], [isDarkMode]);
+
+    // Carrega a preferência de tema do Supabase
+    const loadThemePreference = useCallback(async () => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user?.user_metadata?.preferred_theme) {
+                setIsDarkMode(session.user.user_metadata.preferred_theme === 'dark');
+            }
+        } catch (error) {
+            console.error('Erro ao carregar tema:', error);
+        }
+    }, []);
+
+    // Carrega tema ao montar componente
+    useEffect(() => {
+        loadThemePreference();
+
+        // Listener para mudanças no tema
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            if (session?.user?.user_metadata?.preferred_theme) {
+                setIsDarkMode(session.user.user_metadata.preferred_theme === 'dark');
+            }
+        });
+
+        return () => {
+            subscription.unsubscribe();
+        };
+    }, [loadThemePreference]);
+
+    // Recarrega tema ao focar na tela
+    useFocusEffect(
+        useCallback(() => {
+            loadThemePreference();
+        }, [loadThemePreference])
+    );
 
     // Tipos de quarto disponíveis
     const tiposQuarto: SelectOption[] = [
@@ -131,10 +197,20 @@ const CriarQuarto: React.FC = () => {
     };
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
-            <InfoHeader entity="Quartos" action="Adição" onBackPress={() => router.push('/screens/Quarto/ListagemQuarto')} />
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
+            <InfoHeader
+                entity="Quartos"
+                action="Adição"
+                onBackPress={() => router.push('/screens/Quarto/ListagemQuarto')}
+                colors={{
+                    background: theme.background,
+                    breadcrumb: theme.textSecondary,
+                    accent: isDarkMode ? '#FACC15' : '#FFE157',
+                    backIcon: '#FFFFFF'
+                }}
+            />
 
-            <View style={styles.content}>
+            <View style={[styles.content, { backgroundColor: theme.content }]}>
                 <ScrollView
                     style={styles.scrollView}
                     contentContainerStyle={styles.scrollContent}
@@ -142,11 +218,11 @@ const CriarQuarto: React.FC = () => {
                 >
                     {/* Título da seção */}
                     <View style={styles.titleContainer}>
-                        <Ionicons name="add-circle-outline" size={24} color="#0162B3" />
-                        <Text style={styles.title}>Novo Quarto</Text>
+                        <Ionicons name="add-circle-outline" size={24} color={theme.accent} />
+                        <Text style={[styles.title, { color: theme.text }]}>Novo Quarto</Text>
                     </View>
 
-                    <Text style={styles.subtitle}>
+                    <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
                         Cadastre um novo quarto no sistema
                     </Text>
 
@@ -155,7 +231,7 @@ const CriarQuarto: React.FC = () => {
                     {/* Formulário */}
                     <View style={styles.form}>
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>
+                            <Text style={[styles.label, { color: theme.text }]}>
                                 Número do Quarto <Text style={styles.required}>*</Text>
                             </Text>
                             <FormInput
@@ -167,11 +243,12 @@ const CriarQuarto: React.FC = () => {
                                 keyboardType="numeric"
                                 maxLength={4}
                                 helperText="Identificação única do quarto"
+                                isDarkMode={isDarkMode}
                             />
                         </View>
 
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>
+                            <Text style={[styles.label, { color: theme.text }]}>
                                 Tipo do Quarto <Text style={styles.required}>*</Text>
                             </Text>
                             <FormSelect
@@ -187,7 +264,7 @@ const CriarQuarto: React.FC = () => {
 
                         <View style={styles.row}>
                             <View style={[styles.fieldGroup, styles.halfWidth]}>
-                                <Text style={styles.label}>
+                                <Text style={[styles.label, { color: theme.text }]}>
                                     Capacidade <Text style={styles.required}>*</Text>
                                 </Text>
                                 <FormInput
@@ -199,11 +276,12 @@ const CriarQuarto: React.FC = () => {
                                     keyboardType="numeric"
                                     maxLength={2}
                                     helperText="Número de hóspedes"
+                                    isDarkMode={isDarkMode}
                                 />
                             </View>
 
                             <View style={[styles.fieldGroup, styles.halfWidth]}>
-                                <Text style={styles.label}>
+                                <Text style={[styles.label, { color: theme.text }]}>
                                     Preço Diária <Text style={styles.required}>*</Text>
                                 </Text>
                                 <FormInput
@@ -214,12 +292,13 @@ const CriarQuarto: React.FC = () => {
                                     editable={!loading}
                                     keyboardType="numeric"
                                     helperText="Valor por dia (R$)"
+                                    isDarkMode={isDarkMode}
                                 />
                             </View>
                         </View>
 
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>Descrição</Text>
+                            <Text style={[styles.label, { color: theme.text }]}>Descrição</Text>
                             <FormInput
                                 icon="document-text-outline"
                                 placeholder="Características e amenidades do quarto (opcional)"
@@ -228,11 +307,12 @@ const CriarQuarto: React.FC = () => {
                                 editable={!loading}
                                 multiline
                                 numberOfLines={3}
+                                isDarkMode={isDarkMode}
                             />
                         </View>
 
                         {/* Status de Disponibilidade */}
-                        <View style={styles.switchContainer}>
+                        <View style={[styles.switchContainer, { backgroundColor: theme.card, borderColor: theme.border }]}>
                             <View style={styles.switchLabel}>
                                 <Ionicons
                                     name={disponivel ? "checkmark-circle" : "close-circle"}
@@ -240,10 +320,10 @@ const CriarQuarto: React.FC = () => {
                                     color={disponivel ? "#10B981" : "#EF4444"}
                                 />
                                 <View style={styles.switchTextContainer}>
-                                    <Text style={styles.switchTitle}>
+                                    <Text style={[styles.switchTitle, { color: theme.text }]}>
                                         {disponivel ? 'Quarto Disponível' : 'Quarto Indisponível'}
                                     </Text>
-                                    <Text style={styles.switchDescription}>
+                                    <Text style={[styles.switchDescription, { color: theme.textSecondary }]}>
                                         {disponivel
                                             ? 'Pronto para receber reservas'
                                             : 'Não aceita novas reservas'}
@@ -254,7 +334,7 @@ const CriarQuarto: React.FC = () => {
                                 value={disponivel}
                                 onValueChange={setDisponivel}
                                 trackColor={{ false: '#EF4444', true: '#10B981' }}
-                                thumbColor="#FFFFFF"
+                                thumbColor={theme.switchThumb}
                                 disabled={loading}
                             />
                         </View>
@@ -269,6 +349,7 @@ const CriarQuarto: React.FC = () => {
                             icon="checkmark-circle-outline"
                             onPress={handleSave}
                             disabled={loading}
+                            tone={isDarkMode ? 'dark' : 'light'}
                         >
                             {loading ? 'Criando...' : 'Criar Quarto'}
                         </ActionButton>
@@ -278,6 +359,7 @@ const CriarQuarto: React.FC = () => {
                             icon="close-circle-outline"
                             onPress={() => router.push('/screens/Quarto/ListagemQuarto')}
                             disabled={loading}
+                            tone={isDarkMode ? 'dark' : 'light'}
                         >
                             Cancelar
                         </ActionButton>
@@ -291,11 +373,9 @@ const CriarQuarto: React.FC = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#132F3B',
     },
     content: {
         flex: 1,
-        backgroundColor: '#F8FAFC',
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
         overflow: 'hidden',
@@ -317,11 +397,9 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 24,
         fontWeight: '700',
-        color: '#132F3B',
     },
     subtitle: {
         fontSize: 14,
-        color: '#64748B',
         lineHeight: 20,
     },
     form: {
@@ -333,7 +411,6 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#334155',
         marginBottom: 4,
     },
     required: {
@@ -350,11 +427,9 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: '#FFFFFF',
         padding: 16,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: '#E2E8F0',
     },
     switchLabel: {
         flexDirection: 'row',
@@ -369,11 +444,9 @@ const styles = StyleSheet.create({
     switchTitle: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#132F3B',
     },
     switchDescription: {
         fontSize: 12,
-        color: '#64748B',
     },
     actions: {
         gap: 12,
