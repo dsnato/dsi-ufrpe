@@ -1,39 +1,84 @@
+import { supabase } from '@/lib/supabase';
 import { ActionButton } from '@/src/components/ActionButton';
 import { FormInput } from '@/src/components/FormInput';
 import { ImagePicker } from '@/src/components/ImagePicker';
 import { InfoHeader } from '@/src/components/InfoHeader';
 import { Separator } from '@/src/components/Separator';
 import { useToast } from '@/src/components/ToastContext';
-import { atualizarAtividade, buscarAtividadePorId, removerImagemAtividade, uploadImagemAtividade } from '@/src/services/atividadesService';
-import { getSuccessMessage } from '@/src/utils/errorMessages';
+import { criarAtividade, uploadImagemAtividade } from '@/src/services/atividadesService';
+import { getSuccessMessage, getValidationMessage } from '@/src/utils/errorMessages';
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const EditarAtividade: React.FC = () => {
+const CriarAtividade: React.FC = () => {
     const router = useRouter();
-    const { id } = useLocalSearchParams<{ id: string }>();
     const { showSuccess, showError } = useToast();
 
     const [loading, setLoading] = useState(false);
     const [nome, setNome] = useState('');
     const [descricao, setDescricao] = useState('');
     const [local, setLocal] = useState('');
-    const [dataAtividade, setDataAtividade] = useState('');
-    const [horario, setHorario] = useState('');
+    const [data, setData] = useState('');
+    const [hora, setHora] = useState('');
+    const [capacidade, setCapacidade] = useState('');
     const [ativa, setAtiva] = useState(true);
     const [imagemUri, setImagemUri] = useState<string | null>(null);
-    const [imagemOriginal, setImagemOriginal] = useState<string | null>(null);
-    const [imagemAlterada, setImagemAlterada] = useState(false);
+    const [isDarkMode, setIsDarkMode] = useState(false);
 
-    // Formata a data automaticamente para DD/MM/AAAA
+    // Paleta de cores dark/light
+    const palettes = useMemo(() => ({
+        light: {
+            background: '#132F3B',
+            content: '#F8FAFC',
+            text: '#132F3B',
+            textSecondary: '#64748B',
+            icon: '#0162B3',
+            breadcrumb: '#E0F2FE',
+            accent: '#FFE157',
+            backIcon: '#FFFFFF',
+        },
+        dark: {
+            background: '#050C18',
+            content: '#0B1624',
+            text: '#F1F5F9',
+            textSecondary: '#94A3B8',
+            icon: '#60A5FA',
+            breadcrumb: '#94A3B8',
+            accent: '#FDE047',
+            backIcon: '#E2E8F0',
+        },
+    }), []);
+
+    const theme = useMemo(() => {
+        return isDarkMode ? palettes.dark : palettes.light;
+    }, [isDarkMode, palettes]);
+
+    // Carrega preferência de tema
+    const loadThemePreference = useCallback(async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const preferredTheme = user.user_metadata?.preferred_theme;
+                setIsDarkMode(preferredTheme === 'dark');
+            }
+        } catch (error) {
+            console.error('Erro ao carregar preferência de tema:', error);
+        }
+    }, []);
+
+    // Carrega tema ao montar componente
+    useFocusEffect(
+        useCallback(() => {
+            loadThemePreference();
+        }, [loadThemePreference])
+    );
+
+    // Formata data automaticamente (DD/MM/AAAA)
     const handleDateChange = (text: string) => {
-        // Remove tudo que não é número
         const numbersOnly = text.replace(/\D/g, '');
-
-        // Limita a 8 dígitos (DDMMAAAA)
         const limited = numbersOnly.slice(0, 8);
 
         // Valida e corrige o mês (1-12)
@@ -65,227 +110,186 @@ const EditarAtividade: React.FC = () => {
             processedValue = processedValue.slice(0, 4) + correctedYear;
         }
 
-        // Formata conforme o usuário digita
         let formatted = processedValue;
-        if (processedValue.length >= 3) {
+        if (limited.length >= 3) {
             formatted = `${processedValue.slice(0, 2)}/${processedValue.slice(2)}`;
         }
-        if (processedValue.length >= 5) {
+        if (limited.length >= 5) {
             formatted = `${processedValue.slice(0, 2)}/${processedValue.slice(2, 4)}/${processedValue.slice(4)}`;
         }
 
-        setDataAtividade(formatted);
+        setData(formatted);
     };
 
-    // Formata o horário automaticamente para HH:MM
+    // Formata hora automaticamente (HH:MM)
     const handleTimeChange = (text: string) => {
-        // Remove tudo que não é número
         const numbersOnly = text.replace(/\D/g, '');
-
-        // Limita a 4 dígitos (HHMM)
         const limited = numbersOnly.slice(0, 4);
 
-        // Valida hora (00-23)
-        if (limited.length >= 2) {
-            const hour = parseInt(limited.slice(0, 2));
-            if (hour > 23) {
-                setHorario('23:');
-                return;
-            }
-        }
-
-        // Valida minuto (00-59)
-        if (limited.length >= 3) {
-            const minute = parseInt(limited.slice(2, 4));
-            if (minute > 59) {
-                const formattedHour = limited.slice(0, 2);
-                setHorario(`${formattedHour}:59`);
-                return;
-            }
-        }
-
-        // Formata conforme o usuário digita
         let formatted = limited;
         if (limited.length >= 3) {
             formatted = `${limited.slice(0, 2)}:${limited.slice(2)}`;
         }
 
-        setHorario(formatted);
+        setHora(formatted);
     };
 
-    // Carrega os dados da atividade
-    const loadAtividade = useCallback(async () => {
-        if (!id) return;
-
-        try {
-            setLoading(true);
-            const data = await buscarAtividadePorId(id as string);
-
-            if (!data) {
-                showError('Atividade não encontrada.');
-                return;
-            }
-
-            setNome(data.nome || '');
-            setDescricao(data.descricao || '');
-            setLocal(data.local || '');
-
-            // Salva a imagem original para comparação
-            // Só atualiza se o usuário não alterou a imagem manualmente
-            if (!imagemAlterada) {
-                console.log('🖼️ [EdicaoAtividade] Carregando imagem da atividade:', data.imagem_url);
-                setImagemUri(data.imagem_url || null);
-                setImagemOriginal(data.imagem_url || null);
-            } else {
-                console.log('🖼️ [EdicaoAtividade] Imagem já foi alterada pelo usuário, mantendo a nova');
-            }
-
-            // Converte data_hora (timestamp) para data e hora separados
-            if (data.data_hora) {
-                const dateTime = new Date(data.data_hora);
-                const day = String(dateTime.getDate()).padStart(2, '0');
-                const month = String(dateTime.getMonth() + 1).padStart(2, '0');
-                const year = dateTime.getFullYear();
-                setDataAtividade(`${day}/${month}/${year}`);
-
-                const hours = String(dateTime.getHours()).padStart(2, '0');
-                const minutes = String(dateTime.getMinutes()).padStart(2, '0');
-                setHorario(`${hours}:${minutes}`);
-            }
-
-            setAtiva(data.status === 'ativa');
-        } catch (error) {
-            console.error('Erro ao carregar atividade:', error);
-            showError('Não foi possível carregar os dados da atividade.');
-        } finally {
-            setLoading(false);
-        }
-    }, [id, showError]);
-
-    useFocusEffect(
-        useCallback(() => {
-            loadAtividade();
-        }, [loadAtividade])
-    );
+    // Formata capacidade (apenas números)
+    const handleCapacidadeChange = (text: string) => {
+        const numbersOnly = text.replace(/\D/g, '');
+        setCapacidade(numbersOnly);
+    };
 
     const handleSave = async () => {
         // Validações
         if (!nome.trim()) {
-            showError('O nome da atividade é obrigatório.');
+            showError(getValidationMessage('nome_atividade', 'required'));
             return;
         }
 
-        if (!dataAtividade.trim()) {
-            showError('A data da atividade é obrigatória.');
+        if (nome.trim().length < 3) {
+            showError('O nome da atividade deve ter pelo menos 3 caracteres.');
             return;
         }
 
-        // Valida formato da data (DD/MM/AAAA)
+        if (!local.trim()) {
+            showError(getValidationMessage('local', 'required'));
+            return;
+        }
+
+        if (!data.trim()) {
+            showError(getValidationMessage('data', 'required'));
+            return;
+        }
+
         const dateRegex = /^\d{2}\/\d{2}\/\d{4}$/;
-        if (!dateRegex.test(dataAtividade)) {
+        if (!dateRegex.test(data)) {
             showError('Data inválida. Use o formato DD/MM/AAAA.');
             return;
         }
 
-        // Valida se é uma data válida
-        const [day, month, year] = dataAtividade.split('/').map(Number);
-        const date = new Date(year, month - 1, day);
+        // Valida se a data é válida
+        const [day, month, year] = data.split('/').map(Number);
+        const dateObj = new Date(year, month - 1, day);
         if (
-            date.getDate() !== day ||
-            date.getMonth() !== month - 1 ||
-            date.getFullYear() !== year
+            dateObj.getDate() !== day ||
+            dateObj.getMonth() !== month - 1 ||
+            dateObj.getFullYear() !== year
         ) {
             showError('Data inválida. Verifique o dia e mês informados.');
             return;
         }
 
-        if (!horario.trim()) {
-            showError('O horário da atividade é obrigatório.');
+        // Valida se a data não é passada
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (dateObj < today) {
+            showError('A data da atividade não pode ser no passado.');
             return;
         }
 
-        // Valida formato do horário (HH:MM)
+        if (!hora.trim()) {
+            showError(getValidationMessage('hora', 'required'));
+            return;
+        }
+
         const timeRegex = /^\d{2}:\d{2}$/;
-        if (!timeRegex.test(horario)) {
-            showError('Horário inválido. Use o formato HH:MM.');
+        if (!timeRegex.test(hora)) {
+            showError('Hora inválida. Use o formato HH:MM.');
             return;
         }
 
-        // Valida se é um horário válido
-        const [hour, minute] = horario.split(':').map(Number);
-        if (hour > 23 || minute > 59) {
-            showError('Horário inválido. Hora deve ser 00-23 e minuto 00-59.');
+        const [hours, minutes] = hora.split(':').map(Number);
+        if (hours > 23 || minutes > 59) {
+            showError('Hora inválida. Horas devem ser 00-23 e minutos 00-59.');
             return;
+        }
+
+        // Validação de capacidade (opcional)
+        if (capacidade.trim()) {
+            const cap = parseInt(capacidade);
+            if (cap < 1 || cap > 500) {
+                showError('A capacidade deve ser entre 1 e 500 pessoas.');
+                return;
+            }
         }
 
         try {
             setLoading(true);
 
             // Combina data e hora em um timestamp
-            const [day, month, year] = dataAtividade.split('/').map(Number);
-            const [hour, minute] = horario.split(':').map(Number);
-            const dataHora = new Date(year, month - 1, day, hour, minute);
+            const [day, month, year] = data.split('/').map(Number);
+            const [hours, minutes] = hora.split(':').map(Number);
+            const dataHora = new Date(year, month - 1, day, hours, minutes);
+
+            // Converte capacidade de forma segura
+            const capacidadeMaxima = capacidade.trim()
+                ? parseInt(capacidade.trim())
+                : undefined;
 
             const atividadeData = {
                 nome: nome.trim(),
-                descricao: descricao.trim(),
+                descricao: descricao.trim() || undefined,
                 local: local.trim(),
                 data_hora: dataHora.toISOString(),
+                capacidade_maxima: capacidadeMaxima,
                 status: ativa ? 'ativa' : 'inativa',
             };
 
-            await atualizarAtividade(id as string, atividadeData);
+            const novaAtividade = await criarAtividade(atividadeData);
 
-            // Gerenciar imagem
-            console.log('🖼️ [EdicaoAtividade] Verificando alteração de imagem:', {
-                imagemAlterada,
-                imagemUriLength: imagemUri?.length || 0,
-                imagemOriginalLength: imagemOriginal?.length || 0,
-                saoIguais: imagemUri === imagemOriginal
-            });
+            // Se houver imagem selecionada, faz o upload
+            if (imagemUri && novaAtividade.id) {
+                try {
+                    console.log('🖼️ [CriacaoAtividade] Iniciando upload de imagem...');
+                    console.log('🖼️ [CriacaoAtividade] Atividade ID:', novaAtividade.id);
+                    console.log('🖼️ [CriacaoAtividade] Image URI length:', imagemUri.length);
 
-            if (imagemAlterada && imagemUri !== imagemOriginal) {
-                if (!imagemUri && imagemOriginal) {
-                    // Imagem foi removida
-                    try {
-                        console.log('🗑️ [EdicaoAtividade] Removendo imagem...');
-                        await removerImagemAtividade(id as string);
-                        console.log('✅ [EdicaoAtividade] Imagem removida');
-                    } catch (error) {
-                        console.error('❌ [EdicaoAtividade] Erro ao remover imagem:', error);
-                        showError('Atividade atualizada, mas houve erro ao remover a imagem.');
-                    }
-                } else if (imagemUri && imagemUri !== imagemOriginal) {
-                    // Imagem foi alterada ou adicionada
-                    try {
-                        console.log('🖼️ [EdicaoAtividade] Fazendo upload da nova imagem...');
-                        await uploadImagemAtividade(id as string, imagemUri);
-                        console.log('✅ [EdicaoAtividade] Imagem atualizada');
-                    } catch (error) {
-                        console.error('❌ [EdicaoAtividade] Erro ao fazer upload:', error);
-                        showError('Atividade atualizada, mas houve erro ao enviar a imagem.');
-                    }
+                    const imageUrl = await uploadImagemAtividade(novaAtividade.id, imagemUri);
+
+                    console.log('✅ [CriacaoAtividade] Imagem enviada com sucesso!');
+                    console.log('✅ [CriacaoAtividade] URL da imagem:', imageUrl);
+                } catch (error) {
+                    console.error('❌ [CriacaoAtividade] ERRO ao enviar imagem:', error);
+                    console.error('❌ [CriacaoAtividade] Stack trace:', error);
+                    // Não bloqueia a criação se o upload falhar
+                    showError('Atividade criada, mas houve erro ao enviar a imagem.');
                 }
+            } else {
+                console.log('ℹ️ [CriacaoAtividade] Sem imagem para upload:', {
+                    temImagemUri: !!imagemUri,
+                    temAtividadeId: !!novaAtividade.id
+                });
             }
 
-            showSuccess(getSuccessMessage('update'));
+            showSuccess(getSuccessMessage('create'));
 
             setTimeout(() => {
                 router.back();
             }, 1500);
         } catch (error) {
-            console.error('Erro ao salvar atividade:', error);
-            showError('Ocorreu um erro ao salvar. Tente novamente.');
+            console.error('Erro ao criar atividade:', error);
+            showError('Ocorreu um erro ao criar a atividade. Tente novamente.');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
-            <InfoHeader entity="Atividades" onBackPress={() => router.push("/screens/Atividade/ListagemAtividade")} />
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
+            <InfoHeader
+                colors={{
+                    background: theme.background,
+                    breadcrumb: theme.breadcrumb,
+                    accent: theme.accent,
+                    backIcon: theme.backIcon,
+                }}
+                entity="Atividades"
+                action="Adição"
+                onBackPress={() => router.push('/screens/Atividade/ListagemAtividade')}
+            />
 
-            <View style={styles.content}>
+            <View style={[styles.content, { backgroundColor: theme.content }]}>
                 <ScrollView
                     style={styles.scrollView}
                     contentContainerStyle={styles.scrollContent}
@@ -293,31 +297,23 @@ const EditarAtividade: React.FC = () => {
                 >
                     {/* Título da seção */}
                     <View style={styles.titleContainer}>
-                        <Ionicons name="create-outline" size={24} color="#0162B3" />
-                        <Text style={styles.title}>Editar Atividade</Text>
+                        <Ionicons name="add-circle-outline" size={24} color={theme.icon} />
+                        <Text style={[styles.title, { color: theme.text }]}>Nova Atividade</Text>
                     </View>
 
-                    <Text style={styles.subtitle}>
-                        Atualize as informações da atividade recreativa
+                    <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
+                        Preencha os dados da nova atividade recreativa
                     </Text>
 
                     <Separator marginTop={16} marginBottom={24} />
 
                     {/* Imagem da Atividade */}
                     <View style={styles.fieldGroup}>
-                        <Text style={styles.label}>Imagem da Atividade</Text>
+                        <Text style={[styles.label, { color: theme.text }]}>Imagem da Atividade</Text>
                         <ImagePicker
                             imageUri={imagemUri}
-                            onImageSelected={(uri) => {
-                                console.log('🖼️ [EdicaoAtividade] Nova imagem selecionada:', uri.substring(0, 50) + '...');
-                                setImagemUri(uri);
-                                setImagemAlterada(true);
-                            }}
-                            onImageRemoved={() => {
-                                console.log('🗑️ [EdicaoAtividade] Imagem removida pelo usuário');
-                                setImagemUri(null);
-                                setImagemAlterada(true);
-                            }}
+                            onImageSelected={setImagemUri}
+                            onImageRemoved={() => setImagemUri(null)}
                             disabled={loading}
                         />
                     </View>
@@ -325,76 +321,108 @@ const EditarAtividade: React.FC = () => {
                     {/* Formulário */}
                     <View style={styles.form}>
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>
+                            <Text style={[styles.label, { color: theme.text }]}>
                                 Nome da Atividade <Text style={styles.required}>*</Text>
                             </Text>
                             <FormInput
-                                icon="create-outline"
-                                placeholder="Ex: Aula de Yoga"
+                                icon="fitness-outline"
+                                placeholder="Ex: Yoga Matinal, Aula de Culinária"
                                 value={nome}
                                 onChangeText={setNome}
                                 editable={!loading}
+                                maxLength={100}
+                                isDarkMode={isDarkMode}
                             />
                         </View>
 
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>Descrição</Text>
+                            <Text style={[styles.label, { color: theme.text }]}>Descrição</Text>
                             <FormInput
                                 icon="document-text-outline"
-                                placeholder="Descreva a atividade"
+                                placeholder="Descreva a atividade (opcional)"
                                 value={descricao}
                                 onChangeText={setDescricao}
+                                editable={!loading}
                                 multiline
                                 numberOfLines={3}
-                                editable={!loading}
+                                isDarkMode={isDarkMode}
                             />
                         </View>
 
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>Local</Text>
+                            <Text style={[styles.label, { color: theme.text }]}>
+                                Local <Text style={styles.required}>*</Text>
+                            </Text>
                             <FormInput
                                 icon="location-outline"
-                                placeholder="Ex: Área de lazer"
+                                placeholder="Ex: Salão Principal, Piscina"
                                 value={local}
                                 onChangeText={setLocal}
                                 editable={!loading}
+                                maxLength={100}
+                                isDarkMode={isDarkMode}
                             />
                         </View>
 
-                        <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>
-                                Data <Text style={styles.required}>*</Text>
-                            </Text>
-                            <FormInput
-                                icon="calendar-outline"
-                                placeholder="DD/MM/AAAA"
-                                value={dataAtividade}
-                                onChangeText={handleDateChange}
-                                editable={!loading}
-                                keyboardType="numeric"
-                                maxLength={10}
-                                helperText="Formato: dia/mês/ano"
-                            />
+                        <View style={styles.row}>
+                            <View style={[styles.fieldGroup, styles.halfWidth]}>
+                                <Text style={[styles.label, { color: theme.text }]}>
+                                    Data <Text style={styles.required}>*</Text>
+                                </Text>
+                                <FormInput
+                                    icon="calendar-outline"
+                                    placeholder="DD/MM/AAAA"
+                                    value={data}
+                                    onChangeText={handleDateChange}
+                                    editable={!loading}
+                                    keyboardType="numeric"
+                                    maxLength={10}
+                                    helperText="Formato: dia/mês/ano"
+                                    isDarkMode={isDarkMode}
+                                />
+                            </View>
+
+                            <View style={[styles.fieldGroup, styles.halfWidth]}>
+                                <Text style={[styles.label, { color: theme.text }]}>
+                                    Horário <Text style={styles.required}>*</Text>
+                                </Text>
+                                <FormInput
+                                    icon="time-outline"
+                                    placeholder="HH:MM"
+                                    value={hora}
+                                    onChangeText={handleTimeChange}
+                                    editable={!loading}
+                                    keyboardType="numeric"
+                                    maxLength={5}
+                                    helperText="Formato: hora:minuto"
+                                    isDarkMode={isDarkMode}
+                                />
+                            </View>
                         </View>
 
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>
-                                Horário <Text style={styles.required}>*</Text>
-                            </Text>
+                            <Text style={[styles.label, { color: theme.text }]}>Capacidade (opcional)</Text>
                             <FormInput
-                                icon="time-outline"
-                                placeholder="HH:MM"
-                                value={horario}
-                                onChangeText={handleTimeChange}
+                                icon="people-outline"
+                                placeholder="Número máximo de participantes"
+                                value={capacidade}
+                                onChangeText={handleCapacidadeChange}
                                 editable={!loading}
                                 keyboardType="numeric"
-                                maxLength={5}
-                                helperText="Formato: hora:minuto (00:00 - 23:59)"
+                                maxLength={3}
+                                helperText="Deixe em branco para capacidade ilimitada"
+                                isDarkMode={isDarkMode}
                             />
                         </View>
 
                         {/* Status da Atividade */}
-                        <View style={styles.switchContainer}>
+                        <View style={[
+                            styles.switchContainer,
+                            {
+                                backgroundColor: isDarkMode ? '#1E293B' : '#FFFFFF',
+                                borderColor: isDarkMode ? '#334155' : '#E2E8F0',
+                            }
+                        ]}>
                             <View style={styles.switchLabel}>
                                 <Ionicons
                                     name={ativa ? "checkmark-circle" : "close-circle"}
@@ -402,9 +430,9 @@ const EditarAtividade: React.FC = () => {
                                     color={ativa ? "#10B981" : "#6B7280"}
                                 />
                                 <View style={styles.switchTextContainer}>
-                                    <Text style={styles.switchTitle}>Atividade Ativa</Text>
-                                    <Text style={styles.switchDescription}>
-                                        {ativa ? 'Esta atividade está disponível para os hóspedes' : 'Esta atividade está pausada'}
+                                    <Text style={[styles.switchTitle, { color: theme.text }]}>Atividade Ativa</Text>
+                                    <Text style={[styles.switchDescription, { color: theme.textSecondary }]}>
+                                        {ativa ? 'Atividade disponível para reservas' : 'Atividade desativada'}
                                     </Text>
                                 </View>
                             </View>
@@ -421,21 +449,22 @@ const EditarAtividade: React.FC = () => {
                     <Separator marginTop={24} marginBottom={16} />
 
                     {/* Botões de ação */}
-                    {/* Fazer Integração com o Supabase */}
                     <View style={styles.actions}>
                         <ActionButton
                             variant="primary"
                             icon="checkmark-circle-outline"
+                            tone={isDarkMode ? 'dark' : 'light'}
                             onPress={handleSave}
                             disabled={loading}
                         >
-                            {loading ? 'Salvando...' : 'Salvar Alterações'}
+                            {loading ? 'Criando...' : 'Criar Atividade'}
                         </ActionButton>
 
                         <ActionButton
                             variant="secondary"
                             icon="close-circle-outline"
-                            onPress={() => router.push("/screens/Atividade/ListagemAtividade")}
+                            tone={isDarkMode ? 'dark' : 'light'}
+                            onPress={() => router.push('/screens/Atividade/ListagemAtividade')}
                             disabled={loading}
                         >
                             Cancelar
@@ -450,11 +479,9 @@ const EditarAtividade: React.FC = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#132F3B',
     },
     content: {
         flex: 1,
-        backgroundColor: '#F8FAFC',
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
         overflow: 'hidden',
@@ -463,7 +490,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     scrollContent: {
-        flexGrow: 0,
+        flexGrow: 1,
         padding: 20,
         paddingBottom: 40,
     },
@@ -476,11 +503,9 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 24,
         fontWeight: '700',
-        color: '#132F3B',
     },
     subtitle: {
         fontSize: 14,
-        color: '#64748B',
         lineHeight: 20,
     },
     form: {
@@ -492,21 +517,25 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#334155',
         marginBottom: 4,
     },
     required: {
         color: '#EF4444',
     },
+    row: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    halfWidth: {
+        flex: 1,
+    },
     switchContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: '#FFFFFF',
         padding: 16,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: '#E2E8F0',
     },
     switchLabel: {
         flexDirection: 'row',
@@ -521,15 +550,13 @@ const styles = StyleSheet.create({
     switchTitle: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#132F3B',
     },
     switchDescription: {
         fontSize: 12,
-        color: '#64748B',
     },
     actions: {
         gap: 12,
     },
 });
 
-export default EditarAtividade;
+export default CriarAtividade;
