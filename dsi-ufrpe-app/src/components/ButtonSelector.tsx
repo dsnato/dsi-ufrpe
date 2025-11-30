@@ -8,6 +8,7 @@ interface ButtonSelectorProps {
     value: string;
     onSelect: (value: string) => void;
     helperText?: string;
+    isDarkMode?: boolean;
 }
 
 export const ButtonSelector: React.FC<ButtonSelectorProps> = ({
@@ -16,18 +17,29 @@ export const ButtonSelector: React.FC<ButtonSelectorProps> = ({
     value,
     onSelect,
     helperText,
+    isDarkMode = false,
 }) => {
     return (
         <View style={styles.container}>
-            <Text style={styles.label}>{label}</Text>
-            {helperText && <Text style={styles.helperText}>{helperText}</Text>}
+            <Text style={[styles.label, { color: isDarkMode ? '#F1F5F9' : '#132F3B' }]}>{label}</Text>
+            {helperText && <Text style={[styles.helperText, { color: isDarkMode ? '#94A3B8' : '#64748B' }]}>{helperText}</Text>}
             <View style={styles.buttonsContainer}>
                 {options.map((option) => {
                     const isSelected = value === option.value;
                     return (
                         <TouchableOpacity
                             key={option.value}
-                            style={[styles.button, isSelected && styles.buttonSelected]}
+                            style={[
+                                styles.button,
+                                {
+                                    backgroundColor: isSelected
+                                        ? '#8B5CF6'
+                                        : isDarkMode ? '#1E293B' : '#F1F5F9',
+                                    borderColor: isSelected
+                                        ? '#8B5CF6'
+                                        : isDarkMode ? '#334155' : '#E2E8F0',
+                                },
+                            ]}
                             onPress={() => onSelect(option.value)}
                             activeOpacity={0.7}
                         >
@@ -35,10 +47,18 @@ export const ButtonSelector: React.FC<ButtonSelectorProps> = ({
                                 <Ionicons
                                     name={option.icon}
                                     size={20}
-                                    color={isSelected ? '#FFFFFF' : '#64748B'}
+                                    color={isSelected ? '#FFFFFF' : isDarkMode ? '#94A3B8' : '#64748B'}
                                 />
                             )}
-                            <Text style={[styles.buttonText, isSelected && styles.buttonTextSelected]}>
+                            <Text style={[
+                                styles.buttonText,
+                                {
+                                    color: isSelected
+                                        ? '#FFFFFF'
+                                        : isDarkMode ? '#94A3B8' : '#64748B',
+                                    fontWeight: isSelected ? '600' : '500',
+                                },
+                            ]}>
                                 {option.label}
                             </Text>
                         </TouchableOpacity>
@@ -56,12 +76,10 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#132F3B',
         marginBottom: 4,
     },
     helperText: {
         fontSize: 12,
-        color: '#64748B',
         marginBottom: 8,
     },
     buttonsContainer: {
@@ -72,25 +90,14 @@ const styles = StyleSheet.create({
     button: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#F1F5F9',
         paddingVertical: 12,
         paddingHorizontal: 16,
         borderRadius: 8,
         borderWidth: 2,
-        borderColor: '#E2E8F0',
         gap: 6,
-    },
-    buttonSelected: {
-        backgroundColor: '#8B5CF6',
-        borderColor: '#8B5CF6',
     },
     buttonText: {
         fontSize: 14,
-        fontWeight: '500',
-        color: '#64748B',
-    },
-    buttonTextSelected: {
-        color: '#FFFFFF',
-        fontWeight: '600',
     },
 });
+
