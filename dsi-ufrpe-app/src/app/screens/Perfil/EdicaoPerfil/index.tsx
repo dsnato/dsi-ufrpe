@@ -226,6 +226,7 @@ export default function EdicaoPerfil() {
                                     onChangeText={setName}
                                     maxLength={80}
                                     editable={!saving}
+                                    isDarkMode={themeKey === 'dark'}
                                 />
                             </View>
 
@@ -239,6 +240,7 @@ export default function EdicaoPerfil() {
                                     keyboardType="phone-pad"
                                     maxLength={15}
                                     editable={!saving}
+                                    isDarkMode={themeKey === 'dark'}
                                 />
                             </View>
 
@@ -252,6 +254,7 @@ export default function EdicaoPerfil() {
                                     keyboardType="number-pad"
                                     maxLength={18}
                                     editable={!saving}
+                                    isDarkMode={themeKey === 'dark'}
                                 />
                             </View>
 
@@ -264,6 +267,7 @@ export default function EdicaoPerfil() {
                                     onChangeText={setHotelName}
                                     maxLength={100}
                                     editable={!saving}
+                                    isDarkMode={themeKey === 'dark'}
                                 />
                             </View>
                         </View>
@@ -365,4 +369,5 @@ const styles = StyleSheet.create({
         gap: 12,
     },
 });
+
 
