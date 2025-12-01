@@ -3,16 +3,36 @@ import { StyleSheet, TextInput, TextInputProps, View } from "react-native";
 
 type TextInputRoundedProps = TextInputProps & {
     placeholder?: string;
+    isDarkMode?: boolean;
 }
 
-export default function TextInputRounded({ placeholder, ...rest }: TextInputRoundedProps) {
+export default function TextInputRounded({ placeholder, isDarkMode = false, ...rest }: TextInputRoundedProps) {
+    const colors = isDarkMode
+        ? {
+            bg: 'rgba(21, 34, 56, 0.4)', // card com transparência
+            border: 'rgba(31, 43, 60, 0.6)',
+            icon: '#94A3B8',
+            placeholder: '#64748B',
+            text: '#E2E8F0',
+        }
+        : {
+            bg: '#FFFFFF',
+            border: '#E2E8F0',
+            icon: '#64748B',
+            placeholder: '#94A3B8',
+            text: '#132F3B',
+        };
+
     return (
-        <View style={styles.container}>
-            <FontAwesome name="search" size={18} color="#64748B" />
+        <View style={[styles.container, {
+            backgroundColor: colors.bg,
+            borderColor: colors.border
+        }]}>
+            <FontAwesome name="search" size={18} color={colors.icon} />
             <TextInput
-                style={styles.input}
+                style={[styles.input, { color: colors.text }]}
                 placeholder={placeholder || "Pesquisar por nome..."}
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={colors.placeholder}
                 {...rest}
             />
         </View>
@@ -21,7 +41,6 @@ export default function TextInputRounded({ placeholder, ...rest }: TextInputRoun
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: "#FFFFFF",
         borderRadius: 12,
         flexDirection: "row",
         alignItems: "center",
@@ -29,7 +48,6 @@ const styles = StyleSheet.create({
         paddingVertical: 14,
         gap: 12,
         borderWidth: 1.5,
-        borderColor: "#E2E8F0",
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.05,
@@ -38,7 +56,6 @@ const styles = StyleSheet.create({
     },
     input: {
         flex: 1,
-        color: "#132F3B",
         fontSize: 15,
         fontWeight: "500",
         paddingVertical: 0,

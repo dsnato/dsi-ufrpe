@@ -6,40 +6,62 @@ type FormInputProps = TextInputProps & {
     icon?: keyof typeof Ionicons.glyphMap;
     error?: string;
     helperText?: string;
+    isDarkMode?: boolean;
 };
 
 export const FormInput: React.FC<FormInputProps> = ({
     icon,
     error,
     helperText,
+    isDarkMode = false,
     multiline = false,
     numberOfLines = 1,
     style,
     ...rest
 }) => {
+    const colors = isDarkMode ? {
+        bg: 'rgba(26, 35, 50, 0.4)',
+        border: 'rgba(45, 59, 79, 0.6)',
+        text: '#E2E8F0',
+        placeholder: '#64748B',
+        icon: '#60A5FA',
+        helper: '#94A3B8',
+    } : {
+        bg: '#FFFFFF',
+        border: '#E2E8F0',
+        text: '#1E293B',
+        placeholder: '#94A3B8',
+        icon: '#64748B',
+        helper: '#64748B',
+    };
+
     return (
         <View style={styles.wrapper}>
             <View style={[
                 styles.container,
-                error && styles.containerError,
+                {
+                    backgroundColor: error ? '#FEF2F2' : colors.bg,
+                    borderColor: error ? '#EF4444' : colors.border,
+                },
                 multiline && styles.containerMultiline
             ]}>
                 {icon && (
                     <Ionicons
                         name={icon}
                         size={20}
-                        color={error ? '#EF4444' : '#64748B'}
+                        color={error ? '#EF4444' : colors.icon}
                         style={styles.icon}
                     />
                 )}
                 <TextInput
                     style={[
                         styles.input,
+                        { color: colors.text },
                         multiline && styles.inputMultiline,
                         { height: multiline ? numberOfLines * 20 + 24 : 48 },
                         style
                     ]}
-                    placeholderTextColor="#94A3B8"
+                    placeholderTextColor={colors.placeholder}
                     multiline={multiline}
                     numberOfLines={numberOfLines}
                     textAlignVertical={multiline ? 'top' : 'center'}
@@ -53,7 +75,7 @@ export const FormInput: React.FC<FormInputProps> = ({
                 </View>
             )}
             {!error && helperText && (
-                <Text style={styles.helperText}>{helperText}</Text>
+                <Text style={[styles.helperText, { color: colors.helper }]}>{helperText}</Text>
             )}
         </View>
     );
@@ -66,16 +88,10 @@ const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#FFFFFF',
         borderWidth: 1.5,
-        borderColor: '#E2E8F0',
         borderRadius: 12,
         paddingHorizontal: 16,
         minHeight: 48,
-    },
-    containerError: {
-        borderColor: '#EF4444',
-        backgroundColor: '#FEF2F2',
     },
     containerMultiline: {
         alignItems: 'flex-start',
@@ -87,7 +103,6 @@ const styles = StyleSheet.create({
     input: {
         flex: 1,
         fontSize: 15,
-        color: '#1E293B',
         fontWeight: '500',
         padding: 0,
     },
@@ -109,7 +124,6 @@ const styles = StyleSheet.create({
     },
     helperText: {
         fontSize: 12,
-        color: '#64748B',
         marginTop: 6,
         paddingHorizontal: 4,
     },
