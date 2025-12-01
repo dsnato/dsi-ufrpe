@@ -1,5 +1,8 @@
+import { supabase } from '@/lib/supabase';
 import { ActionButton } from '@/src/components/ActionButton';
 import { FormInput } from '@/src/components/FormInput';
+import { FormSelect, SelectOption } from '@/src/components/FormSelect';
+import { ImagePicker } from '@/src/components/ImagePicker';
 import { InfoHeader } from '@/src/components/InfoHeader';
 import { Separator } from '@/src/components/Separator';
 import { useToast } from '@/src/components/ToastContext';
@@ -7,8 +10,8 @@ import { atualizarFuncionario, buscarFuncionarioPorId } from '@/src/services/fun
 import { getSuccessMessage, getValidationMessage } from '@/src/utils/errorMessages';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { Alert, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const EditarFuncionario: React.FC = () => {
@@ -17,6 +20,7 @@ const EditarFuncionario: React.FC = () => {
     const { showSuccess, showError } = useToast();
 
     const [loading, setLoading] = useState(false);
+    const [isDarkMode, setIsDarkMode] = useState(false);
     const [nome, setNome] = useState('');
     const [cpf, setCpf] = useState('');
     const [celular, setCelular] = useState('');
@@ -27,6 +31,54 @@ const EditarFuncionario: React.FC = () => {
     // Estado para gerenciar a foto
     const [photoUri, setPhotoUri] = useState<string | null>(null);
     const [hasCustomPhoto, setHasCustomPhoto] = useState(false);
+
+    // Paleta de cores
+    const palettes = useMemo(() => ({
+        light: {
+            background: '#132F3B',
+            content: '#F8FAFC',
+            text: '#132F3B',
+            textSecondary: '#64748B',
+            breadcrumb: '#E0F2FE',
+            accent: '#FFE157',
+            backIcon: '#FFFFFF',
+        },
+        dark: {
+            background: '#050C18',
+            content: '#0B1624',
+            text: '#F1F5F9',
+            textSecondary: '#94A3B8',
+            breadcrumb: '#94A3B8',
+            accent: '#FDE047',
+            backIcon: '#E2E8F0',
+        }
+    }), []);
+
+    const theme = useMemo(() => palettes[isDarkMode ? 'dark' : 'light'], [isDarkMode, palettes]);
+
+    // Cargos disponíveis
+    const cargosDisponiveis: SelectOption[] = [
+        { label: 'Recepcionista - Atendimento e check-in', value: 'Recepcionista' },
+        { label: 'Camareira - Limpeza e organização', value: 'Camareira' },
+        { label: 'Garçom - Serviço de alimentação', value: 'Garçom' },
+        { label: 'Gerente - Administração geral', value: 'Gerente' },
+        { label: 'Manobrista - Estacionamento', value: 'Manobrista' },
+        { label: 'Cozinheiro - Preparo de refeições', value: 'Cozinheiro' },
+        { label: 'Segurança - Vigilância', value: 'Segurança' },
+        { label: 'Manutenção - Reparos e conservação', value: 'Manutenção' },
+    ];
+
+    const loadThemePreference = useCallback(async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            const preferredTheme = user.user_metadata?.preferred_theme;
+            setIsDarkMode(preferredTheme === 'dark');
+        } catch (error) {
+            console.error('Erro ao carregar tema:', error);
+        }
+    }, []);
 
     // Formata CPF automaticamente (000.000.000-00)
     const handleCpfChange = (text: string) => {
@@ -141,12 +193,12 @@ const EditarFuncionario: React.FC = () => {
         try {
             setLoading(true);
             const data = await buscarFuncionarioPorId(id as string);
-            
+
             if (!data) {
                 showError('Funcionário não encontrado.');
                 return;
             }
-            
+
             setNome(data.nome_completo || '');
             setCpf(data.cpf || '');
             setCelular(data.telefone || '');
@@ -169,8 +221,9 @@ const EditarFuncionario: React.FC = () => {
 
     useFocusEffect(
         useCallback(() => {
+            loadThemePreference();
             loadFuncionario();
-        }, [loadFuncionario])
+        }, [loadFuncionario, loadThemePreference])
     );
 
     const handleSave = async () => {
@@ -252,10 +305,20 @@ const EditarFuncionario: React.FC = () => {
     };
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
-            <InfoHeader entity="Funcionários" action="Edição" onBackPress={() => router.push('/screens/Funcionario/ListagemFuncionario')} />
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
+            <InfoHeader
+                entity="Funcionários"
+                action="Edição"
+                onBackPress={() => router.push('/screens/Funcionario/ListagemFuncionario')}
+                colors={{
+                    background: theme.background,
+                    breadcrumb: theme.breadcrumb,
+                    accent: theme.accent,
+                    backIcon: theme.backIcon,
+                }}
+            />
 
-            <View style={styles.content}>
+            <View style={[styles.content, { backgroundColor: theme.content }]}>
                 <ScrollView
                     style={styles.scrollView}
                     contentContainerStyle={styles.scrollContent}
@@ -263,75 +326,27 @@ const EditarFuncionario: React.FC = () => {
                 >
                     {/* Título da seção */}
                     <View style={styles.titleContainer}>
-                        <Ionicons name="create-outline" size={24} color="#0162B3" />
-                        <Text style={styles.title}>Editar Funcionário</Text>
+                        <Ionicons name="create-outline" size={24} color={isDarkMode ? '#60A5FA' : '#0162B3'} />
+                        <Text style={[styles.title, { color: theme.text }]}>Editar Funcionário</Text>
                     </View>
 
-                    <Text style={styles.subtitle}>
+                    <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
                         Atualize as informações do funcionário
                     </Text>
 
                     <Separator marginTop={16} marginBottom={24} />
 
                     {/* Seção de Foto de Perfil */}
-                    <View style={styles.photoSection}>
-                        <Text style={styles.photoLabel}>Foto de Perfil</Text>
-
-                        <View style={styles.photoContainer}>
-                            {/* Avatar */}
-                            <View style={styles.avatarWrapper}>
-                                {photoUri ? (
-                                    <Image
-                                        source={{ uri: photoUri }}
-                                        style={styles.avatar}
-                                    />
-                                ) : (
-                                    <View style={styles.avatarPlaceholder}>
-                                        <Ionicons name="person" size={50} color="#94A3B8" />
-                                    </View>
-                                )}
-
-                                {/* Botão de editar foto */}
-                                <TouchableOpacity
-                                    style={styles.editPhotoButton}
-                                    onPress={handleSelectPhoto}
-                                    disabled={loading}
-                                >
-                                    <Ionicons name="camera" size={18} color="#FFFFFF" />
-                                </TouchableOpacity>
-                            </View>
-
-                            {/* Botões de ação da foto */}
-                            <View style={styles.photoActions}>
-                                <TouchableOpacity
-                                    style={styles.photoActionButton}
-                                    onPress={handleSelectPhoto}
-                                    disabled={loading}
-                                >
-                                    <Ionicons name="cloud-upload-outline" size={20} color="#0162B3" />
-                                    <Text style={styles.photoActionText}>
-                                        {hasCustomPhoto ? 'Alterar Foto' : 'Adicionar Foto'}
-                                    </Text>
-                                </TouchableOpacity>
-
-                                {hasCustomPhoto && (
-                                    <TouchableOpacity
-                                        style={[styles.photoActionButton, styles.removeButton]}
-                                        onPress={handleRemovePhoto}
-                                        disabled={loading}
-                                    >
-                                        <Ionicons name="trash-outline" size={20} color="#EF4444" />
-                                        <Text style={[styles.photoActionText, styles.removeText]}>
-                                            Remover Foto
-                                        </Text>
-                                    </TouchableOpacity>
-                                )}
-                            </View>
-                        </View>
-
-                        <Text style={styles.photoHelper}>
-                            Formatos aceitos: JPG, PNG. Tamanho máximo: 2MB
-                        </Text>
+                    {/* Foto do Funcionário */}
+                    <View style={styles.fieldGroup}>
+                        <Text style={[styles.label, { color: theme.text }]}>Foto de Perfil</Text>
+                        <ImagePicker
+                            imageUri={photoUri}
+                            onImageSelected={handleSelectPhoto}
+                            onImageRemoved={handleRemovePhoto}
+                            disabled={loading}
+                            tone={isDarkMode ? 'dark' : 'light'}
+                        />
                     </View>
 
                     <Separator marginTop={24} marginBottom={24} />
@@ -339,7 +354,7 @@ const EditarFuncionario: React.FC = () => {
                     {/* Formulário */}
                     <View style={styles.form}>
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>
+                            <Text style={[styles.label, { color: theme.text }]}>
                                 Nome Completo <Text style={styles.required}>*</Text>
                             </Text>
                             <FormInput
@@ -348,11 +363,12 @@ const EditarFuncionario: React.FC = () => {
                                 value={nome}
                                 onChangeText={setNome}
                                 editable={!loading}
+                                isDarkMode={isDarkMode}
                             />
                         </View>
 
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>
+                            <Text style={[styles.label, { color: theme.text }]}>
                                 CPF <Text style={styles.required}>*</Text>
                             </Text>
                             <FormInput
@@ -364,11 +380,12 @@ const EditarFuncionario: React.FC = () => {
                                 keyboardType="numeric"
                                 maxLength={14}
                                 helperText="Formato: 000.000.000-00"
+                                isDarkMode={isDarkMode}
                             />
                         </View>
 
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>
+                            <Text style={[styles.label, { color: theme.text }]}>
                                 Celular <Text style={styles.required}>*</Text>
                             </Text>
                             <FormInput
@@ -380,11 +397,12 @@ const EditarFuncionario: React.FC = () => {
                                 keyboardType="numeric"
                                 maxLength={15}
                                 helperText="Formato: (00) 00000-0000"
+                                isDarkMode={isDarkMode}
                             />
                         </View>
 
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>
+                            <Text style={[styles.label, { color: theme.text }]}>
                                 E-mail <Text style={styles.required}>*</Text>
                             </Text>
                             <FormInput
@@ -395,22 +413,33 @@ const EditarFuncionario: React.FC = () => {
                                 editable={!loading}
                                 keyboardType="email-address"
                                 autoCapitalize="none"
+                                isDarkMode={isDarkMode}
                             />
                         </View>
 
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>Cargo</Text>
-                            <FormInput
+                            <Text style={[styles.label, { color: theme.text }]}>
+                                Cargo <Text style={styles.required}>*</Text>
+                            </Text>
+                            <FormSelect
                                 icon="briefcase-outline"
-                                placeholder="Ex: Recepcionista, Gerente"
+                                placeholder="Selecione o cargo"
                                 value={cargo}
-                                onChangeText={setCargo}
-                                editable={!loading}
+                                options={cargosDisponiveis}
+                                onSelect={setCargo}
+                                disabled={loading}
+                                isDarkMode={isDarkMode}
                             />
                         </View>
 
                         {/* Status do Funcionário */}
-                        <View style={styles.switchContainer}>
+                        <View style={[
+                            styles.switchContainer,
+                            {
+                                backgroundColor: isDarkMode ? '#1E293B' : '#FFFFFF',
+                                borderColor: isDarkMode ? '#334155' : '#E2E8F0'
+                            }
+                        ]}>
                             <View style={styles.switchLabel}>
                                 <Ionicons
                                     name={ativo ? "checkmark-circle" : "close-circle"}
@@ -418,8 +447,8 @@ const EditarFuncionario: React.FC = () => {
                                     color={ativo ? "#10B981" : "#6B7280"}
                                 />
                                 <View style={styles.switchTextContainer}>
-                                    <Text style={styles.switchTitle}>Funcionário Ativo</Text>
-                                    <Text style={styles.switchDescription}>
+                                    <Text style={[styles.switchTitle, { color: theme.text }]}>Funcionário Ativo</Text>
+                                    <Text style={[styles.switchDescription, { color: theme.textSecondary }]}>
                                         {ativo ? 'Este funcionário está ativo no sistema' : 'Este funcionário está inativo'}
                                     </Text>
                                 </View>
@@ -443,6 +472,7 @@ const EditarFuncionario: React.FC = () => {
                             icon="checkmark-circle-outline"
                             onPress={handleSave}
                             disabled={loading}
+                            tone={isDarkMode ? 'dark' : 'light'}
                         >
                             {loading ? 'Salvando...' : 'Salvar Alterações'}
                         </ActionButton>
@@ -452,6 +482,7 @@ const EditarFuncionario: React.FC = () => {
                             icon="close-circle-outline"
                             onPress={() => router.push('/screens/Funcionario/ListagemFuncionario')}
                             disabled={loading}
+                            tone={isDarkMode ? 'dark' : 'light'}
                         >
                             Cancelar
                         </ActionButton>
@@ -465,11 +496,9 @@ const EditarFuncionario: React.FC = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#132F3B',
     },
     content: {
         flex: 1,
-        backgroundColor: '#F8FAFC',
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
         overflow: 'hidden',
@@ -491,99 +520,10 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 24,
         fontWeight: '700',
-        color: '#132F3B',
     },
     subtitle: {
         fontSize: 14,
-        color: '#64748B',
         lineHeight: 20,
-    },
-    // Estilos da seção de foto
-    photoSection: {
-        alignItems: 'center',
-        gap: 16,
-    },
-    photoLabel: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#334155',
-        alignSelf: 'flex-start',
-    },
-    photoContainer: {
-        alignItems: 'center',
-        gap: 16,
-    },
-    avatarWrapper: {
-        position: 'relative',
-    },
-    avatar: {
-        width: 120,
-        height: 120,
-        borderRadius: 60,
-        borderWidth: 4,
-        borderColor: '#FFFFFF',
-        backgroundColor: '#E2E8F0',
-    },
-    avatarPlaceholder: {
-        width: 120,
-        height: 120,
-        borderRadius: 60,
-        borderWidth: 4,
-        borderColor: '#FFFFFF',
-        backgroundColor: '#E2E8F0',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    editPhotoButton: {
-        position: 'absolute',
-        right: 0,
-        bottom: 0,
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: '#0162B3',
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 3,
-        borderColor: '#FFFFFF',
-        elevation: 4,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 3,
-    },
-    photoActions: {
-        flexDirection: 'row',
-        gap: 12,
-        flexWrap: 'wrap',
-        justifyContent: 'center',
-    },
-    photoActionButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-        paddingVertical: 10,
-        paddingHorizontal: 16,
-        borderRadius: 8,
-        borderWidth: 1.5,
-        borderColor: '#0162B3',
-        backgroundColor: '#FFFFFF',
-    },
-    removeButton: {
-        borderColor: '#EF4444',
-    },
-    photoActionText: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#0162B3',
-    },
-    removeText: {
-        color: '#EF4444',
-    },
-    photoHelper: {
-        fontSize: 12,
-        color: '#64748B',
-        textAlign: 'center',
     },
     // Estilos do formulário
     form: {
@@ -595,7 +535,6 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#334155',
         marginBottom: 4,
     },
     required: {
@@ -624,11 +563,9 @@ const styles = StyleSheet.create({
     switchTitle: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#132F3B',
     },
     switchDescription: {
         fontSize: 12,
-        color: '#64748B',
     },
     actions: {
         gap: 12,
