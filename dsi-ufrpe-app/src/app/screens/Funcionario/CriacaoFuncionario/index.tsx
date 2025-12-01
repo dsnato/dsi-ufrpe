@@ -1,6 +1,8 @@
+import { supabase } from '@/lib/supabase';
 import { ActionButton } from '@/src/components/ActionButton';
 import { FormInput } from '@/src/components/FormInput';
 import { FormSelect, SelectOption } from '@/src/components/FormSelect';
+import { ImagePicker } from '@/src/components/ImagePicker';
 import { InfoHeader } from '@/src/components/InfoHeader';
 import { Separator } from '@/src/components/Separator';
 import { useToast } from '@/src/components/ToastContext';
@@ -8,7 +10,7 @@ import { criarFuncionario } from '@/src/services/funcionariosService';
 import { getSuccessMessage, getValidationMessage } from '@/src/utils/errorMessages';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -17,6 +19,7 @@ const CriarFuncionario: React.FC = () => {
     const { showSuccess, showError } = useToast();
 
     const [loading, setLoading] = useState(false);
+    const [isDarkMode, setIsDarkMode] = useState(false);
     const [nome, setNome] = useState('');
     const [cpf, setCpf] = useState('');
     const [celular, setCelular] = useState('');
@@ -25,6 +28,47 @@ const CriarFuncionario: React.FC = () => {
     const [dataAdmissao, setDataAdmissao] = useState('');
     const [salario, setSalario] = useState('');
     const [ativo, setAtivo] = useState(true);
+    const [photoUri, setPhotoUri] = useState<string | null>(null);
+
+    // Paleta de cores
+    const palettes = useMemo(() => ({
+        light: {
+            background: '#132F3B',
+            content: '#F8FAFC',
+            text: '#132F3B',
+            textSecondary: '#64748B',
+            breadcrumb: '#E0F2FE',
+            accent: '#FFE157',
+            backIcon: '#FFFFFF',
+        },
+        dark: {
+            background: '#050C18',
+            content: '#0B1624',
+            text: '#F1F5F9',
+            textSecondary: '#94A3B8',
+            breadcrumb: '#94A3B8',
+            accent: '#FDE047',
+            backIcon: '#E2E8F0',
+        }
+    }), []);
+
+    const theme = useMemo(() => palettes[isDarkMode ? 'dark' : 'light'], [isDarkMode, palettes]);
+
+    useEffect(() => {
+        loadThemePreference();
+    }, []);
+
+    const loadThemePreference = async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            const preferredTheme = user.user_metadata?.preferred_theme;
+            setIsDarkMode(preferredTheme === 'dark');
+        } catch (error) {
+            console.error('Erro ao carregar tema:', error);
+        }
+    };
 
     // Cargos disponíveis
     const cargosDisponiveis: SelectOption[] = [
@@ -299,10 +343,20 @@ const CriarFuncionario: React.FC = () => {
     };
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
-            <InfoHeader entity="Funcionários" action="Adição" onBackPress={() => router.push('/screens/Funcionario/ListagemFuncionario')} />
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
+            <InfoHeader
+                entity="Funcionários"
+                action="Adição"
+                onBackPress={() => router.push('/screens/Funcionario/ListagemFuncionario')}
+                colors={{
+                    background: theme.background,
+                    breadcrumb: theme.breadcrumb,
+                    accent: theme.accent,
+                    backIcon: theme.backIcon,
+                }}
+            />
 
-            <View style={styles.content}>
+            <View style={[styles.content, { backgroundColor: theme.content }]}>
                 <ScrollView
                     style={styles.scrollView}
                     contentContainerStyle={styles.scrollContent}
@@ -310,20 +364,32 @@ const CriarFuncionario: React.FC = () => {
                 >
                     {/* Título da seção */}
                     <View style={styles.titleContainer}>
-                        <Ionicons name="add-circle-outline" size={24} color="#0162B3" />
-                        <Text style={styles.title}>Novo Funcionário</Text>
+                        <Ionicons name="add-circle-outline" size={24} color={isDarkMode ? '#60A5FA' : '#0162B3'} />
+                        <Text style={[styles.title, { color: theme.text }]}>Novo Funcionário</Text>
                     </View>
 
-                    <Text style={styles.subtitle}>
+                    <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
                         Cadastre um novo funcionário no sistema
                     </Text>
 
                     <Separator marginTop={16} marginBottom={24} />
 
+                    {/* Foto do Funcionário */}
+                    <View style={styles.fieldGroup}>
+                        <Text style={[styles.label, { color: theme.text }]}>Foto de Perfil</Text>
+                        <ImagePicker
+                            imageUri={photoUri}
+                            onImageSelected={setPhotoUri}
+                            onImageRemoved={() => setPhotoUri(null)}
+                            disabled={loading}
+                            tone={isDarkMode ? 'dark' : 'light'}
+                        />
+                    </View>
+
                     {/* Formulário */}
                     <View style={styles.form}>
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>
+                            <Text style={[styles.label, { color: theme.text }]}>
                                 Nome Completo <Text style={styles.required}>*</Text>
                             </Text>
                             <FormInput
@@ -333,12 +399,13 @@ const CriarFuncionario: React.FC = () => {
                                 onChangeText={setNome}
                                 editable={!loading}
                                 maxLength={100}
+                                isDarkMode={isDarkMode}
                             />
                         </View>
 
                         <View style={styles.row}>
                             <View style={[styles.fieldGroup, styles.halfWidth]}>
-                                <Text style={styles.label}>
+                                <Text style={[styles.label, { color: theme.text }]}>
                                     CPF <Text style={styles.required}>*</Text>
                                 </Text>
                                 <FormInput
@@ -349,11 +416,12 @@ const CriarFuncionario: React.FC = () => {
                                     editable={!loading}
                                     keyboardType="numeric"
                                     maxLength={14}
+                                    isDarkMode={isDarkMode}
                                 />
                             </View>
 
                             <View style={[styles.fieldGroup, styles.halfWidth]}>
-                                <Text style={styles.label}>
+                                <Text style={[styles.label, { color: theme.text }]}>
                                     Celular <Text style={styles.required}>*</Text>
                                 </Text>
                                 <FormInput
@@ -364,12 +432,13 @@ const CriarFuncionario: React.FC = () => {
                                     editable={!loading}
                                     keyboardType="phone-pad"
                                     maxLength={15}
+                                    isDarkMode={isDarkMode}
                                 />
                             </View>
                         </View>
 
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>
+                            <Text style={[styles.label, { color: theme.text }]}>
                                 E-mail <Text style={styles.required}>*</Text>
                             </Text>
                             <FormInput
@@ -381,11 +450,12 @@ const CriarFuncionario: React.FC = () => {
                                 keyboardType="email-address"
                                 autoCapitalize="none"
                                 maxLength={100}
+                                isDarkMode={isDarkMode}
                             />
                         </View>
 
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>
+                            <Text style={[styles.label, { color: theme.text }]}>
                                 Cargo <Text style={styles.required}>*</Text>
                             </Text>
                             <FormSelect
@@ -395,12 +465,13 @@ const CriarFuncionario: React.FC = () => {
                                 options={cargosDisponiveis}
                                 onSelect={setCargo}
                                 disabled={loading}
+                                isDarkMode={isDarkMode}
                             />
                         </View>
 
                         <View style={styles.row}>
                             <View style={[styles.fieldGroup, styles.halfWidth]}>
-                                <Text style={styles.label}>
+                                <Text style={[styles.label, { color: theme.text }]}>
                                     Data Admissão <Text style={styles.required}>*</Text>
                                 </Text>
                                 <FormInput
@@ -412,11 +483,12 @@ const CriarFuncionario: React.FC = () => {
                                     keyboardType="numeric"
                                     maxLength={10}
                                     helperText="Data de contratação"
+                                    isDarkMode={isDarkMode}
                                 />
                             </View>
 
                             <View style={[styles.fieldGroup, styles.halfWidth]}>
-                                <Text style={styles.label}>
+                                <Text style={[styles.label, { color: theme.text }]}>
                                     Salário <Text style={styles.required}>*</Text>
                                 </Text>
                                 <FormInput
@@ -427,12 +499,19 @@ const CriarFuncionario: React.FC = () => {
                                     editable={!loading}
                                     keyboardType="numeric"
                                     helperText="Salário mensal (R$)"
+                                    isDarkMode={isDarkMode}
                                 />
                             </View>
                         </View>
 
                         {/* Status do Funcionário */}
-                        <View style={styles.switchContainer}>
+                        <View style={[
+                            styles.switchContainer,
+                            {
+                                backgroundColor: isDarkMode ? '#1E293B' : '#FFFFFF',
+                                borderColor: isDarkMode ? '#334155' : '#E2E8F0'
+                            }
+                        ]}>
                             <View style={styles.switchLabel}>
                                 <Ionicons
                                     name={ativo ? "checkmark-circle" : "close-circle"}
@@ -440,10 +519,10 @@ const CriarFuncionario: React.FC = () => {
                                     color={ativo ? "#10B981" : "#EF4444"}
                                 />
                                 <View style={styles.switchTextContainer}>
-                                    <Text style={styles.switchTitle}>
+                                    <Text style={[styles.switchTitle, { color: theme.text }]}>
                                         {ativo ? 'Funcionário Ativo' : 'Funcionário Inativo'}
                                     </Text>
-                                    <Text style={styles.switchDescription}>
+                                    <Text style={[styles.switchDescription, { color: theme.textSecondary }]}>
                                         {ativo
                                             ? 'Trabalhando normalmente'
                                             : 'Afastado ou desligado'}
@@ -469,6 +548,7 @@ const CriarFuncionario: React.FC = () => {
                             icon="checkmark-circle-outline"
                             onPress={handleSave}
                             disabled={loading}
+                            tone={isDarkMode ? 'dark' : 'light'}
                         >
                             {loading ? 'Criando...' : 'Criar Funcionário'}
                         </ActionButton>
@@ -478,6 +558,7 @@ const CriarFuncionario: React.FC = () => {
                             icon="close-circle-outline"
                             onPress={() => router.push('/screens/Funcionario/ListagemFuncionario')}
                             disabled={loading}
+                            tone={isDarkMode ? 'dark' : 'light'}
                         >
                             Cancelar
                         </ActionButton>
@@ -491,11 +572,9 @@ const CriarFuncionario: React.FC = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#132F3B',
     },
     content: {
         flex: 1,
-        backgroundColor: '#F8FAFC',
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
         overflow: 'hidden',
@@ -517,11 +596,9 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 24,
         fontWeight: '700',
-        color: '#132F3B',
     },
     subtitle: {
         fontSize: 14,
-        color: '#64748B',
         lineHeight: 20,
     },
     form: {
@@ -533,7 +610,6 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#334155',
         marginBottom: 4,
     },
     required: {
@@ -550,11 +626,9 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: '#FFFFFF',
         padding: 16,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: '#E2E8F0',
     },
     switchLabel: {
         flexDirection: 'row',
@@ -569,11 +643,9 @@ const styles = StyleSheet.create({
     switchTitle: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#132F3B',
     },
     switchDescription: {
         fontSize: 12,
-        color: '#64748B',
     },
     actions: {
         gap: 12,
