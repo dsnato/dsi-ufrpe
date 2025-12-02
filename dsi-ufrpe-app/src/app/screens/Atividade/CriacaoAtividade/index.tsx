@@ -1,3 +1,4 @@
+import { supabase } from '@/lib/supabase';
 import { ActionButton } from '@/src/components/ActionButton';
 import { FormInput } from '@/src/components/FormInput';
 import { ImagePicker } from '@/src/components/ImagePicker';
@@ -7,9 +8,9 @@ import { useToast } from '@/src/components/ToastContext';
 import { criarAtividade, uploadImagemAtividade } from '@/src/services/atividadesService';
 import { getSuccessMessage, getValidationMessage } from '@/src/utils/errorMessages';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { Platform, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useMemo, useState } from 'react';
+import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const CriarAtividade: React.FC = () => {
@@ -25,6 +26,55 @@ const CriarAtividade: React.FC = () => {
     const [capacidade, setCapacidade] = useState('');
     const [ativa, setAtiva] = useState(true);
     const [imagemUri, setImagemUri] = useState<string | null>(null);
+    const [isDarkMode, setIsDarkMode] = useState(false);
+
+    // Paleta de cores dark/light
+    const palettes = useMemo(() => ({
+        light: {
+            background: '#132F3B',
+            content: '#F8FAFC',
+            text: '#132F3B',
+            textSecondary: '#64748B',
+            icon: '#0162B3',
+            breadcrumb: '#E0F2FE',
+            accent: '#FFE157',
+            backIcon: '#FFFFFF',
+        },
+        dark: {
+            background: '#050C18',
+            content: '#0B1624',
+            text: '#F1F5F9',
+            textSecondary: '#94A3B8',
+            icon: '#60A5FA',
+            breadcrumb: '#94A3B8',
+            accent: '#FDE047',
+            backIcon: '#E2E8F0',
+        },
+    }), []);
+
+    const theme = useMemo(() => {
+        return isDarkMode ? palettes.dark : palettes.light;
+    }, [isDarkMode, palettes]);
+
+    // Carrega preferência de tema
+    const loadThemePreference = useCallback(async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const preferredTheme = user.user_metadata?.preferred_theme;
+                setIsDarkMode(preferredTheme === 'dark');
+            }
+        } catch (error) {
+            console.error('Erro ao carregar preferência de tema:', error);
+        }
+    }, []);
+
+    // Carrega tema ao montar componente
+    useFocusEffect(
+        useCallback(() => {
+            loadThemePreference();
+        }, [loadThemePreference])
+    );
 
     // Formata data automaticamente (DD/MM/AAAA)
     const handleDateChange = (text: string) => {
@@ -226,10 +276,20 @@ const CriarAtividade: React.FC = () => {
     };
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
-            <InfoHeader entity="Atividades" action="Adição" onBackPress={() => router.push('/screens/Atividade/ListagemAtividade')} />
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
+            <InfoHeader
+                colors={{
+                    background: theme.background,
+                    breadcrumb: theme.breadcrumb,
+                    accent: theme.accent,
+                    backIcon: theme.backIcon,
+                }}
+                entity="Atividades"
+                action="Adição"
+                onBackPress={() => router.push('/screens/Atividade/ListagemAtividade')}
+            />
 
-            <View style={styles.content}>
+            <View style={[styles.content, { backgroundColor: theme.content }]}>
                 <ScrollView
                     style={styles.scrollView}
                     contentContainerStyle={styles.scrollContent}
@@ -237,11 +297,11 @@ const CriarAtividade: React.FC = () => {
                 >
                     {/* Título da seção */}
                     <View style={styles.titleContainer}>
-                        <Ionicons name="add-circle-outline" size={24} color="#0162B3" />
-                        <Text style={styles.title}>Nova Atividade</Text>
+                        <Ionicons name="add-circle-outline" size={24} color={theme.icon} />
+                        <Text style={[styles.title, { color: theme.text }]}>Nova Atividade</Text>
                     </View>
 
-                    <Text style={styles.subtitle}>
+                    <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
                         Preencha os dados da nova atividade recreativa
                     </Text>
 
@@ -249,22 +309,20 @@ const CriarAtividade: React.FC = () => {
 
                     {/* Imagem da Atividade */}
                     <View style={styles.fieldGroup}>
-                        <Text style={styles.label}>Imagem da Atividade</Text>
-                        <Text style={{ fontSize: 12, color: '#666', marginBottom: 8 }}>
-                            DEBUG: ImagePicker deve aparecer abaixo (Platform: {Platform.OS})
-                        </Text>
+                        <Text style={[styles.label, { color: theme.text }]}>Imagem da Atividade</Text>
                         <ImagePicker
                             imageUri={imagemUri}
                             onImageSelected={setImagemUri}
                             onImageRemoved={() => setImagemUri(null)}
                             disabled={loading}
+                            tone={isDarkMode ? 'dark' : 'light'}
                         />
                     </View>
 
                     {/* Formulário */}
                     <View style={styles.form}>
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>
+                            <Text style={[styles.label, { color: theme.text }]}>
                                 Nome da Atividade <Text style={styles.required}>*</Text>
                             </Text>
                             <FormInput
@@ -274,11 +332,12 @@ const CriarAtividade: React.FC = () => {
                                 onChangeText={setNome}
                                 editable={!loading}
                                 maxLength={100}
+                                isDarkMode={isDarkMode}
                             />
                         </View>
 
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>Descrição</Text>
+                            <Text style={[styles.label, { color: theme.text }]}>Descrição</Text>
                             <FormInput
                                 icon="document-text-outline"
                                 placeholder="Descreva a atividade (opcional)"
@@ -287,11 +346,12 @@ const CriarAtividade: React.FC = () => {
                                 editable={!loading}
                                 multiline
                                 numberOfLines={3}
+                                isDarkMode={isDarkMode}
                             />
                         </View>
 
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>
+                            <Text style={[styles.label, { color: theme.text }]}>
                                 Local <Text style={styles.required}>*</Text>
                             </Text>
                             <FormInput
@@ -301,12 +361,13 @@ const CriarAtividade: React.FC = () => {
                                 onChangeText={setLocal}
                                 editable={!loading}
                                 maxLength={100}
+                                isDarkMode={isDarkMode}
                             />
                         </View>
 
                         <View style={styles.row}>
                             <View style={[styles.fieldGroup, styles.halfWidth]}>
-                                <Text style={styles.label}>
+                                <Text style={[styles.label, { color: theme.text }]}>
                                     Data <Text style={styles.required}>*</Text>
                                 </Text>
                                 <FormInput
@@ -318,11 +379,12 @@ const CriarAtividade: React.FC = () => {
                                     keyboardType="numeric"
                                     maxLength={10}
                                     helperText="Formato: dia/mês/ano"
+                                    isDarkMode={isDarkMode}
                                 />
                             </View>
 
                             <View style={[styles.fieldGroup, styles.halfWidth]}>
-                                <Text style={styles.label}>
+                                <Text style={[styles.label, { color: theme.text }]}>
                                     Horário <Text style={styles.required}>*</Text>
                                 </Text>
                                 <FormInput
@@ -334,12 +396,13 @@ const CriarAtividade: React.FC = () => {
                                     keyboardType="numeric"
                                     maxLength={5}
                                     helperText="Formato: hora:minuto"
+                                    isDarkMode={isDarkMode}
                                 />
                             </View>
                         </View>
 
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>Capacidade (opcional)</Text>
+                            <Text style={[styles.label, { color: theme.text }]}>Capacidade (opcional)</Text>
                             <FormInput
                                 icon="people-outline"
                                 placeholder="Número máximo de participantes"
@@ -349,11 +412,18 @@ const CriarAtividade: React.FC = () => {
                                 keyboardType="numeric"
                                 maxLength={3}
                                 helperText="Deixe em branco para capacidade ilimitada"
+                                isDarkMode={isDarkMode}
                             />
                         </View>
 
                         {/* Status da Atividade */}
-                        <View style={styles.switchContainer}>
+                        <View style={[
+                            styles.switchContainer,
+                            {
+                                backgroundColor: isDarkMode ? '#1E293B' : '#FFFFFF',
+                                borderColor: isDarkMode ? '#334155' : '#E2E8F0',
+                            }
+                        ]}>
                             <View style={styles.switchLabel}>
                                 <Ionicons
                                     name={ativa ? "checkmark-circle" : "close-circle"}
@@ -361,8 +431,8 @@ const CriarAtividade: React.FC = () => {
                                     color={ativa ? "#10B981" : "#6B7280"}
                                 />
                                 <View style={styles.switchTextContainer}>
-                                    <Text style={styles.switchTitle}>Atividade Ativa</Text>
-                                    <Text style={styles.switchDescription}>
+                                    <Text style={[styles.switchTitle, { color: theme.text }]}>Atividade Ativa</Text>
+                                    <Text style={[styles.switchDescription, { color: theme.textSecondary }]}>
                                         {ativa ? 'Atividade disponível para reservas' : 'Atividade desativada'}
                                     </Text>
                                 </View>
@@ -384,6 +454,7 @@ const CriarAtividade: React.FC = () => {
                         <ActionButton
                             variant="primary"
                             icon="checkmark-circle-outline"
+                            tone={isDarkMode ? 'dark' : 'light'}
                             onPress={handleSave}
                             disabled={loading}
                         >
@@ -393,6 +464,7 @@ const CriarAtividade: React.FC = () => {
                         <ActionButton
                             variant="secondary"
                             icon="close-circle-outline"
+                            tone={isDarkMode ? 'dark' : 'light'}
                             onPress={() => router.push('/screens/Atividade/ListagemAtividade')}
                             disabled={loading}
                         >
@@ -408,11 +480,9 @@ const CriarAtividade: React.FC = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#132F3B',
     },
     content: {
         flex: 1,
-        backgroundColor: '#F8FAFC',
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
         overflow: 'hidden',
@@ -434,11 +504,9 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 24,
         fontWeight: '700',
-        color: '#132F3B',
     },
     subtitle: {
         fontSize: 14,
-        color: '#64748B',
         lineHeight: 20,
     },
     form: {
@@ -450,7 +518,6 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#334155',
         marginBottom: 4,
     },
     required: {
@@ -467,11 +534,9 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: '#FFFFFF',
         padding: 16,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: '#E2E8F0',
     },
     switchLabel: {
         flexDirection: 'row',
@@ -486,11 +551,9 @@ const styles = StyleSheet.create({
     switchTitle: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#132F3B',
     },
     switchDescription: {
         fontSize: 12,
-        color: '#64748B',
     },
     actions: {
         gap: 12,
