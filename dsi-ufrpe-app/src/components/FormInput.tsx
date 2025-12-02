@@ -20,11 +20,11 @@ export const FormInput: React.FC<FormInputProps> = ({
     ...rest
 }) => {
     const colors = isDarkMode ? {
-        bg: 'rgba(26, 35, 50, 0.4)',
-        border: 'rgba(45, 59, 79, 0.6)',
+        bg: '#1A2332',
+        border: '#2D3B4F',
         text: '#E2E8F0',
         placeholder: '#64748B',
-        icon: '#60A5FA',
+        icon: '#FACC15',
         helper: '#94A3B8',
     } : {
         bg: '#FFFFFF',

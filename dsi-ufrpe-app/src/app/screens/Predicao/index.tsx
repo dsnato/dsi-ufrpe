@@ -1,15 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import React, { useRef, useState } from 'react';
-import {
-    ActivityIndicator,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { supabase } from '@/lib/supabase';
 import { ButtonSelector } from '@/src/components/ButtonSelector';
 import { FormInput } from '@/src/components/FormInput';
 import { InfoHeader } from '@/src/components/InfoHeader';
@@ -22,6 +11,18 @@ import {
     type PredictionResult,
 } from '@/src/services/bookingPredictor';
 import { convertUserInputToFeatures } from '@/src/utils/bookingFeatureMapping';
+import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
+import {
+    ActivityIndicator,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function PredicaoScreen() {
     const router = useRouter();
@@ -30,6 +31,54 @@ export default function PredicaoScreen() {
     const [loading, setLoading] = useState(false);
     const [showResults, setShowResults] = useState(false);
     const [predictionResult, setPredictionResult] = useState<PredictionResult | null>(null);
+    const [isDarkMode, setIsDarkMode] = useState(false);
+
+    // Paleta de cores
+    const palettes = useMemo(() => ({
+        light: {
+            background: '#132F3B',
+            content: '#F8FAFC',
+            text: '#132F3B',
+            textSecondary: '#64748B',
+            icon: '#0162B3',
+            breadcrumb: '#E0F2FE',
+            accent: '#FFE157',
+            backIcon: '#FFFFFF',
+        },
+        dark: {
+            background: '#050C18',
+            content: '#0B1624',
+            text: '#F1F5F9',
+            textSecondary: '#94A3B8',
+            icon: '#60A5FA',
+            breadcrumb: '#94A3B8',
+            accent: '#FDE047',
+            backIcon: '#E2E8F0',
+        },
+    }), []);
+
+    const theme = useMemo(() => {
+        return isDarkMode ? palettes.dark : palettes.light;
+    }, [isDarkMode, palettes]);
+
+    // Carrega preferência de tema
+    const loadThemePreference = useCallback(async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const preferredTheme = user.user_metadata?.preferred_theme;
+                setIsDarkMode(preferredTheme === 'dark');
+            }
+        } catch (error) {
+            console.error('Erro ao carregar preferência de tema:', error);
+        }
+    }, []);
+
+    useFocusEffect(
+        useCallback(() => {
+            loadThemePreference();
+        }, [loadThemePreference])
+    );
 
     const [formData, setFormData] = useState({
         hotel: '',
@@ -49,14 +98,14 @@ export default function PredicaoScreen() {
     // Funções de formatação
     const formatLeadTime = (value: string) => {
         const numbers = value.replace(/\D/g, '');
-        return numbers ? ${numbers} dias : '';
+        return numbers ? `${numbers} dias` : '';
     };
 
     const formatCurrency = (value: string) => {
         const numbers = value.replace(/\D/g, '');
         if (!numbers) return '';
         const amount = parseFloat(numbers) / 100;
-        return R$ ${amount.toFixed(2).replace('.', ',')};
+        return `R$ ${amount.toFixed(2).replace('.', ',')}`;
     };
 
     const parseLeadTime = (formatted: string): string => {
@@ -142,14 +191,20 @@ export default function PredicaoScreen() {
     };
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
             <InfoHeader
+                colors={{
+                    background: theme.background,
+                    breadcrumb: theme.breadcrumb,
+                    accent: theme.accent,
+                    backIcon: theme.backIcon,
+                }}
                 entity="Predição de Cancelamento"
                 action={showResults ? "Resultado" : "Análise"}
                 onBackPress={() => router.push('/screens/home')}
             />
 
-            <View style={styles.content}>
+            <View style={[styles.content, { backgroundColor: theme.content }]}>
                 <ScrollView
                     ref={scrollViewRef}
                     style={styles.scrollView}
@@ -160,11 +215,11 @@ export default function PredicaoScreen() {
                         <View>
                             {/* Título da seção */}
                             <View style={styles.titleContainer}>
-                                <Ionicons name="analytics-outline" size={24} color="#0162B3" />
-                                <Text style={styles.title}>Análise de Risco</Text>
+                                <Ionicons name="analytics-outline" size={24} color={theme.icon} />
+                                <Text style={[styles.title, { color: theme.text }]}>Análise de Risco</Text>
                             </View>
 
-                            <Text style={styles.subtitle}>
+                            <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
                                 Preencha os dados da reserva para prever o risco de cancelamento
                             </Text>
 
@@ -172,8 +227,9 @@ export default function PredicaoScreen() {
 
                             {/* Seção 1: Tipo de Hotel */}
                             <View style={styles.fieldGroup}>
-                                <Text style={styles.sectionTitle}>📍 Informações do Hotel</Text>
+                                <Text style={[styles.sectionTitle, { color: theme.text }]}>📍 Informações do Hotel</Text>
                                 <ButtonSelector
+                                    isDarkMode={isDarkMode}
                                     label="Tipo de Hotel *"
                                     helperText="Selecione o tipo de estabelecimento"
                                     value={formData.hotel}
@@ -189,26 +245,27 @@ export default function PredicaoScreen() {
 
                             {/* Seção 2: Dados da Reserva */}
                             <View style={styles.fieldGroup}>
-                                <Text style={styles.sectionTitle}>📅 Dados da Reserva</Text>
+                                <Text style={[styles.sectionTitle, { color: theme.text }]}>📅 Dados da Reserva</Text>
 
                                 <View style={styles.fieldContainer}>
-                                    <Text style={styles.fieldLabel}>Lead Time (dias até check-in) *</Text>
-                                    <Text style={styles.fieldHelper}>Quantos dias de antecedência a reserva foi feita</Text>
+                                    <Text style={[styles.fieldLabel, { color: theme.text }]}>Lead Time (dias até check-in) *</Text>
+                                    <Text style={[styles.fieldHelper, { color: theme.textSecondary }]}>Quantos dias de antecedência a reserva foi feita</Text>
                                     <FormInput
                                         icon="calendar"
                                         placeholder="Ex: 30"
                                         value={formData.lead_time.replace(' dias', '')}
                                         onChangeText={(value) => {
                                             const numbers = value.replace(/\D/g, '');
-                                            setFormData({ ...formData, lead_time: numbers ? ${numbers} dias : '' });
+                                            setFormData({ ...formData, lead_time: numbers ? `${numbers} dias` : '' });
                                         }}
                                         keyboardType="numeric"
+                                        isDarkMode={isDarkMode}
                                     />
                                 </View>
 
                                 <View style={styles.fieldContainer}>
-                                    <Text style={styles.fieldLabel}>Taxa Diária Média (R$) *</Text>
-                                    <Text style={styles.fieldHelper}>Valor médio da diária cobrada</Text>
+                                    <Text style={[styles.fieldLabel, { color: theme.text }]}>Taxa Diária Média (R$) *</Text>
+                                    <Text style={[styles.fieldHelper, { color: theme.textSecondary }]}>Valor médio da diária cobrada</Text>
                                     <FormInput
                                         icon="cash"
                                         placeholder="Ex: 150,00"
@@ -218,6 +275,7 @@ export default function PredicaoScreen() {
                                             setFormData({ ...formData, adr: formatCurrency(numbers) });
                                         }}
                                         keyboardType="numeric"
+                                        isDarkMode={isDarkMode}
                                     />
                                 </View>
                             </View>
@@ -226,8 +284,9 @@ export default function PredicaoScreen() {
 
                             {/* Seção 3: Tipo de Depósito */}
                             <View style={styles.fieldGroup}>
-                                <Text style={styles.sectionTitle}>💳 Pagamento</Text>
+                                <Text style={[styles.sectionTitle, { color: theme.text }]}>💳 Pagamento</Text>
                                 <ButtonSelector
+                                    isDarkMode={isDarkMode}
                                     label="Tipo de Depósito *"
                                     helperText="Condições de reembolso do depósito"
                                     value={formData.deposit_type}
@@ -244,8 +303,9 @@ export default function PredicaoScreen() {
 
                             {/* Seção 4: Segmento de Mercado */}
                             <View style={styles.fieldGroup}>
-                                <Text style={styles.sectionTitle}>🎯 Canal de Venda</Text>
+                                <Text style={[styles.sectionTitle, { color: theme.text }]}>🎯 Canal de Venda</Text>
                                 <ButtonSelector
+                                    isDarkMode={isDarkMode}
                                     label="Segmento de Mercado *"
                                     helperText="Como a reserva foi realizada"
                                     value={formData.market_segment}
@@ -264,9 +324,10 @@ export default function PredicaoScreen() {
 
                             {/* Seção 5: Histórico do Cliente */}
                             <View style={styles.fieldGroup}>
-                                <Text style={styles.sectionTitle}>👤 Perfil do Cliente</Text>
+                                <Text style={[styles.sectionTitle, { color: theme.text }]}>👤 Perfil do Cliente</Text>
 
                                 <ButtonSelector
+                                    isDarkMode={isDarkMode}
                                     label="Cliente Repetido?"
                                     helperText="Já se hospedou antes neste hotel"
                                     value={formData.is_repeated_guest}
@@ -278,26 +339,28 @@ export default function PredicaoScreen() {
                                 />
 
                                 <View style={styles.fieldContainer}>
-                                    <Text style={styles.fieldLabel}>Cancelamentos Anteriores</Text>
-                                    <Text style={styles.fieldHelper}>Quantas vezes cancelou reservas no passado</Text>
+                                    <Text style={[styles.fieldLabel, { color: theme.text }]}>Cancelamentos Anteriores</Text>
+                                    <Text style={[styles.fieldHelper, { color: theme.textSecondary }]}>Quantas vezes cancelou reservas no passado</Text>
                                     <FormInput
                                         icon="close-circle"
                                         placeholder="Digite 0 se for novo cliente"
                                         value={formData.previous_cancellations}
                                         onChangeText={(value) => setFormData({ ...formData, previous_cancellations: value })}
                                         keyboardType="numeric"
+                                        isDarkMode={isDarkMode}
                                     />
                                 </View>
 
                                 <View style={styles.fieldContainer}>
-                                    <Text style={styles.fieldLabel}>Pedidos Especiais</Text>
-                                    <Text style={styles.fieldHelper}>Quantidade de solicitações extras (café da manhã, vista, etc)</Text>
+                                    <Text style={[styles.fieldLabel, { color: theme.text }]}>Pedidos Especiais</Text>
+                                    <Text style={[styles.fieldHelper, { color: theme.textSecondary }]}>Quantidade de solicitações extras (café da manhã, vista, etc)</Text>
                                     <FormInput
                                         icon="star"
                                         placeholder="Ex: 2"
                                         value={formData.total_of_special_requests}
                                         onChangeText={(value) => setFormData({ ...formData, total_of_special_requests: value })}
                                         keyboardType="numeric"
+                                        isDarkMode={isDarkMode}
                                     />
                                 </View>
                             </View>
@@ -306,8 +369,8 @@ export default function PredicaoScreen() {
 
                             {/* Seção 6: Composição da Reserva */}
                             <View style={styles.fieldGroup}>
-                                <Text style={styles.sectionTitle}>👥 Hóspedes e Estadia</Text>
-                                <Text style={styles.fieldHelper}>Composição dos hóspedes</Text>
+                                <Text style={[styles.sectionTitle, { color: theme.text }]}>👥 Hóspedes e Estadia</Text>
+                                <Text style={[styles.fieldHelper, { color: theme.textSecondary }]}>Composição dos hóspedes</Text>
                                 <View style={styles.rowInputs}>
                                     <View style={styles.halfInput}>
                                         <FormInput
@@ -316,6 +379,7 @@ export default function PredicaoScreen() {
                                             value={formData.adults}
                                             onChangeText={(value) => setFormData({ ...formData, adults: value })}
                                             keyboardType="numeric"
+                                            isDarkMode={isDarkMode}
                                         />
                                     </View>
                                     <View style={styles.halfInput}>
@@ -325,11 +389,12 @@ export default function PredicaoScreen() {
                                             value={formData.children}
                                             onChangeText={(value) => setFormData({ ...formData, children: value })}
                                             keyboardType="numeric"
+                                            isDarkMode={isDarkMode}
                                         />
                                     </View>
                                 </View>
 
-                                <Text style={styles.fieldHelper}>Duração da hospedagem</Text>
+                                <Text style={[styles.fieldHelper, { color: theme.textSecondary }]}>Duração da hospedagem</Text>
                                 <View style={styles.rowInputs}>
                                     <View style={styles.halfInput}>
                                         <FormInput
@@ -338,6 +403,7 @@ export default function PredicaoScreen() {
                                             value={formData.stays_in_weekend_nights}
                                             onChangeText={(value) => setFormData({ ...formData, stays_in_weekend_nights: value })}
                                             keyboardType="numeric"
+                                            isDarkMode={isDarkMode}
                                         />
                                     </View>
                                     <View style={styles.halfInput}>
@@ -347,12 +413,17 @@ export default function PredicaoScreen() {
                                             value={formData.stays_in_week_nights}
                                             onChangeText={(value) => setFormData({ ...formData, stays_in_week_nights: value })}
                                             keyboardType="numeric"
+                                            isDarkMode={isDarkMode}
                                         />
                                     </View>
                                 </View>
 
                                 <TouchableOpacity
-                                    style={[styles.predictButton, loading && styles.predictButtonDisabled]}
+                                    style={[
+                                        styles.predictButton,
+                                        { backgroundColor: theme.icon },
+                                        loading && styles.predictButtonDisabled
+                                    ]}
                                     onPress={handlePredict}
                                     disabled={loading}
                                 >
@@ -376,7 +447,13 @@ export default function PredicaoScreen() {
                                 return (
                                     <>
                                         {/* Card Principal de Risco - Expandido */}
-                                        <View style={styles.mainRiskCard}>
+                                        <View style={[
+                                            styles.mainRiskCard,
+                                            {
+                                                backgroundColor: isDarkMode ? '#1E293B' : '#FFFFFF',
+                                                shadowColor: isDarkMode ? '#000000' : '#000',
+                                            }
+                                        ]}>
                                             <RiskCard
                                                 riskLevel={predictionResult.riskLevel}
                                                 probability={predictionResult.probability}
@@ -384,25 +461,35 @@ export default function PredicaoScreen() {
                                                 color={profileInfo.color}
                                                 icon={profileInfo.icon}
                                                 name={profileInfo.name}
+                                                isDarkMode={isDarkMode}
                                             />
 
                                             {/* Estatísticas da Simulação */}
                                             {predictionResult.statistics && (
                                                 <View style={styles.statsGrid}>
-                                                    <View style={styles.statBox}>
-                                                        <Ionicons name="bar-chart" size={24} color="#0162B3" />
-                                                        <Text style={styles.statValue}>{predictionResult.statistics.totalFeatures}</Text>
-                                                        <Text style={styles.statLabel}>Features Analisadas</Text>
+                                                    <View style={[
+                                                        styles.statBox,
+                                                        { backgroundColor: isDarkMode ? '#0F172A' : '#F8FAFC' }
+                                                    ]}>
+                                                        <Ionicons name="bar-chart" size={24} color={theme.icon} />
+                                                        <Text style={[styles.statValue, { color: theme.text }]}>{predictionResult.statistics.totalFeatures}</Text>
+                                                        <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Features Analisadas</Text>
                                                     </View>
-                                                    <View style={styles.statBox}>
+                                                    <View style={[
+                                                        styles.statBox,
+                                                        { backgroundColor: isDarkMode ? '#0F172A' : '#F8FAFC' }
+                                                    ]}>
                                                         <Ionicons name="alert-circle" size={24} color="#F59E0B" />
-                                                        <Text style={styles.statValue}>{predictionResult.statistics.criticalFactors}</Text>
-                                                        <Text style={styles.statLabel}>Fatores Críticos</Text>
+                                                        <Text style={[styles.statValue, { color: theme.text }]}>{predictionResult.statistics.criticalFactors}</Text>
+                                                        <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Fatores Críticos</Text>
                                                     </View>
-                                                    <View style={styles.statBox}>
+                                                    <View style={[
+                                                        styles.statBox,
+                                                        { backgroundColor: isDarkMode ? '#0F172A' : '#F8FAFC' }
+                                                    ]}>
                                                         <Ionicons name="speedometer" size={24} color="#10B981" />
-                                                        <Text style={styles.statValue}>{predictionResult.statistics.adjustmentApplied > 0 ? '+' : ''}{predictionResult.statistics.adjustmentApplied}%</Text>
-                                                        <Text style={styles.statLabel}>Ajuste Aplicado</Text>
+                                                        <Text style={[styles.statValue, { color: theme.text }]}>{predictionResult.statistics.adjustmentApplied > 0 ? '+' : ''}{predictionResult.statistics.adjustmentApplied}%</Text>
+                                                        <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Ajuste Aplicado</Text>
                                                     </View>
                                                 </View>
                                             )}
@@ -410,9 +497,15 @@ export default function PredicaoScreen() {
 
                                         {/* Similaridade com Perfis */}
                                         {predictionResult.profileDistances && (
-                                            <View style={styles.similarityCard}>
-                                                <Text style={styles.similarityTitle}>📊 Similaridade com Perfis de Risco</Text>
-                                                <Text style={styles.similaritySubtitle}>Distância Euclidiana Normalizada</Text>
+                                            <View style={[
+                                                styles.similarityCard,
+                                                {
+                                                    backgroundColor: isDarkMode ? '#1E293B' : '#FFFFFF',
+                                                    shadowColor: isDarkMode ? '#000000' : '#000',
+                                                }
+                                            ]}>
+                                                <Text style={[styles.similarityTitle, { color: theme.text }]}>📊 Similaridade com Perfis de Risco</Text>
+                                                <Text style={[styles.similaritySubtitle, { color: theme.textSecondary }]}>Distância Euclidiana Normalizada</Text>
                                                 {predictionResult.profileDistances.map((dist, idx) => {
                                                     const profileNames: Record<string, string> = {
                                                         'low_risk': 'Baixo Risco',
@@ -427,25 +520,31 @@ export default function PredicaoScreen() {
                                                     return (
                                                         <View key={idx} style={styles.similarityBar}>
                                                             <View style={styles.similarityBarHeader}>
-                                                                <Text style={styles.similarityBarLabel}>{profileNames[dist.profile]}</Text>
+                                                                <Text style={[styles.similarityBarLabel, { color: theme.text }]}>{profileNames[dist.profile]}</Text>
                                                                 <Text style={[styles.similarityBarValue, { color: colors[dist.profile] }]}>
                                                                     {dist.similarity.toFixed(1)}%
                                                                 </Text>
                                                             </View>
-                                                            <View style={styles.progressBarContainer}>
+                                                            <View style={[
+                                                                styles.progressBarContainer,
+                                                                { backgroundColor: isDarkMode ? '#334155' : '#E2E8F0' }
+                                                            ]}>
                                                                 <View
                                                                     style={[
                                                                         styles.progressBarFill,
-                                                                        { width: ${dist.similarity}%, backgroundColor: colors[dist.profile] }
+                                                                        { width: `${dist.similarity}%`, backgroundColor: colors[dist.profile] }
                                                                     ]}
                                                                 />
                                                             </View>
                                                         </View>
                                                     );
                                                 })}
-                                                <View style={styles.explainerBox}>
-                                                    <Ionicons name="information-circle" size={18} color="#64748B" />
-                                                    <Text style={styles.explainerText}>
+                                                <View style={[
+                                                    styles.explainerBox,
+                                                    { backgroundColor: isDarkMode ? '#0F172A' : '#F1F5F9' }
+                                                ]}>
+                                                    <Ionicons name="information-circle" size={18} color={theme.textSecondary} />
+                                                    <Text style={[styles.explainerText, { color: theme.textSecondary }]}>
                                                         Quanto maior a similaridade, mais confiável é a predição.
                                                         Valores acima de 70% indicam alta confiança.
                                                     </Text>
@@ -453,24 +552,40 @@ export default function PredicaoScreen() {
                                             </View>
                                         )}
 
-                                        <View style={styles.recommendationCard}>
+                                        <View style={[
+                                            styles.recommendationCard,
+                                            {
+                                                backgroundColor: isDarkMode ? '#451A03' : '#FEF3C7',
+                                                borderLeftColor: '#F59E0B',
+                                            }
+                                        ]}>
                                             <View style={styles.recommendationHeader}>
                                                 <Ionicons name="bulb" size={28} color="#F59E0B" />
-                                                <Text style={styles.recommendationTitle}>💡 Recomendações Estratégicas</Text>
+                                                <Text style={[
+                                                    styles.recommendationTitle,
+                                                    { color: isDarkMode ? '#FDE047' : '#92400E' }
+                                                ]}>💡 Recomendações Estratégicas</Text>
                                             </View>
-                                            <Text style={styles.recommendationText}>
+                                            <Text style={[
+                                                styles.recommendationText,
+                                                { color: isDarkMode ? '#FEF3C7' : '#78350F' }
+                                            ]}>
                                                 {predictionResult.recommendation}
                                             </Text>
                                         </View>
 
                                         {predictionResult.factors.length > 0 && (
                                             <View style={styles.factorsSection}>
-                                                <Text style={styles.factorsTitle}>🔍 Fatores Críticos Identificados</Text>
-                                                <Text style={styles.factorsSubtitle}>Elementos que influenciaram a predição</Text>
+                                                <Text style={[styles.factorsTitle, { color: theme.text }]}>🔍 Fatores Críticos Identificados</Text>
+                                                <Text style={[styles.factorsSubtitle, { color: theme.textSecondary }]}>Elementos que influenciaram a predição</Text>
                                                 {predictionResult.factors.map((factor, index) => (
                                                     <View key={index} style={[
                                                         styles.factorCard,
-                                                        { borderLeftColor: factor.impact === 'positive' ? '#10B981' : '#EF4444' }
+                                                        {
+                                                            backgroundColor: isDarkMode ? '#1E293B' : '#FFFFFF',
+                                                            borderLeftColor: factor.impact === 'positive' ? '#10B981' : '#EF4444',
+                                                            shadowColor: isDarkMode ? '#000000' : '#000',
+                                                        }
                                                     ]}>
                                                         <View style={styles.factorHeader}>
                                                             <View style={[
@@ -484,15 +599,18 @@ export default function PredicaoScreen() {
                                                                 />
                                                             </View>
                                                             <View style={styles.factorContent}>
-                                                                <Text style={styles.factorDescription}>{factor.description}</Text>
+                                                                <Text style={[styles.factorDescription, { color: theme.text }]}>{factor.description}</Text>
                                                                 <View style={styles.factorMeta}>
-                                                                    <View style={styles.importanceBar}>
+                                                                    <View style={[
+                                                                        styles.importanceBar,
+                                                                        { backgroundColor: isDarkMode ? '#334155' : '#E2E8F0' }
+                                                                    ]}>
                                                                         <View style={[
                                                                             styles.importanceBarFill,
-                                                                            { width: ${factor.importance * 100}% }
+                                                                            { width: `${factor.importance * 100}%`, backgroundColor: theme.icon }
                                                                         ]} />
                                                                     </View>
-                                                                    <Text style={styles.importanceText}>
+                                                                    <Text style={[styles.importanceText, { color: theme.textSecondary }]}>
                                                                         {(factor.importance * 100).toFixed(0)}% importância
                                                                     </Text>
                                                                 </View>
@@ -503,9 +621,18 @@ export default function PredicaoScreen() {
                                             </View>
                                         )}
 
-                                        <TouchableOpacity style={styles.newAnalysisButton} onPress={handleReset}>
-                                            <Ionicons name="add-circle-outline" size={24} color="#0162B3" />
-                                            <Text style={styles.newAnalysisButtonText}>Nova Análise</Text>
+                                        <TouchableOpacity
+                                            style={[
+                                                styles.newAnalysisButton,
+                                                {
+                                                    backgroundColor: isDarkMode ? '#1E293B' : '#FFFFFF',
+                                                    borderColor: theme.icon,
+                                                }
+                                            ]}
+                                            onPress={handleReset}
+                                        >
+                                            <Ionicons name="add-circle-outline" size={24} color={theme.icon} />
+                                            <Text style={[styles.newAnalysisButtonText, { color: theme.icon }]}>Nova Análise</Text>
                                         </TouchableOpacity>
                                     </>
                                 );
@@ -521,11 +648,9 @@ export default function PredicaoScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#132F3B',
     },
     content: {
         flex: 1,
-        backgroundColor: '#F8FAFC',
         borderTopLeftRadius: 32,
         borderTopRightRadius: 32,
         marginTop: 16,
@@ -545,17 +670,14 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: '#0F172A',
     },
     subtitle: {
         fontSize: 14,
-        color: '#64748B',
         marginBottom: 16,
     },
     sectionTitle: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: '#132F3B',
         marginTop: 8,
         marginBottom: 12,
     },
@@ -568,12 +690,10 @@ const styles = StyleSheet.create({
     fieldLabel: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#132F3B',
         marginBottom: 4,
     },
     fieldHelper: {
         fontSize: 12,
-        color: '#64748B',
         marginBottom: 8,
         lineHeight: 16,
     },
@@ -589,7 +709,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#0162B3',
         padding: 16,
         borderRadius: 12,
         gap: 8,
@@ -609,10 +728,8 @@ const styles = StyleSheet.create({
         paddingBottom: 32,
     },
     mainRiskCard: {
-        backgroundColor: '#FFFFFF',
         borderRadius: 16,
         padding: 20,
-        shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.1,
         shadowRadius: 12,
@@ -628,25 +745,20 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         padding: 16,
-        backgroundColor: '#F8FAFC',
         borderRadius: 12,
         gap: 6,
     },
     statValue: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: '#132F3B',
     },
     statLabel: {
         fontSize: 11,
-        color: '#64748B',
         textAlign: 'center',
     },
     similarityCard: {
-        backgroundColor: '#FFFFFF',
         borderRadius: 16,
         padding: 20,
-        shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.08,
         shadowRadius: 8,
@@ -655,12 +767,10 @@ const styles = StyleSheet.create({
     similarityTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#132F3B',
         marginBottom: 4,
     },
     similaritySubtitle: {
         fontSize: 13,
-        color: '#64748B',
         marginBottom: 16,
     },
     similarityBar: {
@@ -675,7 +785,6 @@ const styles = StyleSheet.create({
     similarityBarLabel: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#132F3B',
     },
     similarityBarValue: {
         fontSize: 16,
@@ -683,7 +792,6 @@ const styles = StyleSheet.create({
     },
     progressBarContainer: {
         height: 12,
-        backgroundColor: '#E2E8F0',
         borderRadius: 6,
         overflow: 'hidden',
     },
@@ -696,23 +804,19 @@ const styles = StyleSheet.create({
         alignItems: 'flex-start',
         gap: 8,
         padding: 12,
-        backgroundColor: '#F1F5F9',
         borderRadius: 8,
         marginTop: 8,
     },
     explainerText: {
         flex: 1,
         fontSize: 12,
-        color: '#64748B',
         lineHeight: 16,
     },
     recommendationCard: {
-        backgroundColor: '#FEF3C7',
         padding: 20,
         minHeight: 120,
         borderRadius: 12,
         borderLeftWidth: 4,
-        borderLeftColor: '#F59E0B',
     },
     recommendationHeader: {
         flexDirection: 'row',
@@ -723,11 +827,9 @@ const styles = StyleSheet.create({
     recommendationTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#92400E',
     },
     recommendationText: {
         fontSize: 15,
-        color: '#78350F',
         lineHeight: 22,
         marginTop: 4,
     },
@@ -737,21 +839,17 @@ const styles = StyleSheet.create({
     factorsTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#132F3B',
         marginBottom: 4,
     },
     factorsSubtitle: {
         fontSize: 13,
-        color: '#64748B',
         marginBottom: 16,
     },
     factorCard: {
-        backgroundColor: '#FFFFFF',
         padding: 16,
         borderRadius: 12,
         marginBottom: 12,
         borderLeftWidth: 4,
-        shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.05,
         shadowRadius: 4,
@@ -775,7 +873,6 @@ const styles = StyleSheet.create({
     factorDescription: {
         fontSize: 15,
         fontWeight: '600',
-        color: '#132F3B',
         marginBottom: 8,
     },
     factorMeta: {
@@ -786,35 +883,29 @@ const styles = StyleSheet.create({
     importanceBar: {
         flex: 1,
         height: 6,
-        backgroundColor: '#E2E8F0',
         borderRadius: 3,
         overflow: 'hidden',
     },
     importanceBarFill: {
         height: '100%',
-        backgroundColor: '#0162B3',
         borderRadius: 3,
     },
     importanceText: {
         fontSize: 12,
-        color: '#64748B',
         fontWeight: '500',
     },
     newAnalysisButton: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#FFFFFF',
         padding: 16,
         borderRadius: 12,
         gap: 8,
         borderWidth: 2,
-        borderColor: '#0162B3',
         marginTop: 8,
     },
     newAnalysisButtonText: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: '#0162B3',
     },
 });

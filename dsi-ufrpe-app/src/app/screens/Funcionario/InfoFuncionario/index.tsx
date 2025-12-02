@@ -1,3 +1,4 @@
+import { supabase } from '@/lib/supabase';
 import { ActionButton } from '@/src/components/ActionButton';
 import { ErrorState } from '@/src/components/ErrorState';
 import { InfoHeader } from '@/src/components/InfoHeader';
@@ -5,13 +6,13 @@ import { InfoRow } from '@/src/components/InfoRow';
 import { Loading } from '@/src/components/Loading';
 import { ProfileSection } from '@/src/components/ProfileSection';
 import { Separator } from '@/src/components/Separator';
+import { useToast } from '@/src/components/ToastContext';
 import { buscarFuncionarioPorId, excluirFuncionario, Funcionario } from '@/src/services/funcionariosService';
 import { formatCPF, formatPhone, withPlaceholder } from '@/src/utils/formatters';
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import React, { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, Platform } from "react-native";
+import React, { useCallback, useMemo, useState } from 'react';
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useToast } from '@/src/components/ToastContext';
 
 
 const InfoFuncionario: React.FC = () => {
@@ -24,6 +25,54 @@ const InfoFuncionario: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [isDarkMode, setIsDarkMode] = useState(false);
+
+    // Paleta de cores
+    const palettes = useMemo(() => ({
+        light: {
+            background: '#132F3B',
+            content: '#F8FAFC',
+            text: '#132F3B',
+            textSecondary: '#64748B',
+            icon: '#2176ff',
+            breadcrumb: '#E0F2FE',
+            accent: '#FFE157',
+            backIcon: '#FFFFFF',
+            modalOverlay: 'rgba(0, 0, 0, 0.5)',
+            modalBg: '#FFFFFF',
+            modalText: '#132F3B',
+        },
+        dark: {
+            background: '#050C18',
+            content: '#0B1624',
+            text: '#F1F5F9',
+            textSecondary: '#94A3B8',
+            icon: '#60A5FA',
+            breadcrumb: '#94A3B8',
+            accent: '#FDE047',
+            backIcon: '#E2E8F0',
+            modalOverlay: 'rgba(0, 0, 0, 0.7)',
+            modalBg: '#0B1624',
+            modalText: '#F1F5F9',
+        }
+    }), []);
+
+    const theme = useMemo(() => palettes[isDarkMode ? 'dark' : 'light'], [isDarkMode, palettes]);
+
+    /**
+     * Carrega preferência de tema do usuário
+     */
+    const loadThemePreference = useCallback(async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            const preferredTheme = user.user_metadata?.preferred_theme;
+            setIsDarkMode(preferredTheme === 'dark');
+        } catch (error) {
+            console.error('Erro ao carregar tema:', error);
+        }
+    }, []);
 
     /**
      * ✅ REQUISITO 1: Carregamento dos dados usando ID da URL
@@ -54,8 +103,9 @@ const InfoFuncionario: React.FC = () => {
     // Recarrega os dados sempre que a tela receber foco
     useFocusEffect(
         useCallback(() => {
+            loadThemePreference();
             loadFuncionario();
-        }, [loadFuncionario])
+        }, [loadThemePreference, loadFuncionario])
     );
 
     /**
@@ -69,11 +119,11 @@ const InfoFuncionario: React.FC = () => {
         try {
             setShowDeleteConfirm(false);
             setLoading(true);
-            
+
             await excluirFuncionario(id as string);
-            
+
             showSuccess('Funcionário excluído com sucesso!');
-            
+
             setTimeout(() => {
                 router.push("/screens/Funcionario/ListagemFuncionario");
             }, 1500);
@@ -92,10 +142,19 @@ const InfoFuncionario: React.FC = () => {
      */
     if (loading) {
         return (
-            <SafeAreaView style={styles.container} edges={['top']}>
-                <InfoHeader entity="Funcionários" onBackPress={() => router.back()} />
-                <View style={styles.subContainer}>
-                    <Loading message="Carregando funcionário..." />
+            <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
+                <InfoHeader
+                    entity="Funcionários"
+                    onBackPress={() => router.back()}
+                    colors={{
+                        background: theme.background,
+                        breadcrumb: theme.breadcrumb,
+                        accent: theme.accent,
+                        backIcon: theme.backIcon,
+                    }}
+                />
+                <View style={[styles.subContainer, { backgroundColor: theme.content }]}>
+                    <Loading message="Carregando funcionário..." isDarkMode={isDarkMode} />
                 </View>
             </SafeAreaView>
         );
@@ -106,9 +165,18 @@ const InfoFuncionario: React.FC = () => {
      */
     if (error || !funcionario) {
         return (
-            <SafeAreaView style={styles.container} edges={['top']}>
-                <InfoHeader entity="Funcionários" onBackPress={() => router.back()} />
-                <View style={styles.subContainer}>
+            <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
+                <InfoHeader
+                    entity="Funcionários"
+                    onBackPress={() => router.back()}
+                    colors={{
+                        background: theme.background,
+                        breadcrumb: theme.breadcrumb,
+                        accent: theme.accent,
+                        backIcon: theme.backIcon,
+                    }}
+                />
+                <View style={[styles.subContainer, { backgroundColor: theme.content }]}>
                     <ErrorState
                         message={error || 'Funcionário não encontrado'}
                         onRetry={loadFuncionario}
@@ -120,20 +188,32 @@ const InfoFuncionario: React.FC = () => {
     }
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
             {/* ✅ REQUISITO 9: Breadcrumb/indicador de navegação */}
-            <InfoHeader entity="Funcionários" onBackPress={() => router.back()} />
+            <InfoHeader
+                entity="Funcionários"
+                onBackPress={() => router.back()}
+                colors={{
+                    background: theme.background,
+                    breadcrumb: theme.breadcrumb,
+                    accent: theme.accent,
+                    backIcon: theme.backIcon,
+                }}
+            />
 
             {/* Seção de foto e nome no fundo azul */}
             <ProfileSection
                 name={withPlaceholder(funcionario.nome_completo, 'Nome não informado')}
                 subtitle={withPlaceholder(funcionario.cargo, 'Cargo não informado')}
+                backgroundColor={theme.background}
+                nameColor={isDarkMode ? '#FDE047' : '#FFE157'}
+                subtitleColor={theme.textSecondary}
             />
 
             {/* Container branco com informações */}
-            <View style={styles.subContainer}>
+            <View style={[styles.subContainer, { backgroundColor: theme.content }]}>
                 <View style={styles.funcionarioTitleContainer}>
-                    <Text style={styles.funcionarioTitle}>Informações Pessoais</Text>
+                    <Text style={[styles.funcionarioTitle, { color: theme.text }]}>Informações Pessoais</Text>
                 </View>
                 <Separator />
                 <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -142,18 +222,27 @@ const InfoFuncionario: React.FC = () => {
                         icon="card-outline"
                         label="CPF"
                         value={formatCPF(funcionario.cpf)}
+                        iconColor={theme.icon}
+                        labelColor={theme.textSecondary}
+                        valueColor={theme.text}
                     />
 
                     <InfoRow
                         icon="call-outline"
                         label="CELULAR"
                         value={formatPhone(funcionario.telefone)}
+                        iconColor={theme.icon}
+                        labelColor={theme.textSecondary}
+                        valueColor={theme.text}
                     />
 
                     <InfoRow
                         icon="mail-outline"
                         label="E-MAIL"
                         value={withPlaceholder(funcionario.email, 'Email não informado')}
+                        iconColor={theme.icon}
+                        labelColor={theme.textSecondary}
+                        valueColor={theme.text}
                     />
                 </ScrollView>
 
@@ -170,6 +259,7 @@ const InfoFuncionario: React.FC = () => {
                             pathname: "/screens/Funcionario/EdicaoFuncionario",
                             params: { id: funcionario.id }
                         })}
+                        tone={isDarkMode ? 'dark' : 'light'}
                     >
                         Editar Funcionário
                     </ActionButton>
@@ -179,6 +269,7 @@ const InfoFuncionario: React.FC = () => {
                         variant="danger"
                         icon="trash-outline"
                         onPress={handleDelete}
+                        tone={isDarkMode ? 'dark' : 'light'}
                     >
                         Excluir
                     </ActionButton>
@@ -187,10 +278,10 @@ const InfoFuncionario: React.FC = () => {
 
             {/* Modal de Confirmação de Exclusão */}
             {showDeleteConfirm && (
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>Confirmar Exclusão</Text>
-                        <Text style={styles.modalMessage}>
+                <View style={[styles.modalOverlay, { backgroundColor: theme.modalOverlay }]}>
+                    <View style={[styles.modalContent, { backgroundColor: theme.modalBg }]}>
+                        <Text style={[styles.modalTitle, { color: theme.modalText }]}>Confirmar Exclusão</Text>
+                        <Text style={[styles.modalMessage, { color: theme.textSecondary }]}>
                             Tem certeza que deseja excluir este funcionário? Esta ação não pode ser desfeita.
                         </Text>
                         <View style={styles.modalButtons}>
@@ -198,6 +289,7 @@ const InfoFuncionario: React.FC = () => {
                                 variant="secondary"
                                 onPress={cancelDelete}
                                 style={styles.modalButton}
+                                tone={isDarkMode ? 'dark' : 'light'}
                             >
                                 Cancelar
                             </ActionButton>
@@ -205,6 +297,7 @@ const InfoFuncionario: React.FC = () => {
                                 variant="danger"
                                 onPress={confirmDelete}
                                 style={styles.modalButton}
+                                tone={isDarkMode ? 'dark' : 'light'}
                             >
                                 Excluir
                             </ActionButton>
@@ -219,7 +312,6 @@ const InfoFuncionario: React.FC = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#132F3B',
     },
     header: {
         flexDirection: 'row',
@@ -227,7 +319,6 @@ const styles = StyleSheet.create({
         paddingTop: 50,
         paddingBottom: 16,
         paddingHorizontal: 16,
-        backgroundColor: '#132F3B',
     },
     backButton: {
         marginRight: 16,
@@ -240,18 +331,15 @@ const styles = StyleSheet.create({
     },
     breadcrumbText: {
         fontSize: 14,
-        color: '#E0F2FE',
         opacity: 0.7,
     },
     breadcrumbTextActive: {
         fontSize: 14,
-        color: '#FFE157',
         fontWeight: '600',
     },
     subContainer: {
         flex: 1,
         width: '100%',
-        backgroundColor: '#FFFFFF',
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         paddingVertical: 24,
@@ -272,7 +360,6 @@ const styles = StyleSheet.create({
     funcionarioTitle: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#1E293B',
     },
     infoRow: {
         flexDirection: 'row',
@@ -286,7 +373,6 @@ const styles = StyleSheet.create({
     },
     infoLabel: {
         fontSize: 16,
-        color: '#64748B',
         fontWeight: '600',
         textTransform: 'uppercase',
         marginBottom: 4,
@@ -294,7 +380,6 @@ const styles = StyleSheet.create({
     },
     infoValue: {
         fontSize: 18,
-        color: '#1E293B',
         fontWeight: '500',
         lineHeight: 24,
     },
@@ -307,7 +392,6 @@ const styles = StyleSheet.create({
     buttonPrimary: {
         width: '100%',
         height: 48,
-        backgroundColor: '#0162B3',
         borderRadius: 12,
         flexDirection: 'row',
         alignItems: 'center',
@@ -319,7 +403,6 @@ const styles = StyleSheet.create({
         shadowRadius: 3,
     },
     buttonPrimaryText: {
-        color: '#FFFFFF',
         fontSize: 16,
         fontWeight: '600',
     },
@@ -329,13 +412,11 @@ const styles = StyleSheet.create({
         backgroundColor: 'transparent',
         borderRadius: 12,
         borderWidth: 1.5,
-        borderColor: '#EF4444',
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
     },
     buttonDangerText: {
-        color: '#EF4444',
         fontSize: 16,
         fontWeight: '600',
     },
@@ -348,13 +429,11 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
         justifyContent: 'center',
         alignItems: 'center',
         zIndex: 1000,
     },
     modalContent: {
-        backgroundColor: 'white',
         borderRadius: 12,
         padding: 24,
         width: '90%',
@@ -373,7 +452,6 @@ const styles = StyleSheet.create({
     },
     modalMessage: {
         fontSize: 16,
-        color: '#64748B',
         marginBottom: 24,
         lineHeight: 24,
     },
