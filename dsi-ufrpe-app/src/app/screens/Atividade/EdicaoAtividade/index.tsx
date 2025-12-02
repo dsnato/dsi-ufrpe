@@ -1,3 +1,4 @@
+import { supabase } from '@/lib/supabase';
 import { ActionButton } from '@/src/components/ActionButton';
 import { FormInput } from '@/src/components/FormInput';
 import { ImagePicker } from '@/src/components/ImagePicker';
@@ -8,7 +9,7 @@ import { atualizarAtividade, buscarAtividadePorId, removerImagemAtividade, uploa
 import { getSuccessMessage } from '@/src/utils/errorMessages';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -27,6 +28,48 @@ const EditarAtividade: React.FC = () => {
     const [imagemUri, setImagemUri] = useState<string | null>(null);
     const [imagemOriginal, setImagemOriginal] = useState<string | null>(null);
     const [imagemAlterada, setImagemAlterada] = useState(false);
+    const [isDarkMode, setIsDarkMode] = useState(false);
+
+    // Paleta de cores dark/light
+    const palettes = useMemo(() => ({
+        light: {
+            background: '#132F3B',
+            content: '#F8FAFC',
+            text: '#132F3B',
+            textSecondary: '#64748B',
+            icon: '#0162B3',
+            breadcrumb: '#E0F2FE',
+            accent: '#FFE157',
+            backIcon: '#FFFFFF',
+        },
+        dark: {
+            background: '#050C18',
+            content: '#0B1624',
+            text: '#F1F5F9',
+            textSecondary: '#94A3B8',
+            icon: '#60A5FA',
+            breadcrumb: '#94A3B8',
+            accent: '#FDE047',
+            backIcon: '#E2E8F0',
+        },
+    }), []);
+
+    const theme = useMemo(() => {
+        return isDarkMode ? palettes.dark : palettes.light;
+    }, [isDarkMode, palettes]);
+
+    // Carrega preferência de tema
+    const loadThemePreference = useCallback(async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const preferredTheme = user.user_metadata?.preferred_theme;
+                setIsDarkMode(preferredTheme === 'dark');
+            }
+        } catch (error) {
+            console.error('Erro ao carregar preferência de tema:', error);
+        }
+    }, []);
 
     // Formata a data automaticamente para DD/MM/AAAA
     const handleDateChange = (text: string) => {
@@ -164,8 +207,9 @@ const EditarAtividade: React.FC = () => {
 
     useFocusEffect(
         useCallback(() => {
+            loadThemePreference();
             loadAtividade();
-        }, [loadAtividade])
+        }, [loadAtividade, loadThemePreference])
     );
 
     const handleSave = async () => {
@@ -282,10 +326,19 @@ const EditarAtividade: React.FC = () => {
     };
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
-            <InfoHeader entity="Atividades" onBackPress={() => router.push("/screens/Atividade/ListagemAtividade")} />
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
+            <InfoHeader
+                colors={{
+                    background: theme.background,
+                    breadcrumb: theme.breadcrumb,
+                    accent: theme.accent,
+                    backIcon: theme.backIcon,
+                }}
+                entity="Atividades"
+                onBackPress={() => router.push("/screens/Atividade/ListagemAtividade")}
+            />
 
-            <View style={styles.content}>
+            <View style={[styles.content, { backgroundColor: theme.content }]}>
                 <ScrollView
                     style={styles.scrollView}
                     contentContainerStyle={styles.scrollContent}
@@ -293,11 +346,11 @@ const EditarAtividade: React.FC = () => {
                 >
                     {/* Título da seção */}
                     <View style={styles.titleContainer}>
-                        <Ionicons name="create-outline" size={24} color="#0162B3" />
-                        <Text style={styles.title}>Editar Atividade</Text>
+                        <Ionicons name="create-outline" size={24} color={theme.icon} />
+                        <Text style={[styles.title, { color: theme.text }]}>Editar Atividade</Text>
                     </View>
 
-                    <Text style={styles.subtitle}>
+                    <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
                         Atualize as informações da atividade recreativa
                     </Text>
 
@@ -305,7 +358,7 @@ const EditarAtividade: React.FC = () => {
 
                     {/* Imagem da Atividade */}
                     <View style={styles.fieldGroup}>
-                        <Text style={styles.label}>Imagem da Atividade</Text>
+                        <Text style={[styles.label, { color: theme.text }]}>Imagem da Atividade</Text>
                         <ImagePicker
                             imageUri={imagemUri}
                             onImageSelected={(uri) => {
@@ -318,6 +371,7 @@ const EditarAtividade: React.FC = () => {
                                 setImagemUri(null);
                                 setImagemAlterada(true);
                             }}
+                            tone={isDarkMode ? 'dark' : 'light'}
                             disabled={loading}
                         />
                     </View>
@@ -325,7 +379,7 @@ const EditarAtividade: React.FC = () => {
                     {/* Formulário */}
                     <View style={styles.form}>
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>
+                            <Text style={[styles.label, { color: theme.text }]}>
                                 Nome da Atividade <Text style={styles.required}>*</Text>
                             </Text>
                             <FormInput
@@ -334,11 +388,12 @@ const EditarAtividade: React.FC = () => {
                                 value={nome}
                                 onChangeText={setNome}
                                 editable={!loading}
+                                isDarkMode={isDarkMode}
                             />
                         </View>
 
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>Descrição</Text>
+                            <Text style={[styles.label, { color: theme.text }]}>Descrição</Text>
                             <FormInput
                                 icon="document-text-outline"
                                 placeholder="Descreva a atividade"
@@ -347,22 +402,24 @@ const EditarAtividade: React.FC = () => {
                                 multiline
                                 numberOfLines={3}
                                 editable={!loading}
+                                isDarkMode={isDarkMode}
                             />
                         </View>
 
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>Local</Text>
+                            <Text style={[styles.label, { color: theme.text }]}>Local</Text>
                             <FormInput
                                 icon="location-outline"
                                 placeholder="Ex: Área de lazer"
                                 value={local}
                                 onChangeText={setLocal}
                                 editable={!loading}
+                                isDarkMode={isDarkMode}
                             />
                         </View>
 
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>
+                            <Text style={[styles.label, { color: theme.text }]}>
                                 Data <Text style={styles.required}>*</Text>
                             </Text>
                             <FormInput
@@ -374,11 +431,12 @@ const EditarAtividade: React.FC = () => {
                                 keyboardType="numeric"
                                 maxLength={10}
                                 helperText="Formato: dia/mês/ano"
+                                isDarkMode={isDarkMode}
                             />
                         </View>
 
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>
+                            <Text style={[styles.label, { color: theme.text }]}>
                                 Horário <Text style={styles.required}>*</Text>
                             </Text>
                             <FormInput
@@ -390,11 +448,18 @@ const EditarAtividade: React.FC = () => {
                                 keyboardType="numeric"
                                 maxLength={5}
                                 helperText="Formato: hora:minuto (00:00 - 23:59)"
+                                isDarkMode={isDarkMode}
                             />
                         </View>
 
                         {/* Status da Atividade */}
-                        <View style={styles.switchContainer}>
+                        <View style={[
+                            styles.switchContainer,
+                            {
+                                backgroundColor: isDarkMode ? '#1E293B' : '#FFFFFF',
+                                borderColor: isDarkMode ? '#334155' : '#E2E8F0',
+                            }
+                        ]}>
                             <View style={styles.switchLabel}>
                                 <Ionicons
                                     name={ativa ? "checkmark-circle" : "close-circle"}
@@ -402,8 +467,8 @@ const EditarAtividade: React.FC = () => {
                                     color={ativa ? "#10B981" : "#6B7280"}
                                 />
                                 <View style={styles.switchTextContainer}>
-                                    <Text style={styles.switchTitle}>Atividade Ativa</Text>
-                                    <Text style={styles.switchDescription}>
+                                    <Text style={[styles.switchTitle, { color: theme.text }]}>Atividade Ativa</Text>
+                                    <Text style={[styles.switchDescription, { color: theme.textSecondary }]}>
                                         {ativa ? 'Esta atividade está disponível para os hóspedes' : 'Esta atividade está pausada'}
                                     </Text>
                                 </View>
@@ -426,6 +491,7 @@ const EditarAtividade: React.FC = () => {
                         <ActionButton
                             variant="primary"
                             icon="checkmark-circle-outline"
+                            tone={isDarkMode ? 'dark' : 'light'}
                             onPress={handleSave}
                             disabled={loading}
                         >
@@ -435,6 +501,7 @@ const EditarAtividade: React.FC = () => {
                         <ActionButton
                             variant="secondary"
                             icon="close-circle-outline"
+                            tone={isDarkMode ? 'dark' : 'light'}
                             onPress={() => router.push("/screens/Atividade/ListagemAtividade")}
                             disabled={loading}
                         >
@@ -450,11 +517,9 @@ const EditarAtividade: React.FC = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#132F3B',
     },
     content: {
         flex: 1,
-        backgroundColor: '#F8FAFC',
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
         overflow: 'hidden',
@@ -476,11 +541,9 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 24,
         fontWeight: '700',
-        color: '#132F3B',
     },
     subtitle: {
         fontSize: 14,
-        color: '#64748B',
         lineHeight: 20,
     },
     form: {
@@ -492,7 +555,6 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#334155',
         marginBottom: 4,
     },
     required: {
@@ -502,11 +564,9 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: '#FFFFFF',
         padding: 16,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: '#E2E8F0',
     },
     switchLabel: {
         flexDirection: 'row',
@@ -521,11 +581,9 @@ const styles = StyleSheet.create({
     switchTitle: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#132F3B',
     },
     switchDescription: {
         fontSize: 12,
-        color: '#64748B',
     },
     actions: {
         gap: 12,
