@@ -1,16 +1,17 @@
+import { supabase } from '@/lib/supabase';
 import { ActionButton } from '@/src/components/ActionButton';
 import { FormInput } from '@/src/components/FormInput';
 import { FormSelect, SelectOption } from '@/src/components/FormSelect';
 import { InfoHeader } from '@/src/components/InfoHeader';
 import { Separator } from '@/src/components/Separator';
 import { useToast } from '@/src/components/ToastContext';
-import { buscarClientePorCPF } from '@/src/services/clientesService';
+import { listarClientes } from '@/src/services/clientesService';
 import { listarQuartos } from '@/src/services/quartosService';
 import { criarReserva } from '@/src/services/reservasService';
 import { getSuccessMessage, getValidationMessage } from '@/src/utils/errorMessages';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -19,16 +20,59 @@ const CriarReserva: React.FC = () => {
     const { showSuccess, showError } = useToast();
 
     const [loading, setLoading] = useState(false);
+    const [isDarkMode, setIsDarkMode] = useState(false);
     const [numeroQuarto, setNumeroQuarto] = useState('');
-    const [clienteNome, setClienteNome] = useState('');
-    const [clienteCpf, setClienteCpf] = useState('');
+    const [clienteId, setClienteId] = useState('');
     const [checkIn, setCheckIn] = useState('');
     const [checkOut, setCheckOut] = useState('');
     const [observacoes, setObservacoes] = useState('');
     const [confirmada, setConfirmada] = useState(true);
     const [quartosDisponiveis, setQuartosDisponiveis] = useState<SelectOption[]>([]);
+    const [clientesDisponiveis, setClientesDisponiveis] = useState<SelectOption[]>([]);
     const [quartosData, setQuartosData] = useState<any[]>([]);
+    const [clientesData, setClientesData] = useState<any[]>([]);
     const [loadingQuartos, setLoadingQuartos] = useState(false);
+    const [loadingClientes, setLoadingClientes] = useState(false);
+
+    // Paleta de cores
+    const palettes = useMemo(() => ({
+        light: {
+            background: '#132F3B',
+            content: '#F8FAFC',
+            text: '#132F3B',
+            textSecondary: '#64748B',
+            breadcrumb: '#E0F2FE',
+            accent: '#FFE157',
+            backIcon: '#FFFFFF',
+        },
+        dark: {
+            background: '#050C18',
+            content: '#0B1624',
+            text: '#F1F5F9',
+            textSecondary: '#94A3B8',
+            breadcrumb: '#94A3B8',
+            accent: '#FDE047',
+            backIcon: '#E2E8F0',
+        }
+    }), []);
+
+    const theme = useMemo(() => palettes[isDarkMode ? 'dark' : 'light'], [isDarkMode, palettes]);
+
+    const loadThemePreference = useCallback(async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            const preferredTheme = user.user_metadata?.preferred_theme;
+            setIsDarkMode(preferredTheme === 'dark');
+        } catch (error) {
+            console.error('Erro ao carregar tema:', error);
+        }
+    }, []);
+
+    useEffect(() => {
+        loadThemePreference();
+    }, [loadThemePreference]);
 
     // Calcula o valor total baseado nas datas e no quarto selecionado
     const calcularValorTotal = useCallback(() => {
@@ -111,11 +155,40 @@ const CriarReserva: React.FC = () => {
         }
     }, [showError]);
 
-    // Carrega quartos ao abrir a tela
+    // Carrega clientes registrados do banco de dados
+    const carregarClientesDisponiveis = useCallback(async () => {
+        try {
+            setLoadingClientes(true);
+            const clientes = await listarClientes();
+
+            // Salva os dados completos dos clientes
+            setClientesData(clientes);
+
+            // Mapeia para o formato do SelectOption
+            const options: SelectOption[] = clientes.map(c => ({
+                label: `${(c as any).nome_completo} - CPF: ${c.cpf?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')}`,
+                value: c.id || ''
+            }));
+
+            setClientesDisponiveis(options);
+
+            if (options.length === 0) {
+                showError('Não há clientes cadastrados. Cadastre um cliente primeiro.');
+            }
+        } catch (error) {
+            console.error('Erro ao carregar clientes:', error);
+            showError('Não foi possível carregar os clientes.');
+        } finally {
+            setLoadingClientes(false);
+        }
+    }, [showError]);
+
+    // Carrega quartos e clientes ao abrir a tela
     useFocusEffect(
         useCallback(() => {
             carregarQuartosDisponiveis();
-        }, [carregarQuartosDisponiveis])
+            carregarClientesDisponiveis();
+        }, [carregarQuartosDisponiveis, carregarClientesDisponiveis])
     );
 
     // Formata data automaticamente (DD/MM/AAAA)
@@ -163,51 +236,6 @@ const CriarReserva: React.FC = () => {
         setter(formatted);
     };
 
-    // Formata CPF automaticamente (000.000.000-00)
-    const handleCpfChange = (text: string) => {
-        const numbersOnly = text.replace(/\D/g, '');
-        const limited = numbersOnly.slice(0, 11);
-
-        let formatted = limited;
-        if (limited.length >= 4) {
-            formatted = `${limited.slice(0, 3)}.${limited.slice(3)}`;
-        }
-        if (limited.length >= 7) {
-            formatted = `${limited.slice(0, 3)}.${limited.slice(3, 6)}.${limited.slice(6)}`;
-        }
-        if (limited.length >= 10) {
-            formatted = `${limited.slice(0, 3)}.${limited.slice(3, 6)}.${limited.slice(6, 9)}-${limited.slice(9)}`;
-        }
-
-        setClienteCpf(formatted);
-    };
-
-    // Valida CPF
-    const validateCpf = (cpfString: string): boolean => {
-        const cpfNumbers = cpfString.replace(/\D/g, '');
-
-        if (cpfNumbers.length !== 11) return false;
-        if (/^(\d)\1{10}$/.test(cpfNumbers)) return false;
-
-        let sum = 0;
-        for (let i = 0; i < 9; i++) {
-            sum += parseInt(cpfNumbers.charAt(i)) * (10 - i);
-        }
-        let firstDigit = 11 - (sum % 11);
-        if (firstDigit >= 10) firstDigit = 0;
-        if (firstDigit !== parseInt(cpfNumbers.charAt(9))) return false;
-
-        sum = 0;
-        for (let i = 0; i < 10; i++) {
-            sum += parseInt(cpfNumbers.charAt(i)) * (11 - i);
-        }
-        let secondDigit = 11 - (sum % 11);
-        if (secondDigit >= 10) secondDigit = 0;
-        if (secondDigit !== parseInt(cpfNumbers.charAt(10))) return false;
-
-        return true;
-    };
-
     // Valida data
     const validateDate = (dateString: string): Date | null => {
         const dateRegex = /^\d{2}\/\d{2}\/\d{4}$/;
@@ -234,29 +262,8 @@ const CriarReserva: React.FC = () => {
             return;
         }
 
-        if (!clienteNome.trim()) {
-            showError(getValidationMessage('name', 'required'));
-            return;
-        }
-
-        if (clienteNome.trim().length < 3) {
-            showError('O nome do cliente deve ter pelo menos 3 caracteres.');
-            return;
-        }
-
-        if (!clienteCpf.trim()) {
-            showError(getValidationMessage('cpf', 'required'));
-            return;
-        }
-
-        const cpfRegex = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/;
-        if (!cpfRegex.test(clienteCpf)) {
-            showError(getValidationMessage('cpf_format', 'invalid'));
-            return;
-        }
-
-        if (!validateCpf(clienteCpf)) {
-            showError(getValidationMessage('cpf_digits', 'invalid'));
+        if (!clienteId.trim()) {
+            showError('Selecione um cliente para a reserva.');
             return;
         }
 
@@ -326,17 +333,7 @@ const CriarReserva: React.FC = () => {
         try {
             setLoading(true);
 
-            // 1. Buscar cliente pelo CPF para obter o UUID
-            const cpfLimpo = clienteCpf.replace(/\D/g, '');
-            const cliente = await buscarClientePorCPF(cpfLimpo);
-
-            if (!cliente) {
-                showError('Cliente não encontrado. Verifique o CPF informado.');
-                setLoading(false);
-                return;
-            }
-
-            // 2. Buscar quarto pelo número para obter o UUID
+            // 1. Buscar quarto pelo número para obter o UUID
             const quartos = await listarQuartos();
             const quarto = quartos.find(q => q.numero_quarto === numeroQuarto.trim());
 
@@ -346,17 +343,17 @@ const CriarReserva: React.FC = () => {
                 return;
             }
 
-            // 3. Converter datas de DD/MM/AAAA para AAAA-MM-DD
+            // 2. Converter datas de DD/MM/AAAA para AAAA-MM-DD
             const [diaIn, mesIn, anoIn] = checkIn.split('/');
             const dataCheckinFormatada = `${anoIn}-${mesIn}-${diaIn}`;
 
             const [diaOut, mesOut, anoOut] = checkOut.split('/');
             const dataCheckoutFormatada = `${anoOut}-${mesOut}-${diaOut}`;
 
-            // 4. Criar reserva com os UUIDs corretos e datas formatadas
+            // 3. Criar reserva com os UUIDs corretos e datas formatadas
             const reservaData = {
                 id_quarto: quarto.id!,
-                id_cliente: cliente.id!,
+                id_cliente: clienteId, // Já temos o UUID do cliente do dropdown
                 data_checkin: dataCheckinFormatada,
                 data_checkout: dataCheckoutFormatada,
                 numero_hospedes: 1,
@@ -381,10 +378,20 @@ const CriarReserva: React.FC = () => {
     };
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
-            <InfoHeader entity="Reservas" action="Adição" onBackPress={() => router.push('/screens/Reserva/ListagemReserva')} />
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
+            <InfoHeader
+                entity="Reservas"
+                action="Adição"
+                onBackPress={() => router.push('/screens/Reserva/ListagemReserva')}
+                colors={{
+                    background: theme.background,
+                    breadcrumb: theme.breadcrumb,
+                    accent: theme.accent,
+                    backIcon: theme.backIcon,
+                }}
+            />
 
-            <View style={styles.content}>
+            <View style={[styles.content, { backgroundColor: theme.content }]}>
                 <ScrollView
                     style={styles.scrollView}
                     contentContainerStyle={styles.scrollContent}
@@ -392,11 +399,11 @@ const CriarReserva: React.FC = () => {
                 >
                     {/* Título da seção */}
                     <View style={styles.titleContainer}>
-                        <Ionicons name="add-circle-outline" size={24} color="#0162B3" />
-                        <Text style={styles.title}>Nova Reserva</Text>
+                        <Ionicons name="add-circle-outline" size={24} color={isDarkMode ? '#60A5FA' : '#0162B3'} />
+                        <Text style={[styles.title, { color: theme.text }]}>Nova Reserva</Text>
                     </View>
 
-                    <Text style={styles.subtitle}>
+                    <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
                         Preencha os dados para criar uma nova reserva
                     </Text>
 
@@ -405,7 +412,7 @@ const CriarReserva: React.FC = () => {
                     {/* Formulário */}
                     <View style={styles.form}>
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>
+                            <Text style={[styles.label, { color: theme.text }]}>
                                 Número do Quarto <Text style={styles.required}>*</Text>
                             </Text>
                             <FormSelect
@@ -416,42 +423,29 @@ const CriarReserva: React.FC = () => {
                                 onSelect={setNumeroQuarto}
                                 disabled={loading || loadingQuartos}
                                 helperText={`${quartosDisponiveis.length} quarto(s) disponível(is)`}
+                                isDarkMode={isDarkMode}
                             />
                         </View>
 
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>
-                                Nome Completo <Text style={styles.required}>*</Text>
+                            <Text style={[styles.label, { color: theme.text }]}>
+                                Cliente <Text style={styles.required}>*</Text>
                             </Text>
-                            <FormInput
+                            <FormSelect
                                 icon="person-outline"
-                                placeholder="Nome do hóspede"
-                                value={clienteNome}
-                                onChangeText={setClienteNome}
-                                editable={!loading}
-                                maxLength={100}
-                            />
-                        </View>
-
-                        <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>
-                                CPF <Text style={styles.required}>*</Text>
-                            </Text>
-                            <FormInput
-                                icon="card-outline"
-                                placeholder="000.000.000-00"
-                                value={clienteCpf}
-                                onChangeText={handleCpfChange}
-                                editable={!loading}
-                                keyboardType="numeric"
-                                maxLength={14}
-                                helperText="Formato: 000.000.000-00"
+                                placeholder={loadingClientes ? "Carregando clientes..." : "Selecione um cliente"}
+                                value={clienteId}
+                                options={clientesDisponiveis}
+                                onSelect={setClienteId}
+                                disabled={loading || loadingClientes}
+                                helperText={`${clientesDisponiveis.length} cliente(s) cadastrado(s)`}
+                                isDarkMode={isDarkMode}
                             />
                         </View>
 
                         <View style={styles.row}>
                             <View style={[styles.fieldGroup, styles.halfWidth]}>
-                                <Text style={styles.label}>
+                                <Text style={[styles.label, { color: theme.text }]}>
                                     Check-in <Text style={styles.required}>*</Text>
                                 </Text>
                                 <FormInput
@@ -461,13 +455,14 @@ const CriarReserva: React.FC = () => {
                                     onChangeText={(text) => handleDateChange(text, setCheckIn)}
                                     editable={!loading}
                                     keyboardType="numeric"
+                                    isDarkMode={isDarkMode}
                                     maxLength={10}
                                     helperText="Data de entrada"
                                 />
                             </View>
 
                             <View style={[styles.fieldGroup, styles.halfWidth]}>
-                                <Text style={styles.label}>
+                                <Text style={[styles.label, { color: theme.text }]}>
                                     Check-out <Text style={styles.required}>*</Text>
                                 </Text>
                                 <FormInput
@@ -479,22 +474,32 @@ const CriarReserva: React.FC = () => {
                                     keyboardType="numeric"
                                     maxLength={10}
                                     helperText="Data de saída"
+                                    isDarkMode={isDarkMode}
                                 />
                             </View>
                         </View>
 
                         {/* Valor Total Calculado */}
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>Valor Total</Text>
-                            <View style={styles.valorTotalContainer}>
+                            <Text style={[styles.label, { color: theme.text }]}>Valor Total</Text>
+                            <View style={[styles.valorTotalContainer, {
+                                backgroundColor: isDarkMode ? '#064E3B' : '#F0FDF4',
+                                borderColor: isDarkMode ? '#059669' : '#10B981'
+                            }]}>
                                 <Ionicons name="cash-outline" size={24} color="#10B981" />
                                 <View style={styles.valorTotalContent}>
-                                    <Text style={styles.valorTotalLabel}>Total da Reserva</Text>
-                                    <Text style={styles.valorTotalValue}>
+                                    <Text style={[styles.valorTotalLabel, {
+                                        color: isDarkMode ? '#6EE7B7' : '#059669'
+                                    }]}>Total da Reserva</Text>
+                                    <Text style={[styles.valorTotalValue, {
+                                        color: isDarkMode ? '#A7F3D0' : '#047857'
+                                    }]}>
                                         R$ {valorTotalFormatado}
                                     </Text>
                                     {calcularValorTotal() > 0 && (
-                                        <Text style={styles.valorTotalHelper}>
+                                        <Text style={[styles.valorTotalHelper, {
+                                            color: isDarkMode ? '#6EE7B7' : theme.textSecondary
+                                        }]}>
                                             Calculado automaticamente baseado nas diárias
                                         </Text>
                                     )}
@@ -503,7 +508,7 @@ const CriarReserva: React.FC = () => {
                         </View>
 
                         <View style={styles.fieldGroup}>
-                            <Text style={styles.label}>Observações</Text>
+                            <Text style={[styles.label, { color: theme.text }]}>Observações</Text>
                             <FormInput
                                 icon="document-text-outline"
                                 placeholder="Informações adicionais (opcional)"
@@ -512,11 +517,15 @@ const CriarReserva: React.FC = () => {
                                 editable={!loading}
                                 multiline
                                 numberOfLines={3}
+                                isDarkMode={isDarkMode}
                             />
                         </View>
 
                         {/* Status da Reserva */}
-                        <View style={styles.switchContainer}>
+                        <View style={[styles.switchContainer, {
+                            backgroundColor: isDarkMode ? '#1E293B' : '#FFFFFF',
+                            borderColor: isDarkMode ? '#334155' : '#E2E8F0'
+                        }]}>
                             <View style={styles.switchLabel}>
                                 <Ionicons
                                     name={confirmada ? "checkmark-circle" : "time-outline"}
@@ -524,10 +533,10 @@ const CriarReserva: React.FC = () => {
                                     color={confirmada ? "#10B981" : "#F59E0B"}
                                 />
                                 <View style={styles.switchTextContainer}>
-                                    <Text style={styles.switchTitle}>
+                                    <Text style={[styles.switchTitle, { color: theme.text }]}>
                                         {confirmada ? 'Reserva Confirmada' : 'Reserva Pendente'}
                                     </Text>
-                                    <Text style={styles.switchDescription}>
+                                    <Text style={[styles.switchDescription, { color: theme.textSecondary }]}>
                                         {confirmada ? 'Cliente confirmou a reserva' : 'Aguardando confirmação do cliente'}
                                     </Text>
                                 </View>
@@ -551,6 +560,7 @@ const CriarReserva: React.FC = () => {
                             icon="checkmark-circle-outline"
                             onPress={handleSave}
                             disabled={loading}
+                            tone={isDarkMode ? 'dark' : 'light'}
                         >
                             {loading ? 'Criando...' : 'Criar Reserva'}
                         </ActionButton>
@@ -560,6 +570,7 @@ const CriarReserva: React.FC = () => {
                             icon="close-circle-outline"
                             onPress={() => router.push('/screens/Reserva/ListagemReserva')}
                             disabled={loading}
+                            tone={isDarkMode ? 'dark' : 'light'}
                         >
                             Cancelar
                         </ActionButton>
@@ -573,11 +584,9 @@ const CriarReserva: React.FC = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#132F3B',
     },
     content: {
         flex: 1,
-        backgroundColor: '#F8FAFC',
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
         overflow: 'hidden',
@@ -599,11 +608,9 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 24,
         fontWeight: '700',
-        color: '#132F3B',
     },
     subtitle: {
         fontSize: 14,
-        color: '#64748B',
         lineHeight: 20,
     },
     form: {
@@ -615,7 +622,6 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#334155',
         marginBottom: 4,
     },
     required: {
@@ -632,11 +638,9 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: '#FFFFFF',
         padding: 16,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: '#E2E8F0',
     },
     switchLabel: {
         flexDirection: 'row',
@@ -651,11 +655,9 @@ const styles = StyleSheet.create({
     switchTitle: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#132F3B',
     },
     switchDescription: {
         fontSize: 12,
-        color: '#64748B',
     },
     actions: {
         gap: 12,
@@ -663,11 +665,9 @@ const styles = StyleSheet.create({
     valorTotalContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#F0FDF4',
         padding: 16,
         borderRadius: 12,
         borderWidth: 2,
-        borderColor: '#10B981',
         gap: 12,
     },
     valorTotalContent: {
@@ -676,19 +676,16 @@ const styles = StyleSheet.create({
     },
     valorTotalLabel: {
         fontSize: 12,
-        color: '#059669',
         fontWeight: '600',
         textTransform: 'uppercase',
         letterSpacing: 0.5,
     },
     valorTotalValue: {
         fontSize: 24,
-        color: '#047857',
         fontWeight: '700',
     },
     valorTotalHelper: {
         fontSize: 11,
-        color: '#10B981',
         fontStyle: 'italic',
     },
 });
