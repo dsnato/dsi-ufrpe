@@ -1,3 +1,4 @@
+import { supabase } from '@/lib/supabase';
 import { ActionButton } from '@/src/components/ActionButton';
 import { ErrorState } from '@/src/components/ErrorState';
 import { InfoHeader } from '@/src/components/InfoHeader';
@@ -9,7 +10,7 @@ import { useToast } from '@/src/components/ToastContext';
 import { buscarReservaPorId, excluirReserva, realizarCheckin, realizarCheckout, Reserva } from '@/src/services/reservasService';
 import { formatCurrency, formatDate, withPlaceholder } from '@/src/utils/formatters';
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -23,6 +24,51 @@ const InfoReserva: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [isDarkMode, setIsDarkMode] = useState(false);
+
+    // Paleta de cores
+    const palettes = useMemo(() => ({
+        light: {
+            background: '#132F3B',
+            content: '#F8FAFC',
+            text: '#132F3B',
+            textSecondary: '#64748B',
+            icon: '#0162B3',
+            breadcrumb: '#E0F2FE',
+            accent: '#FFE157',
+            backIcon: '#FFFFFF',
+            modalOverlay: 'rgba(0, 0, 0, 0.5)',
+            modalBg: '#FFFFFF',
+            modalText: '#132F3B',
+        },
+        dark: {
+            background: '#050C18',
+            content: '#0B1624',
+            text: '#F1F5F9',
+            textSecondary: '#94A3B8',
+            icon: '#60A5FA',
+            breadcrumb: '#94A3B8',
+            accent: '#FDE047',
+            backIcon: '#E2E8F0',
+            modalOverlay: 'rgba(0, 0, 0, 0.7)',
+            modalBg: '#1E293B',
+            modalText: '#F1F5F9',
+        }
+    }), []);
+
+    const theme = useMemo(() => palettes[isDarkMode ? 'dark' : 'light'], [isDarkMode, palettes]);
+
+    const loadThemePreference = useCallback(async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            const preferredTheme = user.user_metadata?.preferred_theme;
+            setIsDarkMode(preferredTheme === 'dark');
+        } catch (error) {
+            console.error('Erro ao carregar tema:', error);
+        }
+    }, []);
 
     /**
      * ✅ REQUISITO 1: Carregamento dos dados usando ID da URL
@@ -53,8 +99,9 @@ const InfoReserva: React.FC = () => {
     // Recarrega os dados sempre que a tela receber foco
     useFocusEffect(
         useCallback(() => {
+            loadThemePreference();
             loadReserva();
-        }, [loadReserva])
+        }, [loadReserva, loadThemePreference])
     );
 
     /**
@@ -68,11 +115,11 @@ const InfoReserva: React.FC = () => {
         try {
             setShowDeleteConfirm(false);
             setLoading(true);
-            
+
             await excluirReserva(id as string);
-            
+
             showSuccess('Reserva excluída com sucesso!');
-            
+
             setTimeout(() => {
                 router.push("/screens/Reserva/ListagemReserva");
             }, 1500);
@@ -127,10 +174,19 @@ const InfoReserva: React.FC = () => {
      */
     if (loading) {
         return (
-            <SafeAreaView style={styles.container} edges={['top']}>
-                <InfoHeader entity="Reservas" onBackPress={() => router.back()} />
-                <View style={styles.subContainer}>
-                    <Loading message="Carregando reserva..." />
+            <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
+                <InfoHeader
+                    entity="Reservas"
+                    onBackPress={() => router.back()}
+                    colors={{
+                        background: theme.background,
+                        breadcrumb: theme.breadcrumb,
+                        accent: theme.accent,
+                        backIcon: theme.backIcon,
+                    }}
+                />
+                <View style={[styles.subContainer, { backgroundColor: theme.content }]}>
+                    <Loading message="Carregando reserva..." isDarkMode={isDarkMode} />
                 </View>
             </SafeAreaView>
         );
@@ -141,9 +197,18 @@ const InfoReserva: React.FC = () => {
      */
     if (error || !reserva) {
         return (
-            <SafeAreaView style={styles.container} edges={['top']}>
-                <InfoHeader entity="Reservas" onBackPress={() => router.back()} />
-                <View style={styles.subContainer}>
+            <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
+                <InfoHeader
+                    entity="Reservas"
+                    onBackPress={() => router.back()}
+                    colors={{
+                        background: theme.background,
+                        breadcrumb: theme.breadcrumb,
+                        accent: theme.accent,
+                        backIcon: theme.backIcon,
+                    }}
+                />
+                <View style={[styles.subContainer, { backgroundColor: theme.content }]}>
                     <ErrorState
                         message={error || 'Reserva não encontrada'}
                         onRetry={loadReserva}
@@ -166,12 +231,21 @@ const InfoReserva: React.FC = () => {
     };
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
             {/* ✅ REQUISITO 9: Breadcrumb/indicador de navegação */}
-            <InfoHeader entity="Reservas" onBackPress={() => router.back()} />
+            <InfoHeader
+                entity="Reservas"
+                onBackPress={() => router.back()}
+                colors={{
+                    background: theme.background,
+                    breadcrumb: theme.breadcrumb,
+                    accent: theme.accent,
+                    backIcon: theme.backIcon,
+                }}
+            />
 
             {/* Container branco com informações */}
-            <View style={styles.subContainer}>
+            <View style={[styles.subContainer, { backgroundColor: theme.content }]}>
                 <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
                     {/* Título da reserva com badge de status */}
                     <TitleSection
@@ -183,6 +257,8 @@ const InfoReserva: React.FC = () => {
                                 color={getStatusColor(reserva.status || 'Pendente')}
                             />
                         }
+                        titleColor={theme.text}
+                        subtitleColor={theme.textSecondary}
                     />
 
                     {/* ✅ REQUISITO 7 e 8: Informações formatadas com placeholders */}
@@ -190,30 +266,36 @@ const InfoReserva: React.FC = () => {
                         icon="calendar-outline"
                         label="DATA DE CHECK-IN"
                         value={formatDate(reserva.data_checkin)}
+                        iconColor={theme.icon}
+                        labelColor={theme.textSecondary}
+                        valueColor={theme.text}
                     />
 
                     <InfoRow
                         icon="calendar-outline"
                         label="DATA DE CHECK-OUT"
                         value={formatDate(reserva.data_checkout)}
-                    />
-
-                    <InfoRow
-                        icon="bed-outline"
-                        label="QUARTO"
-                            value={withPlaceholder(reserva.quartos?.numero_quarto, 'Não informado')}
+                        iconColor={theme.icon}
+                        labelColor={theme.textSecondary}
+                        valueColor={theme.text}
                     />
 
                     <InfoRow
                         icon="cash-outline"
                         label="VALOR TOTAL"
                         value={formatCurrency(reserva.valor_total || 0)}
+                        iconColor={theme.icon}
+                        labelColor={theme.textSecondary}
+                        valueColor={theme.text}
                     />
 
                     <InfoRow
                         icon="people-outline"
                         label="NÚMERO DE HÓSPEDES"
                         value={`${reserva.numero_hospedes || 0} ${reserva.numero_hospedes === 1 ? 'pessoa' : 'pessoas'}`}
+                        iconColor={theme.icon}
+                        labelColor={theme.textSecondary}
+                        valueColor={theme.text}
                     />
 
                     {reserva.observacoes && (
@@ -221,6 +303,9 @@ const InfoReserva: React.FC = () => {
                             icon="document-text-outline"
                             label="OBSERVAÇÕES"
                             value={withPlaceholder(reserva.observacoes, 'Sem observações')}
+                            iconColor={theme.icon}
+                            labelColor={theme.textSecondary}
+                            valueColor={theme.text}
                         />
                     )}
 
@@ -230,6 +315,8 @@ const InfoReserva: React.FC = () => {
                             label="CHECK-IN REALIZADO"
                             value={formatDate(reserva.checkin_realizado_em)}
                             iconColor="#10B981"
+                            labelColor={theme.textSecondary}
+                            valueColor={theme.text}
                         />
                     )}
 
@@ -239,6 +326,8 @@ const InfoReserva: React.FC = () => {
                             label="CHECK-OUT REALIZADO"
                             value={formatDate(reserva.checkout_realizado_em)}
                             iconColor="#6B7280"
+                            labelColor={theme.textSecondary}
+                            valueColor={theme.text}
                         />
                     )}
                 </ScrollView>
@@ -252,6 +341,7 @@ const InfoReserva: React.FC = () => {
                             icon="log-in-outline"
                             onPress={handleCheckin}
                             disabled={loading}
+                            tone={isDarkMode ? 'dark' : 'light'}
                         >
                             Confirmar Check-in
                         </ActionButton>
@@ -263,6 +353,7 @@ const InfoReserva: React.FC = () => {
                             icon="log-out-outline"
                             onPress={handleCheckout}
                             disabled={loading}
+                            tone={isDarkMode ? 'dark' : 'light'}
                         >
                             Confirmar Check-out
                         </ActionButton>
@@ -276,6 +367,7 @@ const InfoReserva: React.FC = () => {
                             pathname: "/screens/Reserva/EdicaoReserva",
                             params: { id: reserva.id }
                         })}
+                        tone={isDarkMode ? 'dark' : 'light'}
                     >
                         Editar Reserva
                     </ActionButton>
@@ -285,6 +377,7 @@ const InfoReserva: React.FC = () => {
                         variant="danger"
                         icon="trash-outline"
                         onPress={handleDelete}
+                        tone={isDarkMode ? 'dark' : 'light'}
                     >
                         Excluir
                     </ActionButton>
@@ -293,10 +386,10 @@ const InfoReserva: React.FC = () => {
 
             {/* Modal de Confirmação de Exclusão */}
             {showDeleteConfirm && (
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>Confirmar Exclusão</Text>
-                        <Text style={styles.modalMessage}>
+                <View style={[styles.modalOverlay, { backgroundColor: theme.modalOverlay }]}>
+                    <View style={[styles.modalContent, { backgroundColor: theme.modalBg }]}>
+                        <Text style={[styles.modalTitle, { color: theme.modalText }]}>Confirmar Exclusão</Text>
+                        <Text style={[styles.modalMessage, { color: theme.modalText }]}>
                             Tem certeza que deseja excluir esta reserva? Esta ação não pode ser desfeita.
                         </Text>
                         <View style={styles.modalButtons}>
@@ -304,6 +397,7 @@ const InfoReserva: React.FC = () => {
                                 variant="secondary"
                                 onPress={cancelDelete}
                                 style={styles.modalButton}
+                                tone={isDarkMode ? 'dark' : 'light'}
                             >
                                 Cancelar
                             </ActionButton>
@@ -311,6 +405,7 @@ const InfoReserva: React.FC = () => {
                                 variant="danger"
                                 onPress={confirmDelete}
                                 style={styles.modalButton}
+                                tone={isDarkMode ? 'dark' : 'light'}
                             >
                                 Excluir
                             </ActionButton>
@@ -325,7 +420,6 @@ const InfoReserva: React.FC = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#132F3B',
     },
     header: {
         flexDirection: 'row',
@@ -333,7 +427,6 @@ const styles = StyleSheet.create({
         paddingTop: 50,
         paddingBottom: 16,
         paddingHorizontal: 16,
-        backgroundColor: '#132F3B',
     },
     backButton: {
         marginRight: 16,
@@ -346,18 +439,15 @@ const styles = StyleSheet.create({
     },
     breadcrumbText: {
         fontSize: 14,
-        color: '#E0F2FE',
         opacity: 0.7,
     },
     breadcrumbTextActive: {
         fontSize: 14,
-        color: '#FFE157',
         fontWeight: '600',
     },
     subContainer: {
         flex: 1,
         width: '100%',
-        backgroundColor: '#FFFFFF',
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         paddingVertical: 24,
@@ -484,13 +574,11 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
         justifyContent: 'center',
         alignItems: 'center',
         zIndex: 1000,
     },
     modalContent: {
-        backgroundColor: 'white',
         borderRadius: 12,
         padding: 24,
         width: '90%',
@@ -504,12 +592,10 @@ const styles = StyleSheet.create({
     modalTitle: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#DC2626',
         marginBottom: 12,
     },
     modalMessage: {
         fontSize: 16,
-        color: '#64748B',
         marginBottom: 24,
         lineHeight: 24,
     },
