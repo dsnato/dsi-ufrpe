@@ -8,7 +8,7 @@ import { useToast } from '@/src/components/ToastContext';
 import { atualizarAtividade, buscarAtividadePorId, removerImagemAtividade, uploadImagemAtividade } from '@/src/services/atividadesService';
 import { getSuccessMessage } from '@/src/utils/errorMessages';
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -26,8 +26,6 @@ const EditarAtividade: React.FC = () => {
     const [horario, setHorario] = useState('');
     const [ativa, setAtiva] = useState(true);
     const [imagemUri, setImagemUri] = useState<string | null>(null);
-    const [imagemOriginal, setImagemOriginal] = useState<string | null>(null);
-    const [imagemAlterada, setImagemAlterada] = useState(false);
     const [isDarkMode, setIsDarkMode] = useState(false);
 
     // Paleta de cores dark/light
@@ -70,6 +68,13 @@ const EditarAtividade: React.FC = () => {
             console.error('Erro ao carregar preferência de tema:', error);
         }
     }, []);
+
+    // Carrega tema ao montar componente
+    useFocusEffect(
+        useCallback(() => {
+            loadThemePreference();
+        }, [loadThemePreference])
+    );
 
     // Formata a data automaticamente para DD/MM/AAAA
     const handleDateChange = (text: string) => {
@@ -335,7 +340,8 @@ const EditarAtividade: React.FC = () => {
                     backIcon: theme.backIcon,
                 }}
                 entity="Atividades"
-                onBackPress={() => router.push("/screens/Atividade/ListagemAtividade")}
+                action="Adição"
+                onBackPress={() => router.push('/screens/Atividade/ListagemAtividade')}
             />
 
             <View style={[styles.content, { backgroundColor: theme.content }]}>
@@ -346,12 +352,12 @@ const EditarAtividade: React.FC = () => {
                 >
                     {/* Título da seção */}
                     <View style={styles.titleContainer}>
-                        <Ionicons name="create-outline" size={24} color={theme.icon} />
-                        <Text style={[styles.title, { color: theme.text }]}>Editar Atividade</Text>
+                        <Ionicons name="add-circle-outline" size={24} color={theme.icon} />
+                        <Text style={[styles.title, { color: theme.text }]}>Nova Atividade</Text>
                     </View>
 
                     <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-                        Atualize as informações da atividade recreativa
+                        Preencha os dados da nova atividade recreativa
                     </Text>
 
                     <Separator marginTop={16} marginBottom={24} />
@@ -373,6 +379,7 @@ const EditarAtividade: React.FC = () => {
                             }}
                             tone={isDarkMode ? 'dark' : 'light'}
                             disabled={loading}
+                            tone={isDarkMode ? 'dark' : 'light'}
                         />
                     </View>
 
@@ -388,6 +395,7 @@ const EditarAtividade: React.FC = () => {
                                 value={nome}
                                 onChangeText={setNome}
                                 editable={!loading}
+                                maxLength={100}
                                 isDarkMode={isDarkMode}
                             />
                         </View>
@@ -401,44 +409,63 @@ const EditarAtividade: React.FC = () => {
                                 onChangeText={setDescricao}
                                 multiline
                                 numberOfLines={3}
-                                editable={!loading}
                                 isDarkMode={isDarkMode}
                             />
                         </View>
 
                         <View style={styles.fieldGroup}>
-                            <Text style={[styles.label, { color: theme.text }]}>Local</Text>
+                            <Text style={[styles.label, { color: theme.text }]}>
+                                Local <Text style={styles.required}>*</Text>
+                            </Text>
                             <FormInput
                                 icon="location-outline"
                                 placeholder="Ex: Área de lazer"
                                 value={local}
                                 onChangeText={setLocal}
                                 editable={!loading}
+                                maxLength={100}
                                 isDarkMode={isDarkMode}
                             />
                         </View>
 
-                        <View style={styles.fieldGroup}>
-                            <Text style={[styles.label, { color: theme.text }]}>
-                                Data <Text style={styles.required}>*</Text>
-                            </Text>
-                            <FormInput
-                                icon="calendar-outline"
-                                placeholder="DD/MM/AAAA"
-                                value={dataAtividade}
-                                onChangeText={handleDateChange}
-                                editable={!loading}
-                                keyboardType="numeric"
-                                maxLength={10}
-                                helperText="Formato: dia/mês/ano"
-                                isDarkMode={isDarkMode}
-                            />
+                        <View style={styles.row}>
+                            <View style={[styles.fieldGroup, styles.halfWidth]}>
+                                <Text style={[styles.label, { color: theme.text }]}>
+                                    Data <Text style={styles.required}>*</Text>
+                                </Text>
+                                <FormInput
+                                    icon="calendar-outline"
+                                    placeholder="DD/MM/AAAA"
+                                    value={data}
+                                    onChangeText={handleDateChange}
+                                    editable={!loading}
+                                    keyboardType="numeric"
+                                    maxLength={10}
+                                    helperText="Formato: dia/mês/ano"
+                                    isDarkMode={isDarkMode}
+                                />
+                            </View>
+
+                            <View style={[styles.fieldGroup, styles.halfWidth]}>
+                                <Text style={[styles.label, { color: theme.text }]}>
+                                    Horário <Text style={styles.required}>*</Text>
+                                </Text>
+                                <FormInput
+                                    icon="time-outline"
+                                    placeholder="HH:MM"
+                                    value={hora}
+                                    onChangeText={handleTimeChange}
+                                    editable={!loading}
+                                    keyboardType="numeric"
+                                    maxLength={5}
+                                    helperText="Formato: hora:minuto"
+                                    isDarkMode={isDarkMode}
+                                />
+                            </View>
                         </View>
 
                         <View style={styles.fieldGroup}>
-                            <Text style={[styles.label, { color: theme.text }]}>
-                                Horário <Text style={styles.required}>*</Text>
-                            </Text>
+                            <Text style={[styles.label, { color: theme.text }]}>Capacidade (opcional)</Text>
                             <FormInput
                                 icon="time-outline"
                                 placeholder="HH:MM"
@@ -446,8 +473,8 @@ const EditarAtividade: React.FC = () => {
                                 onChangeText={handleTimeChange}
                                 editable={!loading}
                                 keyboardType="numeric"
-                                maxLength={5}
-                                helperText="Formato: hora:minuto (00:00 - 23:59)"
+                                maxLength={3}
+                                helperText="Deixe em branco para capacidade ilimitada"
                                 isDarkMode={isDarkMode}
                             />
                         </View>
@@ -469,7 +496,7 @@ const EditarAtividade: React.FC = () => {
                                 <View style={styles.switchTextContainer}>
                                     <Text style={[styles.switchTitle, { color: theme.text }]}>Atividade Ativa</Text>
                                     <Text style={[styles.switchDescription, { color: theme.textSecondary }]}>
-                                        {ativa ? 'Esta atividade está disponível para os hóspedes' : 'Esta atividade está pausada'}
+                                        {ativa ? 'Atividade disponível para reservas' : 'Atividade desativada'}
                                     </Text>
                                 </View>
                             </View>
@@ -502,7 +529,7 @@ const EditarAtividade: React.FC = () => {
                             variant="secondary"
                             icon="close-circle-outline"
                             tone={isDarkMode ? 'dark' : 'light'}
-                            onPress={() => router.push("/screens/Atividade/ListagemAtividade")}
+                            onPress={() => router.push('/screens/Atividade/ListagemAtividade')}
                             disabled={loading}
                         >
                             Cancelar
