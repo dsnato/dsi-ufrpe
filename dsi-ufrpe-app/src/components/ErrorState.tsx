@@ -6,27 +6,64 @@ interface ErrorStateProps {
     message: string;
     onRetry?: () => void;
     onGoBack?: () => void;
+    isDarkMode?: boolean;
 }
 
-export const ErrorState: React.FC<ErrorStateProps> = ({ message, onRetry, onGoBack }) => {
+export const ErrorState: React.FC<ErrorStateProps> = ({ message, onRetry, onGoBack, isDarkMode = false }) => {
+    const colors = isDarkMode
+        ? {
+            background: '#0B1624',
+            title: '#F1F5F9',
+            message: '#94A3B8',
+            icon: '#EF4444',
+            primaryButton: '#3B82F6',
+            primaryText: '#FFFFFF',
+            secondaryButton: 'transparent',
+            secondaryBorder: '#60A5FA',
+            secondaryText: '#60A5FA',
+        }
+        : {
+            background: '#FFFFFF',
+            title: '#1E293B',
+            message: '#64748B',
+            icon: '#EF4444',
+            primaryButton: '#0162B3',
+            primaryText: '#FFFFFF',
+            secondaryButton: 'transparent',
+            secondaryBorder: '#0162B3',
+            secondaryText: '#0162B3',
+        };
+
     return (
-        <View style={styles.container}>
-            <Ionicons name="alert-circle-outline" size={64} color="#EF4444" />
-            <Text style={styles.title}>Ops!</Text>
-            <Text style={styles.message}>{message}</Text>
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <Ionicons name="alert-circle-outline" size={64} color={colors.icon} />
+            <Text style={[styles.title, { color: colors.title }]}>Ops!</Text>
+            <Text style={[styles.message, { color: colors.message }]}>{message}</Text>
 
             <View style={styles.buttonContainer}>
                 {onRetry && (
-                    <TouchableOpacity style={styles.retryButton} onPress={onRetry}>
-                        <Ionicons name="refresh-outline" size={20} color="#FFFFFF" />
-                        <Text style={styles.retryButtonText}>Tentar Novamente</Text>
+                    <TouchableOpacity
+                        style={[styles.retryButton, { backgroundColor: colors.primaryButton }]}
+                        onPress={onRetry}
+                    >
+                        <Ionicons name="refresh-outline" size={20} color={colors.primaryText} />
+                        <Text style={[styles.retryButtonText, { color: colors.primaryText }]}>Tentar Novamente</Text>
                     </TouchableOpacity>
                 )}
 
                 {onGoBack && (
-                    <TouchableOpacity style={styles.backButton} onPress={onGoBack}>
-                        <Ionicons name="arrow-back-outline" size={20} color="#0162B3" />
-                        <Text style={styles.backButtonText}>Voltar</Text>
+                    <TouchableOpacity
+                        style={[
+                            styles.backButton,
+                            {
+                                backgroundColor: colors.secondaryButton,
+                                borderColor: colors.secondaryBorder
+                            }
+                        ]}
+                        onPress={onGoBack}
+                    >
+                        <Ionicons name="arrow-back-outline" size={20} color={colors.secondaryText} />
+                        <Text style={[styles.backButtonText, { color: colors.secondaryText }]}>Voltar</Text>
                     </TouchableOpacity>
                 )}
             </View>
@@ -39,19 +76,16 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#FFFFFF',
         padding: 20,
     },
     title: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: '#1E293B',
         marginTop: 16,
         marginBottom: 8,
     },
     message: {
         fontSize: 16,
-        color: '#64748B',
         textAlign: 'center',
         marginBottom: 24,
         lineHeight: 24,
@@ -64,14 +98,12 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#0162B3',
         paddingVertical: 12,
         paddingHorizontal: 24,
         borderRadius: 12,
         gap: 8,
     },
     retryButtonText: {
-        color: '#FFFFFF',
         fontSize: 16,
         fontWeight: '600',
     },
@@ -79,16 +111,13 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: 'transparent',
         borderWidth: 1.5,
-        borderColor: '#0162B3',
         paddingVertical: 12,
         paddingHorizontal: 24,
         borderRadius: 12,
         gap: 8,
     },
     backButtonText: {
-        color: '#0162B3',
         fontSize: 16,
         fontWeight: '600',
     },

@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, Linking, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { ActionButton } from '../../../components/ActionButton';
 import { InfoHeader } from '../../../components/InfoHeader';
@@ -24,6 +24,7 @@ export default function LocalizacaoScreen() {
     const router = useRouter();
     const { showSuccess, showError } = useToast();
 
+    const [isDarkMode, setIsDarkMode] = useState(false);
     const [hotelInfo, setHotelInfo] = useState<HotelInfo>({
         nome: 'Hostify Hotel & Resort',
         endereco: 'Av. Boa Viagem, 5000',
@@ -45,7 +46,20 @@ export default function LocalizacaoScreen() {
     useEffect(() => {
         loadHotelData();
         checkUserRole();
+        loadThemePreference();
     }, []);
+
+    const loadThemePreference = async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            const preferredTheme = user.user_metadata?.preferred_theme;
+            setIsDarkMode(preferredTheme === 'dark');
+        } catch (error) {
+            console.error('Erro ao carregar preferência de tema:', error);
+        }
+    };
 
     const checkUserRole = async () => {
         try {
@@ -106,28 +120,28 @@ export default function LocalizacaoScreen() {
     const geocodeAddress = async (endereco: string, cidade: string, estado: string) => {
         try {
             const query = `${endereco}, ${cidade}, ${estado}, Brasil`;
-            console.log('� Iniciando geocodificação...');
+            console.log('  Iniciando geocodificação...');
             console.log('📍 Endereço completo:', query);
-            
+
             const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
             console.log('🌐 URL da API:', url);
-            
+
             const response = await fetch(url, {
                 headers: {
                     'User-Agent': 'DSI-UFRPE-App/1.0'
                 }
             });
-            
+
             console.log('📡 Status da resposta:', response.status);
-            
+
             if (!response.ok) {
                 console.error('❌ Erro na requisição:', response.status, response.statusText);
                 return null;
             }
-            
+
             const data = await response.json();
             console.log('📦 Dados recebidos:', JSON.stringify(data, null, 2));
-            
+
             if (data && data.length > 0) {
                 const coords = {
                     latitude: parseFloat(data[0].lat),
@@ -137,7 +151,7 @@ export default function LocalizacaoScreen() {
                 console.log('📌 Nome do local:', data[0].display_name);
                 return coords;
             }
-            
+
             console.warn('⚠️ Nenhum resultado encontrado para o endereço');
             return null;
         } catch (error) {
@@ -148,7 +162,7 @@ export default function LocalizacaoScreen() {
             }
             return null;
         }
-    };    const handleSaveEdit = async () => {
+    }; const handleSaveEdit = async () => {
         try {
             setSaving(true);
 
@@ -167,13 +181,13 @@ export default function LocalizacaoScreen() {
             console.log('💾 Tentando salvar com dados:', editData);
             showSuccess('Buscando coordenadas do endereço...');
             const coords = await geocodeAddress(editData.endereco, editData.cidade, editData.estado);
-            
+
             if (!coords) {
                 console.error('🚫 Falha ao obter coordenadas');
                 showError('Não foi possível encontrar este endereço. Tente usar um endereço mais completo (ex: Rua, Número, Bairro).');
                 return;
             }
-            
+
             console.log('🎯 Coordenadas obtidas com sucesso:', coords);
 
             // Atualiza os dados com as coordenadas encontradas
@@ -240,6 +254,51 @@ export default function LocalizacaoScreen() {
         router.push('/screens/home' as any);
     };
 
+    const palettes = useMemo(() => ({
+        light: {
+            background: '#132F3B',
+            content: '#FFFFFF',
+            text: '#132F3B',
+            textSecondary: '#64748B',
+            cardBg: '#FFFFFF',
+            border: '#E2E8F0',
+            iconPrimary: '#2176ff',
+            buttonPrimary: '#2176ff',
+            buttonText: '#FFFFFF',
+            modalBg: '#FFFFFF',
+            modalOverlay: 'rgba(0, 0, 0, 0.5)',
+            inputBg: '#FFFFFF',
+            inputBorder: '#E2E8F0',
+            sectionBg: '#F8FAFC',
+            helperBg: '#F1F5F9',
+            breadcrumb: '#E0F2FE',
+            accent: '#FFE157',
+            backIcon: '#FFFFFF',
+        },
+        dark: {
+            background: '#050C18',
+            content: '#0B1624',
+            text: '#F1F5F9',
+            textSecondary: '#94A3B8',
+            cardBg: 'rgba(26, 35, 50, 0.4)',
+            border: 'rgba(45, 59, 79, 0.6)',
+            iconPrimary: '#60A5FA',
+            buttonPrimary: '#60A5FA',
+            buttonText: '#0B1624',
+            modalBg: '#0B1624',
+            modalOverlay: 'rgba(0, 0, 0, 0.7)',
+            inputBg: 'rgba(26, 35, 50, 0.4)',
+            inputBorder: 'rgba(45, 59, 79, 0.6)',
+            sectionBg: 'rgba(15, 23, 42, 0.5)',
+            helperBg: 'rgba(26, 35, 50, 0.6)',
+            breadcrumb: '#94A3B8',
+            accent: '#FDE047',
+            backIcon: '#E2E8F0',
+        }
+    }), []);
+
+    const theme = useMemo(() => palettes[isDarkMode ? 'dark' : 'light'], [isDarkMode, palettes]);
+
     const openInMaps = () => {
         const url = `https://www.google.com/maps/search/?api=1&query=${hotelInfo.latitude},${hotelInfo.longitude}`;
         Linking.openURL(url).catch(() => {
@@ -255,14 +314,23 @@ export default function LocalizacaoScreen() {
     };
 
     return (
-        <View style={styles.container}>
-            <InfoHeader entity="Localização" onBackPress={handleBackPress} />
+        <View style={[styles.container, { backgroundColor: theme.background }]}>
+            <InfoHeader
+                entity="Localização"
+                onBackPress={handleBackPress}
+                colors={{
+                    background: theme.background,
+                    breadcrumb: theme.breadcrumb,
+                    accent: theme.accent,
+                    backIcon: theme.backIcon,
+                }}
+            />
 
             {/* Conteúdo com fundo branco e bordas arredondadas */}
-            <View style={styles.content}>
+            <View style={[styles.content, { backgroundColor: theme.content }]}>
                 <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
                     {/* Map Card */}
-                    <View style={styles.mapCard}>
+                    <View style={[styles.mapCard, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
                         <View style={styles.mapContainer}>
                             <MapEmbed
                                 latitude={hotelInfo.latitude}
@@ -276,12 +344,12 @@ export default function LocalizacaoScreen() {
                     </View>
 
                     {/* Info Card */}
-                    <View style={styles.infoCard}>
+                    <View style={[styles.infoCard, { backgroundColor: theme.content }]}>
                         {/* Hotel Name */}
                         <View style={styles.infoHeader}>
-                            <Ionicons name="business" size={24} color="#2176ff" />
+                            <Ionicons name="business" size={24} color={theme.iconPrimary} />
                             <View style={styles.headerTextContainer}>
-                                <Text style={styles.hotelName}>{hotelInfo.nome}</Text>
+                                <Text style={[styles.hotelName, { color: theme.text }]}>{hotelInfo.nome}</Text>
 
                             </View>
                         </View>
@@ -291,11 +359,11 @@ export default function LocalizacaoScreen() {
                         {/* Address Section */}
                         <View style={styles.section}>
                             <View style={styles.sectionHeader}>
-                                <Ionicons name="location" size={20} color="#2176ff" />
-                                <Text style={styles.sectionTitle}>Endereço</Text>
+                                <Ionicons name="location" size={20} color={theme.iconPrimary} />
+                                <Text style={[styles.sectionTitle, { color: theme.text }]}>Endereço</Text>
                             </View>
-                            <Text style={styles.addressText}>{hotelInfo.endereco}</Text>
-                            <Text style={styles.addressText}>
+                            <Text style={[styles.addressText, { color: theme.textSecondary }]}>{hotelInfo.endereco}</Text>
+                            <Text style={[styles.addressText, { color: theme.textSecondary }]}>
                                 {hotelInfo.cidade} - {hotelInfo.estado}, {hotelInfo.cep}
                             </Text>
                         </View>
@@ -305,19 +373,19 @@ export default function LocalizacaoScreen() {
                         {/* Contact Section */}
                         <View style={styles.section}>
                             <View style={styles.sectionHeader}>
-                                <Ionicons name="call" size={20} color="#2176ff" />
-                                <Text style={styles.sectionTitle}>Telefone</Text>
+                                <Ionicons name="call" size={20} color={theme.iconPrimary} />
+                                <Text style={[styles.sectionTitle, { color: theme.text }]}>Telefone</Text>
                             </View>
-                            <Text style={styles.contactText}>{hotelInfo.telefone}</Text>
+                            <Text style={[styles.contactText, { color: theme.iconPrimary }]}>{hotelInfo.telefone}</Text>
                         </View>
 
                         <Separator />
 
                         {/* Action Buttons */}
                         <View style={styles.actionsContainer}>
-                            <TouchableOpacity style={styles.actionButton} onPress={openInMaps}>
-                                <Ionicons name="navigate" size={20} color="#FFFFFF" />
-                                <Text style={styles.actionText}>Abrir no Mapa</Text>
+                            <TouchableOpacity style={[styles.actionButton, { backgroundColor: theme.buttonPrimary }]} onPress={openInMaps}>
+                                <Ionicons name="navigate" size={20} color={theme.buttonText} />
+                                <Text style={[styles.actionText, { color: theme.buttonText }]}>Abrir no Mapa</Text>
                             </TouchableOpacity>
                         </View>
 
@@ -328,6 +396,7 @@ export default function LocalizacaoScreen() {
                                     variant="primary"
                                     icon="create-outline"
                                     onPress={handleEditPress}
+                                    tone={isDarkMode ? 'dark' : 'light'}
                                 >
                                     Editar Informações do Hotel
                                 </ActionButton>
@@ -335,9 +404,9 @@ export default function LocalizacaoScreen() {
                         )}
 
                         {/* Info Footer */}
-                        <View style={styles.infoFooter}>
-                            <Ionicons name="information-circle" size={18} color="#666" />
-                            <Text style={styles.infoFooterText}>
+                        <View style={[styles.infoFooter, { backgroundColor: theme.sectionBg }]}>
+                            <Ionicons name="information-circle" size={18} color={theme.textSecondary} />
+                            <Text style={[styles.infoFooterText, { color: theme.textSecondary }]}>
                                 Toque no marcador do mapa para mais informações
                             </Text>
                         </View>
@@ -352,95 +421,126 @@ export default function LocalizacaoScreen() {
                 transparent={true}
                 onRequestClose={() => setShowEditModal(false)}
             >
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                        <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>Editar Informações do Hotel</Text>
+                <View style={[styles.modalOverlay, { backgroundColor: theme.modalOverlay }]}>
+                    <View style={[styles.modalContent, { backgroundColor: theme.modalBg }]}>
+                        <View style={[styles.modalHeader, { borderBottomColor: theme.border }]}>
+                            <Text style={[styles.modalTitle, { color: theme.text }]}>Editar Informações do Hotel</Text>
                             <TouchableOpacity onPress={() => setShowEditModal(false)}>
-                                <Ionicons name="close" size={24} color="#132F3B" />
+                                <Ionicons name="close" size={24} color={theme.text} />
                             </TouchableOpacity>
                         </View>
 
                         <ScrollView style={styles.modalScroll}>
                             <View style={styles.formGroup}>
-                                <Text style={styles.label}>Nome do Hotel *</Text>
+                                <Text style={[styles.label, { color: theme.text }]}>Nome do Hotel *</Text>
                                 <TextInput
-                                    style={styles.input}
+                                    style={[styles.input, {
+                                        backgroundColor: theme.inputBg,
+                                        borderColor: theme.inputBorder,
+                                        color: theme.text
+                                    }]}
                                     value={editData.nome}
                                     onChangeText={(text) => setEditData({ ...editData, nome: text })}
                                     placeholder="Nome do hotel"
+                                    placeholderTextColor={theme.textSecondary}
                                 />
                             </View>
 
                             <View style={styles.formGroup}>
-                                <Text style={styles.label}>Endereço *</Text>
+                                <Text style={[styles.label, { color: theme.text }]}>Endereço *</Text>
                                 <TextInput
-                                    style={styles.input}
+                                    style={[styles.input, {
+                                        backgroundColor: theme.inputBg,
+                                        borderColor: theme.inputBorder,
+                                        color: theme.text
+                                    }]}
                                     value={editData.endereco}
                                     onChangeText={(text) => setEditData({ ...editData, endereco: text })}
                                     placeholder="Rua, número"
+                                    placeholderTextColor={theme.textSecondary}
                                 />
                             </View>
 
                             <View style={styles.formRow}>
                                 <View style={[styles.formGroup, { flex: 2 }]}>
-                                    <Text style={styles.label}>Cidade</Text>
+                                    <Text style={[styles.label, { color: theme.text }]}>Cidade</Text>
                                     <TextInput
-                                        style={styles.input}
+                                        style={[styles.input, {
+                                            backgroundColor: theme.inputBg,
+                                            borderColor: theme.inputBorder,
+                                            color: theme.text
+                                        }]}
                                         value={editData.cidade}
                                         onChangeText={(text) => setEditData({ ...editData, cidade: text })}
                                         placeholder="Cidade"
+                                        placeholderTextColor={theme.textSecondary}
                                     />
                                 </View>
 
                                 <View style={[styles.formGroup, { flex: 1 }]}>
-                                    <Text style={styles.label}>Estado</Text>
+                                    <Text style={[styles.label, { color: theme.text }]}>Estado</Text>
                                     <TextInput
-                                        style={styles.input}
+                                        style={[styles.input, {
+                                            backgroundColor: theme.inputBg,
+                                            borderColor: theme.inputBorder,
+                                            color: theme.text
+                                        }]}
                                         value={editData.estado}
                                         onChangeText={(text) => setEditData({ ...editData, estado: text })}
                                         placeholder="UF"
+                                        placeholderTextColor={theme.textSecondary}
                                         maxLength={2}
                                     />
                                 </View>
                             </View>
 
                             <View style={styles.formGroup}>
-                                <Text style={styles.label}>CEP</Text>
+                                <Text style={[styles.label, { color: theme.text }]}>CEP</Text>
                                 <TextInput
-                                    style={styles.input}
+                                    style={[styles.input, {
+                                        backgroundColor: theme.inputBg,
+                                        borderColor: theme.inputBorder,
+                                        color: theme.text
+                                    }]}
                                     value={editData.cep}
                                     onChangeText={(text) => setEditData({ ...editData, cep: text })}
                                     placeholder="00000-000"
+                                    placeholderTextColor={theme.textSecondary}
                                     keyboardType="numeric"
                                 />
                             </View>
 
                             <View style={styles.formGroup}>
-                                <Text style={styles.label}>Telefone</Text>
+                                <Text style={[styles.label, { color: theme.text }]}>Telefone</Text>
                                 <TextInput
-                                    style={styles.input}
+                                    style={[styles.input, {
+                                        backgroundColor: theme.inputBg,
+                                        borderColor: theme.inputBorder,
+                                        color: theme.text
+                                    }]}
                                     value={editData.telefone}
                                     onChangeText={(text) => setEditData({ ...editData, telefone: text })}
                                     placeholder="(00) 0000-0000"
+                                    placeholderTextColor={theme.textSecondary}
                                     keyboardType="phone-pad"
                                 />
                             </View>
 
-                            <View style={styles.helperText}>
-                                <Ionicons name="information-circle" size={16} color="#10B981" />
-                                <Text style={styles.helperTextContent}>
+                            <View style={[styles.helperText, { backgroundColor: theme.helperBg }]}>
+                                <Ionicons name="information-circle" size={16} color={theme.iconPrimary} />
+                                <Text style={[styles.helperTextContent, { color: theme.textSecondary }]}>
                                     As coordenadas para o mapa serão obtidas automaticamente a partir do endereço informado.
                                 </Text>
                             </View>
                         </ScrollView>
 
-                        <View style={styles.modalButtons}>
+                        <View style={[styles.modalButtons, { borderTopColor: theme.border }]}>
                             <ActionButton
                                 variant="secondary"
                                 onPress={() => setShowEditModal(false)}
                                 disabled={saving}
                                 style={{ flex: 1 }}
+                                tone={isDarkMode ? 'dark' : 'light'}
                             >
                                 Cancelar
                             </ActionButton>
@@ -450,6 +550,7 @@ export default function LocalizacaoScreen() {
                                 onPress={handleSaveEdit}
                                 disabled={saving}
                                 style={{ flex: 1 }}
+                                tone={isDarkMode ? 'dark' : 'light'}
                             >
                                 {saving ? 'Salvando...' : 'Salvar'}
                             </ActionButton>
@@ -464,11 +565,9 @@ export default function LocalizacaoScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#132F3B',
     },
     content: {
         flex: 1,
-        backgroundColor: '#FFFFFF',
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         marginTop: 20,
@@ -484,7 +583,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
     },
     mapCard: {
-        backgroundColor: '#FFFFFF',
         borderRadius: 12,
         overflow: 'hidden',
         marginBottom: 20,
@@ -494,7 +592,6 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 4,
         borderWidth: 1,
-        borderColor: '#E2E8F0',
     },
     mapContainer: {
         height: 300,
@@ -502,7 +599,6 @@ const styles = StyleSheet.create({
     },
     infoCard: {
         padding: 20,
-        backgroundColor: '#FFFFFF',
     },
     infoHeader: {
         flexDirection: 'row',
@@ -516,7 +612,6 @@ const styles = StyleSheet.create({
     hotelName: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#132F3B',
         marginBottom: 4,
     },
     statusBadge: {
@@ -547,17 +642,14 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#132F3B',
     },
     addressText: {
         fontSize: 15,
-        color: '#666',
         lineHeight: 22,
         marginLeft: 28,
     },
     contactText: {
         fontSize: 16,
-        color: '#2176ff',
         fontWeight: '600',
         marginLeft: 28,
     },
@@ -572,7 +664,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         gap: 8,
-        backgroundColor: '#2176ff',
         paddingVertical: 14,
         borderRadius: 8,
         elevation: 2,
@@ -582,14 +673,11 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
     },
     actionButtonSecondary: {
-        backgroundColor: '#FFFFFF',
         borderWidth: 2,
-        borderColor: '#2176ff',
     },
     actionText: {
         fontSize: 15,
         fontWeight: '600',
-        color: '#FFFFFF',
     },
     actionTextSecondary: {
         color: '#2176ff',
@@ -600,14 +688,12 @@ const styles = StyleSheet.create({
         gap: 8,
         paddingVertical: 12,
         paddingHorizontal: 16,
-        backgroundColor: '#F5F5F5',
         borderRadius: 8,
         marginTop: 8,
     },
     infoFooterText: {
         flex: 1,
         fontSize: 13,
-        color: '#666',
         lineHeight: 18,
     },
     adminSection: {
@@ -615,11 +701,9 @@ const styles = StyleSheet.create({
     },
     modalOverlay: {
         flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
         justifyContent: 'flex-end',
     },
     modalContent: {
-        backgroundColor: '#FFFFFF',
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
         maxHeight: '90%',
@@ -631,12 +715,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 20,
         borderBottomWidth: 1,
-        borderBottomColor: '#E2E8F0',
     },
     modalTitle: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#132F3B',
     },
     modalScroll: {
         padding: 20,
@@ -651,30 +733,24 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#334155',
         marginBottom: 8,
     },
     input: {
         borderWidth: 1,
-        borderColor: '#E2E8F0',
         borderRadius: 8,
         padding: 12,
         fontSize: 16,
-        color: '#132F3B',
-        backgroundColor: '#FFFFFF',
     },
     helperText: {
         flexDirection: 'row',
         gap: 8,
         padding: 12,
-        backgroundColor: '#F1F5F9',
         borderRadius: 8,
         marginTop: 8,
     },
     helperTextContent: {
         flex: 1,
         fontSize: 13,
-        color: '#666',
         lineHeight: 18,
     },
     modalButtons: {
@@ -683,6 +759,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingTop: 16,
         borderTopWidth: 1,
-        borderTopColor: '#E2E8F0',
     },
 });
+
