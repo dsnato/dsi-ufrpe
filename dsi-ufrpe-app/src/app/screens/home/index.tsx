@@ -1,3 +1,5 @@
+// Reservado
+
 import { supabase } from "@/lib/supabase";
 import { DashboardCard } from "@/src/components/DashboardCard";
 import { LogoutModal } from "@/src/components/ImagePickerModal";
@@ -517,6 +519,7 @@ export default function Home() {
                     visible={showLogoutModal}
                     onClose={() => setShowLogoutModal(false)}
                     onConfirm={confirmLogout}
+                    isDarkMode={isDarkMode}
                 />
             </SafeAreaView>
         </SafeAreaProvider>

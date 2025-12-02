@@ -22,9 +22,9 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
       animationType="fade"
       onRequestClose={onClose}
     >
-      <TouchableOpacity 
-        style={styles.overlay} 
-        activeOpacity={1} 
+      <TouchableOpacity
+        style={styles.overlay}
+        activeOpacity={1}
         onPress={onClose}
       >
         <View style={styles.modalContainer}>
@@ -36,8 +36,8 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
             </View>
 
             <View style={styles.optionsContainer}>
-              <TouchableOpacity 
-                style={styles.optionButton} 
+              <TouchableOpacity
+                style={styles.optionButton}
                 onPress={() => {
                   onClose();
                   onGallery();
@@ -55,8 +55,8 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
 
               <View style={styles.divider} />
 
-              <TouchableOpacity 
-                style={styles.optionButton} 
+              <TouchableOpacity
+                style={styles.optionButton}
                 onPress={() => {
                   onClose();
                   onCamera();
@@ -101,9 +101,9 @@ export const RemoveImageModal: React.FC<RemoveImageModalProps> = ({
       animationType="fade"
       onRequestClose={onClose}
     >
-      <TouchableOpacity 
-        style={styles.overlay} 
-        activeOpacity={1} 
+      <TouchableOpacity
+        style={styles.overlay}
+        activeOpacity={1}
         onPress={onClose}
       >
         <View style={styles.modalContainer}>
@@ -119,15 +119,15 @@ export const RemoveImageModal: React.FC<RemoveImageModalProps> = ({
             </View>
 
             <View style={styles.actionsRow}>
-              <TouchableOpacity 
-                style={[styles.actionButton, styles.secondaryButton]} 
+              <TouchableOpacity
+                style={[styles.actionButton, styles.secondaryButton]}
                 onPress={onClose}
               >
                 <Text style={styles.secondaryButtonText}>Cancelar</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity 
-                style={[styles.actionButton, styles.dangerButton]} 
+              <TouchableOpacity
+                style={[styles.actionButton, styles.dangerButton]}
                 onPress={() => {
                   onClose();
                   onConfirm();
@@ -148,13 +148,37 @@ interface LogoutModalProps {
   visible: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  isDarkMode?: boolean;
 }
 
 export const LogoutModal: React.FC<LogoutModalProps> = ({
   visible,
   onClose,
   onConfirm,
+  isDarkMode = false,
 }) => {
+  const colors = isDarkMode ? {
+    modalBg: '#1A2942',
+    title: '#F1F5F9',
+    subtitle: '#94A3B8',
+    iconBg: '#422006',
+    iconColor: '#FBBF24',
+    secondaryBg: '#0F172A',
+    secondaryBorder: '#334155',
+    secondaryText: '#94A3B8',
+    confirmBg: '#B45309',
+  } : {
+    modalBg: '#FFFFFF',
+    title: '#132F3B',
+    subtitle: '#64748B',
+    iconBg: '#FEF3C7',
+    iconColor: '#F59E0B',
+    secondaryBg: '#F8FAFC',
+    secondaryBorder: '#E2E8F0',
+    secondaryText: '#64748B',
+    confirmBg: '#F59E0B',
+  };
+
   return (
     <Modal
       visible={visible}
@@ -162,33 +186,36 @@ export const LogoutModal: React.FC<LogoutModalProps> = ({
       animationType="fade"
       onRequestClose={onClose}
     >
-      <TouchableOpacity 
-        style={styles.overlay} 
-        activeOpacity={1} 
+      <TouchableOpacity
+        style={styles.overlay}
+        activeOpacity={1}
         onPress={onClose}
       >
         <View style={styles.modalContainer}>
-          <TouchableOpacity activeOpacity={1} style={styles.modalContent}>
+          <TouchableOpacity activeOpacity={1} style={[styles.modalContent, { backgroundColor: colors.modalBg }]}>
             <View style={styles.header}>
-              <View style={[styles.warningIconContainer, { backgroundColor: '#FEF3C7' }]}>
-                <Ionicons name="log-out-outline" size={32} color="#F59E0B" />
+              <View style={[styles.warningIconContainer, { backgroundColor: colors.iconBg }]}>
+                <Ionicons name="log-out-outline" size={32} color={colors.iconColor} />
               </View>
-              <Text style={styles.title}>Sair do Aplicativo</Text>
-              <Text style={styles.subtitle}>
+              <Text style={[styles.title, { color: colors.title }]}>Sair do Aplicativo</Text>
+              <Text style={[styles.subtitle, { color: colors.subtitle }]}>
                 Deseja realmente sair? Você precisará fazer login novamente para acessar o sistema.
               </Text>
             </View>
 
             <View style={styles.actionsRow}>
-              <TouchableOpacity 
-                style={[styles.actionButton, styles.secondaryButton]} 
+              <TouchableOpacity
+                style={[styles.actionButton, styles.secondaryButton, {
+                  backgroundColor: colors.secondaryBg,
+                  borderColor: colors.secondaryBorder
+                }]}
                 onPress={onClose}
               >
-                <Text style={styles.secondaryButtonText}>Cancelar</Text>
+                <Text style={[styles.secondaryButtonText, { color: colors.secondaryText }]}>Cancelar</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity 
-                style={[styles.actionButton, { backgroundColor: '#F59E0B' }]} 
+              <TouchableOpacity
+                style={[styles.actionButton, { backgroundColor: colors.confirmBg }]}
                 onPress={() => {
                   onClose();
                   onConfirm();
@@ -333,3 +360,4 @@ const styles = StyleSheet.create({
     color: '#FFF',
   },
 });
+
