@@ -56,7 +56,7 @@ export const FormSelect: React.FC<FormSelectProps> = ({
                     <Ionicons
                         name={icon}
                         size={20}
-                        color={error ? '#EF4444' : disabled ? '#CBD5E1' : isDarkMode ? '#94A3B8' : '#64748B'}
+                        color={error ? '#EF4444' : disabled ? '#CBD5E1' : isDarkMode ? '#60A5FA' : '#64748B'}
                         style={styles.icon}
                     />
                 )}
@@ -74,7 +74,7 @@ export const FormSelect: React.FC<FormSelectProps> = ({
                 <Ionicons
                     name="chevron-down"
                     size={20}
-                    color={error ? '#EF4444' : disabled ? '#CBD5E1' : isDarkMode ? '#94A3B8' : '#64748B'}
+                    color={error ? '#EF4444' : disabled ? '#CBD5E1' : isDarkMode ? '#60A5FA' : '#64748B'}
                 />
             </TouchableOpacity>
 
@@ -106,7 +106,7 @@ export const FormSelect: React.FC<FormSelectProps> = ({
                                 onPress={() => setIsOpen(false)}
                                 style={styles.closeButton}
                             >
-                                <Ionicons name="close" size={24} color={isDarkMode ? '#94A3B8' : '#64748B'} />
+                                <Ionicons name="close" size={24} color={isDarkMode ? '#60A5FA' : '#64748B'} />
                             </TouchableOpacity>
                         </View>
 
