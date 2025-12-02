@@ -1,3 +1,4 @@
+import { supabase } from '@/lib/supabase';
 import { ActionButton } from '@/src/components/ActionButton';
 import { Separator } from '@/src/components/Separator';
 import TextInputRounded from '@/src/components/TextInputRounded';
@@ -5,7 +6,7 @@ import { useToast } from '@/src/components/ToastContext';
 import { listarReservas, Reserva } from '@/src/services/reservasService';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -15,6 +16,43 @@ const ListagemReserva: React.FC = () => {
     const [items, setItems] = useState<Reserva[]>([]);
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(false);
+    const [isDarkMode, setIsDarkMode] = useState(false);
+
+    // Paleta de cores
+    const palettes = useMemo(() => ({
+        light: {
+            background: '#132F3B',
+            content: '#F8FAFC',
+            text: '#132F3B',
+            textSecondary: '#64748B',
+            icon: '#0162B3',
+            cardBg: '#FFFFFF',
+            cardBorder: '#E2E8F0',
+        },
+        dark: {
+            background: '#050C18',
+            content: '#0B1624',
+            text: '#F1F5F9',
+            textSecondary: '#94A3B8',
+            icon: '#60A5FA',
+            cardBg: '#1E293B',
+            cardBorder: '#334155',
+        }
+    }), []);
+
+    const theme = useMemo(() => palettes[isDarkMode ? 'dark' : 'light'], [isDarkMode, palettes]);
+
+    const loadThemePreference = useCallback(async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            const preferredTheme = user.user_metadata?.preferred_theme;
+            setIsDarkMode(preferredTheme === 'dark');
+        } catch (error) {
+            console.error('Erro ao carregar tema:', error);
+        }
+    }, []);
 
     // Filtra reservas por status ou datas
     const filteredItems = items.filter(
@@ -40,8 +78,9 @@ const ListagemReserva: React.FC = () => {
 
     useFocusEffect(
         useCallback(() => {
+            loadThemePreference();
             loadReservas();
-        }, [loadReservas])
+        }, [loadReservas, loadThemePreference])
     );
 
     // Navega para tela de informações da reserva
@@ -60,53 +99,54 @@ const ListagemReserva: React.FC = () => {
     // Renderiza cada card de reserva
     const renderReservaCard = ({ item }: { item: Reserva }) => (
         <TouchableOpacity
-            style={styles.reservaCard}
+            style={[styles.reservaCard, {
+                backgroundColor: theme.cardBg,
+                borderColor: theme.cardBorder
+            }]}
             onPress={() => handleReservaPress(item.id!)}
-            activeOpacity={0.7}
-            onPress={() => handleReservaPress(item.id)}
             activeOpacity={0.7}
         >
             <View style={styles.cardIcon}>
-                <Ionicons name="bed" size={32} color="#0162B3" />
+                <Ionicons name="bed" size={32} color={theme.icon} />
             </View>
             <View style={styles.cardContent}>
-                <Text style={styles.cardLabel}>Reserva #{item.id?.substring(0, 8)}</Text>
+                <Text style={[styles.cardLabel, { color: theme.text }]}>Reserva #{item.id?.substring(0, 8)}</Text>
                 {item.status && (
                     <View style={styles.statusBadge}>
                         <Text style={styles.statusText}>{item.status}</Text>
                     </View>
                 )}
                 <View style={styles.cardFooter}>
-                    <Ionicons name="calendar-outline" size={14} color="#64748B" />
-                    <Text style={styles.cardDate} numberOfLines={1}>
+                    <Ionicons name="calendar-outline" size={14} color={theme.textSecondary} />
+                    <Text style={[styles.cardDate, { color: theme.textSecondary }]} numberOfLines={1}>
                         {item.data_checkin} - {item.data_checkout}
                     </Text>
                 </View>
                 {item.valor_total && (
-                    <Text style={styles.cardValor}>R$ {item.valor_total.toFixed(2)}</Text>
+                    <Text style={[styles.cardValor, { color: theme.text }]}>R$ {item.valor_total.toFixed(2)}</Text>
                 )}
             </View>
         </TouchableOpacity>
     );
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
             {/* Header customizado para listagem */}
-            <View style={styles.topHeader}>
+            <View style={[styles.topHeader, { backgroundColor: theme.background }]}>
                 <TouchableOpacity onPress={() => router.push('/screens/home')} style={styles.backButton}>
                     <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Reservas</Text>
             </View>
 
-            <View style={styles.content}>
+            <View style={[styles.content, { backgroundColor: theme.content }]}>
                 {/* Header com título e botão */}
                 <View style={styles.header}>
                     <View style={styles.titleContainer}>
-                        <Ionicons name="calendar" size={24} color="#0162B3" />
-                        <Text style={styles.title}>Lista de Reservas</Text>
+                        <Ionicons name="calendar" size={24} color={theme.icon} />
+                        <Text style={[styles.title, { color: theme.text }]}>Lista de Reservas</Text>
                     </View>
-                    <Text style={styles.subtitle}>
+                    <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
                         {filteredItems.length}{' '}
                         {filteredItems.length === 1 ? 'reserva encontrada' : 'reservas encontradas'}
                     </Text>
@@ -120,6 +160,7 @@ const ListagemReserva: React.FC = () => {
                         variant="primary"
                         icon="add-circle-outline"
                         onPress={handleAddReserva}
+                        tone={isDarkMode ? 'dark' : 'light'}
                     >
                         Adicionar Nova Reserva
                     </ActionButton>
@@ -131,6 +172,7 @@ const ListagemReserva: React.FC = () => {
                         value={search}
                         onChangeText={setSearch}
                         placeholder="Buscar por quarto ou data..."
+                        isDarkMode={isDarkMode}
                     />
                 </View>
 
@@ -138,7 +180,7 @@ const ListagemReserva: React.FC = () => {
                 {filteredItems.length > 0 ? (
                     <FlatList
                         data={filteredItems}
-                        keyExtractor={(item) => item.id}
+                        keyExtractor={(item) => item.id!}
                         renderItem={renderReservaCard}
                         numColumns={2}
                         columnWrapperStyle={styles.row}
@@ -147,9 +189,9 @@ const ListagemReserva: React.FC = () => {
                     />
                 ) : (
                     <View style={styles.emptyContainer}>
-                        <Ionicons name="search-outline" size={64} color="#CBD5E1" />
-                        <Text style={styles.emptyTitle}>Nenhuma reserva encontrada</Text>
-                        <Text style={styles.emptySubtitle}>
+                        <Ionicons name="search-outline" size={64} color={isDarkMode ? '#475569' : '#CBD5E1'} />
+                        <Text style={[styles.emptyTitle, { color: theme.text }]}>Nenhuma reserva encontrada</Text>
+                        <Text style={[styles.emptySubtitle, { color: theme.textSecondary }]}>
                             {search
                                 ? 'Tente buscar com outros termos'
                                 : 'Adicione uma nova reserva para começar'}
@@ -166,7 +208,6 @@ export default ListagemReserva;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#132F3B',
     },
     topHeader: {
         flexDirection: 'row',
@@ -174,7 +215,6 @@ const styles = StyleSheet.create({
         paddingTop: 50,
         paddingBottom: 16,
         paddingHorizontal: 16,
-        backgroundColor: '#132F3B',
         gap: 16,
     },
     backButton: {
@@ -191,7 +231,6 @@ const styles = StyleSheet.create({
     },
     content: {
         flex: 1,
-        backgroundColor: '#F8FAFC',
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
         paddingHorizontal: 20,
@@ -208,11 +247,9 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 24,
         fontWeight: '700',
-        color: '#132F3B',
     },
     subtitle: {
         fontSize: 14,
-        color: '#64748B',
     },
     actionContainer: {
         marginBottom: 16,
@@ -230,11 +267,9 @@ const styles = StyleSheet.create({
     reservaCard: {
         flex: 1,
         maxWidth: '48%',
-        backgroundColor: '#FFFFFF',
         borderRadius: 16,
         padding: 16,
         borderWidth: 1.5,
-        borderColor: '#E2E8F0',
         gap: 12,
         elevation: 2,
         shadowColor: '#000',
@@ -256,7 +291,6 @@ const styles = StyleSheet.create({
     },
     cardLabel: {
         fontSize: 13,
-        color: '#64748B',
         fontWeight: '500',
         textAlign: 'center',
     },
@@ -279,13 +313,11 @@ const styles = StyleSheet.create({
     cardNumber: {
         fontSize: 20,
         fontWeight: '700',
-        color: '#132F3B',
         fontFamily: 'monospace',
     },
     cardStatus: {
         fontSize: 12,
         fontWeight: '600',
-        color: '#0162B3',
         textTransform: 'capitalize',
     },
     cardValor: {
@@ -302,7 +334,6 @@ const styles = StyleSheet.create({
     },
     cardDate: {
         fontSize: 12,
-        color: '#64748B',
         textAlign: 'center',
     },
     emptyContainer: {
@@ -315,12 +346,11 @@ const styles = StyleSheet.create({
     emptyTitle: {
         fontSize: 18,
         fontWeight: '600',
-        color: '#475569',
     },
     emptySubtitle: {
         fontSize: 14,
-        color: '#94A3B8',
         textAlign: 'center',
         paddingHorizontal: 32,
     },
 });
+
