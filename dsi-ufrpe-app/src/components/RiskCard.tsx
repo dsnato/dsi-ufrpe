@@ -42,7 +42,7 @@ export const RiskCard: React.FC<RiskCardProps> = ({
                         <Text style={[
                             styles.statLabel,
                             { color: isDarkMode ? '#94A3B8' : '#64748B' }
-                        ]}>Chance</Text>
+                        ]}>Probabilidade</Text>
                         <Text style={[styles.statValue, { color }]}>
                             {probability.toFixed(1)}%
                         </Text>
