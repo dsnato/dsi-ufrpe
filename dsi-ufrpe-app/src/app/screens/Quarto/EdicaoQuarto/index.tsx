@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { ActionButton } from '@/src/components/ActionButton';
 import { FormInput } from '@/src/components/FormInput';
+import { FormSelect, SelectOption } from '@/src/components/FormSelect';
 import { InfoHeader } from '@/src/components/InfoHeader';
 import { Separator } from '@/src/components/Separator';
 import { useToast } from '@/src/components/ToastContext';
@@ -51,6 +52,15 @@ const EditarQuarto: React.FC = () => {
     const [isDarkMode, setIsDarkMode] = useState(false);
 
     const theme = useMemo(() => palettes[isDarkMode ? 'dark' : 'light'], [isDarkMode]);
+
+    // Tipos de quarto disponíveis
+    const tiposQuarto: SelectOption[] = [
+        { label: 'Standard - Acomodação básica confortável', value: 'Standard' },
+        { label: 'Luxo - Acomodação premium com amenidades', value: 'Luxo' },
+        { label: 'Suíte - Espaço amplo com sala separada', value: 'Suíte' },
+        { label: 'Suíte Presidencial - Máximo luxo e conforto', value: 'Suíte Presidencial' },
+        { label: 'Econômico - Opção acessível e prática', value: 'Econômico' },
+    ];
 
     // Carrega a preferência de tema do Supabase
     const loadThemePreference = useCallback(async () => {
@@ -260,13 +270,14 @@ const EditarQuarto: React.FC = () => {
                             <Text style={[styles.label, { color: theme.text }]}>
                                 Tipo do Quarto <Text style={styles.required}>*</Text>
                             </Text>
-                            <FormInput
+                            <FormSelect
                                 icon="bed-outline"
-                                placeholder="Ex: Standard, Luxo, Premium"
+                                placeholder="Selecione o tipo do quarto"
                                 value={tipo}
-                                onChangeText={setTipo}
-                                editable={!loading}
-                                helperText="Categoria ou classificação do quarto"
+                                options={tiposQuarto}
+                                onSelect={setTipo}
+                                disabled={loading}
+                                helperText="Categoria de acomodação"
                                 isDarkMode={isDarkMode}
                             />
                         </View>
