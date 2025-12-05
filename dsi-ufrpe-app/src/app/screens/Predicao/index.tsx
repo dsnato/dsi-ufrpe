@@ -370,52 +370,57 @@ export default function PredicaoScreen() {
                             {/* Seção 6: Composição da Reserva */}
                             <View style={styles.fieldGroup}>
                                 <Text style={[styles.sectionTitle, { color: theme.text }]}>👥 Hóspedes e Estadia</Text>
-                                <Text style={[styles.fieldHelper, { color: theme.textSecondary }]}>Composição dos hóspedes</Text>
-                                <View style={styles.rowInputs}>
-                                    <View style={styles.halfInput}>
-                                        <FormInput
-                                            icon="people"
-                                            placeholder="Adultos"
-                                            value={formData.adults}
-                                            onChangeText={(value) => setFormData({ ...formData, adults: value })}
-                                            keyboardType="numeric"
-                                            isDarkMode={isDarkMode}
-                                        />
-                                    </View>
-                                    <View style={styles.halfInput}>
-                                        <FormInput
-                                            icon="person"
-                                            placeholder="Crianças"
-                                            value={formData.children}
-                                            onChangeText={(value) => setFormData({ ...formData, children: value })}
-                                            keyboardType="numeric"
-                                            isDarkMode={isDarkMode}
-                                        />
-                                    </View>
+
+                                <View style={styles.fieldContainer}>
+                                    <Text style={[styles.fieldLabel, { color: theme.text }]}>Adultos</Text>
+                                    <Text style={[styles.fieldHelper, { color: theme.textSecondary }]}>Quantidade de adultos na reserva</Text>
+                                    <FormInput
+                                        icon="people"
+                                        placeholder="Ex: 2"
+                                        value={formData.adults}
+                                        onChangeText={(value) => setFormData({ ...formData, adults: value })}
+                                        keyboardType="numeric"
+                                        isDarkMode={isDarkMode}
+                                    />
                                 </View>
 
-                                <Text style={[styles.fieldHelper, { color: theme.textSecondary }]}>Duração da hospedagem</Text>
-                                <View style={styles.rowInputs}>
-                                    <View style={styles.halfInput}>
-                                        <FormInput
-                                            icon="moon"
-                                            placeholder="Noites (FDS)"
-                                            value={formData.stays_in_weekend_nights}
-                                            onChangeText={(value) => setFormData({ ...formData, stays_in_weekend_nights: value })}
-                                            keyboardType="numeric"
-                                            isDarkMode={isDarkMode}
-                                        />
-                                    </View>
-                                    <View style={styles.halfInput}>
-                                        <FormInput
-                                            icon="sunny"
-                                            placeholder="Noites (Semana)"
-                                            value={formData.stays_in_week_nights}
-                                            onChangeText={(value) => setFormData({ ...formData, stays_in_week_nights: value })}
-                                            keyboardType="numeric"
-                                            isDarkMode={isDarkMode}
-                                        />
-                                    </View>
+                                <View style={styles.fieldContainer}>
+                                    <Text style={[styles.fieldLabel, { color: theme.text }]}>Crianças</Text>
+                                    <Text style={[styles.fieldHelper, { color: theme.textSecondary }]}>Quantidade de crianças na reserva</Text>
+                                    <FormInput
+                                        icon="person"
+                                        placeholder="Ex: 0"
+                                        value={formData.children}
+                                        onChangeText={(value) => setFormData({ ...formData, children: value })}
+                                        keyboardType="numeric"
+                                        isDarkMode={isDarkMode}
+                                    />
+                                </View>
+
+                                <View style={styles.fieldContainer}>
+                                    <Text style={[styles.fieldLabel, { color: theme.text }]}>Noites no Final de Semana</Text>
+                                    <Text style={[styles.fieldHelper, { color: theme.textSecondary }]}>Quantidade de noites em sábado e domingo</Text>
+                                    <FormInput
+                                        icon="moon"
+                                        placeholder="Ex: 2"
+                                        value={formData.stays_in_weekend_nights}
+                                        onChangeText={(value) => setFormData({ ...formData, stays_in_weekend_nights: value })}
+                                        keyboardType="numeric"
+                                        isDarkMode={isDarkMode}
+                                    />
+                                </View>
+
+                                <View style={styles.fieldContainer}>
+                                    <Text style={[styles.fieldLabel, { color: theme.text }]}>Noites na Semana</Text>
+                                    <Text style={[styles.fieldHelper, { color: theme.textSecondary }]}>Quantidade de noites de segunda a sexta</Text>
+                                    <FormInput
+                                        icon="sunny"
+                                        placeholder="Ex: 3"
+                                        value={formData.stays_in_week_nights}
+                                        onChangeText={(value) => setFormData({ ...formData, stays_in_week_nights: value })}
+                                        keyboardType="numeric"
+                                        isDarkMode={isDarkMode}
+                                    />
                                 </View>
 
                                 <TouchableOpacity
@@ -697,11 +702,6 @@ const styles = StyleSheet.create({
         marginBottom: 8,
         lineHeight: 16,
     },
-    rowInputs: {
-        flexDirection: 'row',
-        gap: 12,
-        marginBottom: 8,
-    },
     halfInput: {
         flex: 1,
     },
@@ -909,3 +909,4 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
 });
+
