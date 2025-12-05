@@ -348,39 +348,39 @@ const CriarCliente: React.FC = () => {
                             />
                         </View>
 
-                        <View style={styles.row}>
-                            <View style={[styles.fieldGroup, styles.halfWidth]}>
-                                <Text style={[styles.label, { color: theme.text }]}>
-                                    CPF <Text style={styles.required}>*</Text>
-                                </Text>
-                                <FormInput
-                                    icon="card-outline"
-                                    placeholder="000.000.000-00"
-                                    value={cpf}
-                                    onChangeText={handleCpfChange}
-                                    editable={!loading}
-                                    keyboardType="numeric"
-                                    maxLength={14}
-                                    isDarkMode={isDarkMode}
-                                />
-                            </View>
-
-                            <View style={[styles.fieldGroup, styles.halfWidth]}>
-                                <Text style={[styles.label, { color: theme.text }]}>
-                                    Telefone <Text style={styles.required}>*</Text>
-                                </Text>
-                                <FormInput
-                                    icon="call-outline"
-                                    placeholder="(00) 00000-0000"
-                                    value={phone}
-                                    onChangeText={handlePhoneChange}
-                                    editable={!loading}
-                                    keyboardType="phone-pad"
-                                    maxLength={15}
-                                    isDarkMode={isDarkMode}
-                                />
-                            </View>
+                        <View style={[styles.fieldGroup, styles.halfWidth]}>
+                            <Text style={[styles.label, { color: theme.text }]}>
+                                CPF <Text style={styles.required}>*</Text>
+                            </Text>
+                            <FormInput
+                                icon="card-outline"
+                                placeholder="000.000.000-00"
+                                value={cpf}
+                                onChangeText={handleCpfChange}
+                                editable={!loading}
+                                keyboardType="numeric"
+                                maxLength={14}
+                                isDarkMode={isDarkMode}
+                            />
                         </View>
+
+                        <View style={[styles.fieldGroup, styles.halfWidth]}>
+                            <Text style={[styles.label, { color: theme.text }]}>
+                                Telefone <Text style={styles.required}>*</Text>
+                            </Text>
+                            <FormInput
+                                icon="call-outline"
+                                placeholder="(00) 00000-0000"
+                                value={phone}
+                                onChangeText={handlePhoneChange}
+                                editable={!loading}
+                                keyboardType="phone-pad"
+                                maxLength={15}
+                                isDarkMode={isDarkMode}
+                            />
+                        </View>
+                        {/* <View style={styles.row}>
+                        </View> */}
 
                         <View style={styles.fieldGroup}>
                             <Text style={[styles.label, { color: theme.text }]}>
@@ -399,33 +399,33 @@ const CriarCliente: React.FC = () => {
                             />
                         </View>
 
-                        <View style={styles.row}>
-                            <View style={[styles.fieldGroup, styles.halfWidth]}>
-                                <Text style={[styles.label, { color: theme.text }]}>Rua</Text>
-                                <FormInput
-                                    icon="location-outline"
-                                    placeholder="Nome da rua"
-                                    value={street}
-                                    onChangeText={setStreet}
-                                    editable={!loading}
-                                    maxLength={60}
-                                    isDarkMode={isDarkMode}
-                                />
-                            </View>
-
-                            <View style={[styles.fieldGroup, styles.halfWidth]}>
-                                <Text style={[styles.label, { color: theme.text }]}>Número</Text>
-                                <FormInput
-                                    icon="keypad-outline"
-                                    placeholder="Ex: 123"
-                                    value={number}
-                                    onChangeText={setNumber}
-                                    editable={!loading}
-                                    maxLength={10}
-                                    isDarkMode={isDarkMode}
-                                />
-                            </View>
+                        <View style={[styles.fieldGroup, styles.halfWidth]}>
+                            <Text style={[styles.label, { color: theme.text }]}>Rua</Text>
+                            <FormInput
+                                icon="location-outline"
+                                placeholder="Nome da rua"
+                                value={street}
+                                onChangeText={setStreet}
+                                editable={!loading}
+                                maxLength={60}
+                                isDarkMode={isDarkMode}
+                            />
                         </View>
+
+                        <View style={[styles.fieldGroup, styles.halfWidth]}>
+                            <Text style={[styles.label, { color: theme.text }]}>Número</Text>
+                            <FormInput
+                                icon="keypad-outline"
+                                placeholder="Ex: 123"
+                                value={number}
+                                onChangeText={setNumber}
+                                editable={!loading}
+                                maxLength={10}
+                                isDarkMode={isDarkMode}
+                            />
+                        </View>
+                        {/* <View style={styles.row}>
+                        </View> */}
 
                         <View style={styles.fieldGroup}>
                             <Text style={[styles.label, { color: theme.text }]}>Bairro</Text>
@@ -440,34 +440,34 @@ const CriarCliente: React.FC = () => {
                             />
                         </View>
 
-                        <View style={styles.row}>
-                            <View style={[styles.fieldGroup, styles.halfWidth]}>
-                                <Text style={[styles.label, { color: theme.text }]}>Cidade <Text style={styles.required}>*</Text></Text>
-                                <FormInput
-                                    icon="business-outline"
-                                    placeholder="Nome da cidade"
-                                    value={city}
-                                    onChangeText={setCity}
-                                    editable={!loading}
-                                    maxLength={50}
-                                    isDarkMode={isDarkMode}
-                                />
-                            </View>
-
-                            <View style={[styles.fieldGroup, styles.halfWidth]}>
-                                <Text style={[styles.label, { color: theme.text }]}>Estado <Text style={styles.required}>*</Text></Text>
-                                <FormSelect
-                                    icon="map-outline"
-                                    placeholder="Selecione o estado"
-                                    value={state}
-                                    options={estadosBrasileiros}
-                                    onSelect={setState}
-                                    disabled={loading}
-                                    helperText="UF do estado"
-                                    isDarkMode={isDarkMode}
-                                />
-                            </View>
+                        <View style={[styles.fieldGroup, styles.halfWidth]}>
+                            <Text style={[styles.label, { color: theme.text }]}>Cidade <Text style={styles.required}>*</Text></Text>
+                            <FormInput
+                                icon="business-outline"
+                                placeholder="Nome da cidade"
+                                value={city}
+                                onChangeText={setCity}
+                                editable={!loading}
+                                maxLength={50}
+                                isDarkMode={isDarkMode}
+                            />
                         </View>
+
+                        <View style={[styles.fieldGroup, styles.halfWidth]}>
+                            <Text style={[styles.label, { color: theme.text }]}>Estado <Text style={styles.required}>*</Text></Text>
+                            <FormSelect
+                                icon="map-outline"
+                                placeholder="Selecione o estado"
+                                value={state}
+                                options={estadosBrasileiros}
+                                onSelect={setState}
+                                disabled={loading}
+                                helperText="UF do estado"
+                                isDarkMode={isDarkMode}
+                            />
+                        </View>
+                        {/* <View style={styles.row}>
+                        </View> */}
 
                         <View style={styles.fieldGroup}>
                             <Text style={[styles.label, { color: theme.text }]}>CEP</Text>
@@ -573,4 +573,5 @@ const styles = StyleSheet.create({
 });
 
 export default CriarCliente;
+
 
