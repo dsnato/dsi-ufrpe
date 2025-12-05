@@ -17,8 +17,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const themeOptions: SelectOption[] = [
-{ label: "Modo Claro", value: "light" },
-{ label: "Modo Escuro", value: "dark" },
+    { label: "Modo Claro", value: "light" },
+    { label: "Modo Escuro", value: "dark" },
 ];
 
 const palettes = {
@@ -56,7 +56,7 @@ export default function Perfil() {
     const [displayName, setDisplayName] = useState("Gerente do Hotel");
     const [email, setEmail] = useState("gerente@hotel.com");
     const [role, setRole] = useState("Gerente");
-    const [preferredTheme, setPreferredTheme] = useState<"light" | "dark"> ("light");
+    const [preferredTheme, setPreferredTheme] = useState<"light" | "dark">("light");
     const [hotelName, setHotelName] = useState("Hotel Atlântico");
     const [updatingTheme, setUpdatingTheme] = useState(false);
     const [highlightLoading, setHighlightLoading] = useState(true);
@@ -75,8 +75,8 @@ export default function Perfil() {
             }
 
             if (!data.session?.user) {
-            router.replace("/screens/Login");
-            return;
+                router.replace("/screens/Login");
+                return;
             }
 
             const currentSession = data.session;
@@ -105,27 +105,27 @@ export default function Perfil() {
                     listarAtividades(),
                 ]);
 
-            const confirmedReservations = reservas.filter((reserva) => {
-                const status = (reserva.status || "").toLowerCase();
-                return status === "confirmada";
-            }).length;
+                const confirmedReservations = reservas.filter((reserva) => {
+                    const status = (reserva.status || "").toLowerCase();
+                    return status === "confirmada";
+                }).length;
 
-            const now = new Date();
-            const upcomingActivities = atividades.filter((atividade) => {
+                const now = new Date();
+                const upcomingActivities = atividades.filter((atividade) => {
                     if (atividade.status !== "ativa" || !atividade.data_hora) return false;
-            const activityDate = new Date(atividade.data_hora);
-            return activityDate > now;
-            }).length;
+                    const activityDate = new Date(atividade.data_hora);
+                    return activityDate > now;
+                }).length;
 
-            setHighlightMetrics({ confirmedReservations, upcomingActivities});
-        } catch (error) {
-            console.error("Erro ao carregar destaques do perfil:", error);
-        } finally {
-            setHighlightLoading(false);
-        }
-    };
+                setHighlightMetrics({ confirmedReservations, upcomingActivities });
+            } catch (error) {
+                console.error("Erro ao carregar destaques do perfil:", error);
+            } finally {
+                setHighlightLoading(false);
+            }
+        };
 
-    loadHighlightMetrics();
+        loadHighlightMetrics();
     }, []);
 
     const initials = useMemo(() => {
@@ -134,9 +134,9 @@ export default function Perfil() {
         if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
         return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
     }, [displayName]);
-        
+
     const theme = useMemo(() => palettes[preferredTheme], [preferredTheme]);
-        
+
     const handleEditProfile = () => {
         router.push({
             pathname: "/screens/Perfil/EdicaoPerfil",
@@ -147,16 +147,16 @@ export default function Perfil() {
     const handleThemeChange = async (value: string) => {
         const normalized: "light" | "dark" = value === "dark" ? "dark" : "light";
         if (normalized === preferredTheme || updatingTheme) return;
-        
+
         setUpdatingTheme(true);
         try {
             const { error } = await supabase.auth.updateUser({
                 data: { preferred_theme: normalized },
             });
 
-        if (error) {
-            throw error;
-        }
+            if (error) {
+                throw error;
+            }
 
             setPreferredTheme(normalized);
             Alert.alert(
@@ -215,16 +215,16 @@ export default function Perfil() {
                         </View>
                         <Text style={[styles.displayName, { color: theme.text }]}>{displayName}</Text>
                         <View style={[styles.rolePill, { backgroundColor: theme.highlight }]}>
-                            <Ionicons name="star" size={16} color={theme.icon}/>
+                            <Ionicons name="star" size={16} color={theme.icon} />
                             <Text style={[styles.roleText, { color: theme.text }]}>{role}</Text>
                         </View>
                         <Text style={[styles.email, { color: theme.muted }]}>{email}</Text>
-                
+
                         <View style={[styles.hotelTag, { backgroundColor: theme.accentSoft, borderColor: theme.accent }]}>
-                            <Ionicons name="business-outline" size={20} color= {theme.icon} />
-                             <View style={styles.hotelInfo}>
+                            <Ionicons name="business-outline" size={20} color={theme.icon} />
+                            <View style={styles.hotelInfo}>
                                 <Text style={[styles.hotelLabel, { color: theme.muted }]}>Hotel</Text>
-                                <Text style={[styles.hotelName, { color: theme.text }]} numberOfLines={1}> 
+                                <Text style={[styles.hotelName, { color: theme.text }]} numberOfLines={1}>
                                     {hotelName}
                                 </Text>
                             </View>
@@ -236,7 +236,7 @@ export default function Perfil() {
                                 {highlightCards.map((item) => (
                                     <View
                                         key={item.label}
-                                        style={[styles.metricCard, {backgroundColor: theme.accentSoft, borderColor: theme.border }]}
+                                        style={[styles.metricCard, { backgroundColor: theme.accentSoft, borderColor: theme.border }]}
                                     >
                                         <View style={[styles.metricIconCircle, { backgroundColor: theme.accent }]}>
                                             <Ionicons name={item.icon} size={18} color="#FFFFFF" />
@@ -254,7 +254,7 @@ export default function Perfil() {
                     <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
                         <Text style={[styles.sectionTitle, { color: theme.text }]}>Preferências do gerente</Text>
                         <Text style={[styles.sectionSubtitle, { color: theme.muted }]}>Ajustes essenciais para quem toma decisões rápidas.</Text>
-                        
+
                         <View style={styles.preferenceCard}>
                             <View style={styles.preferenceHeader}>
                                 <Ionicons name="contrast-outline" size={20} color={theme.icon} />
@@ -273,14 +273,15 @@ export default function Perfil() {
                                     updatingTheme
                                         ? "Aplicando tema em todo o painel..."
                                         : "Sua escolha será refletida em todo o painel."
-                                    }
+                                }
                                 disabled={updatingTheme}
+                                isDarkMode={preferredTheme === "dark"}
                             />
                         </View>
 
                         <TouchableOpacity
-                            style={[styles.primaryButton, { backgroundColor: theme.accent }]} 
-                            onPress={handleEditProfile} 
+                            style={[styles.primaryButton, { backgroundColor: theme.accent }]}
+                            onPress={handleEditProfile}
                             activeOpacity={0.85}
                         >
                             <Ionicons name="create-outline" size={18} color="#FFFFFF" />
@@ -352,7 +353,7 @@ const styles = StyleSheet.create({
     },
     hotelTag: {
         width: "100%",
-    borderRadius: 16,
+        borderRadius: 16,
         borderWidth: 1.5,
         padding: 14,
         marginTop: 20,
