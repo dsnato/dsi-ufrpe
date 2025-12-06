@@ -262,39 +262,37 @@ const CriarQuarto: React.FC = () => {
                             />
                         </View>
 
-                        <View style={styles.row}>
-                            <View style={[styles.fieldGroup, styles.halfWidth]}>
-                                <Text style={[styles.label, { color: theme.text }]}>
-                                    Capacidade <Text style={styles.required}>*</Text>
-                                </Text>
-                                <FormInput
-                                    icon="people-outline"
-                                    placeholder="1-10"
-                                    value={capacidade}
-                                    onChangeText={handleCapacidadeChange}
-                                    editable={!loading}
-                                    keyboardType="numeric"
-                                    maxLength={2}
-                                    helperText="Número de hóspedes"
-                                    isDarkMode={isDarkMode}
-                                />
-                            </View>
+                        <View style={[styles.fieldGroup, styles.halfWidth]}>
+                            <Text style={[styles.label, { color: theme.text }]}>
+                                Capacidade <Text style={styles.required}>*</Text>
+                            </Text>
+                            <FormInput
+                                icon="people-outline"
+                                placeholder="1-10"
+                                value={capacidade}
+                                onChangeText={handleCapacidadeChange}
+                                editable={!loading}
+                                keyboardType="numeric"
+                                maxLength={2}
+                                helperText="Número de hóspedes"
+                                isDarkMode={isDarkMode}
+                            />
+                        </View>
 
-                            <View style={[styles.fieldGroup, styles.halfWidth]}>
-                                <Text style={[styles.label, { color: theme.text }]}>
-                                    Preço Diária <Text style={styles.required}>*</Text>
-                                </Text>
-                                <FormInput
-                                    icon="cash-outline"
-                                    placeholder="0.000,00"
-                                    value={preco}
-                                    onChangeText={handlePrecoChange}
-                                    editable={!loading}
-                                    keyboardType="numeric"
-                                    helperText="Valor por dia (R$)"
-                                    isDarkMode={isDarkMode}
-                                />
-                            </View>
+                        <View style={[styles.fieldGroup, styles.halfWidth]}>
+                            <Text style={[styles.label, { color: theme.text }]}>
+                                Preço Diária <Text style={styles.required}>*</Text>
+                            </Text>
+                            <FormInput
+                                icon="cash-outline"
+                                placeholder="0.000,00"
+                                value={preco}
+                                onChangeText={handlePrecoChange}
+                                editable={!loading}
+                                keyboardType="numeric"
+                                helperText="Valor por dia (R$)"
+                                isDarkMode={isDarkMode}
+                            />
                         </View>
 
                         <View style={styles.fieldGroup}>
@@ -454,3 +452,4 @@ const styles = StyleSheet.create({
 });
 
 export default CriarQuarto;
+

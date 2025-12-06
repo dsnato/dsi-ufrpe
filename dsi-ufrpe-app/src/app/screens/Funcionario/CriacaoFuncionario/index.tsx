@@ -403,38 +403,36 @@ const CriarFuncionario: React.FC = () => {
                             />
                         </View>
 
-                        <View style={styles.row}>
-                            <View style={[styles.fieldGroup, styles.halfWidth]}>
-                                <Text style={[styles.label, { color: theme.text }]}>
-                                    CPF <Text style={styles.required}>*</Text>
-                                </Text>
-                                <FormInput
-                                    icon="card-outline"
-                                    placeholder="000.000.000-00"
-                                    value={cpf}
-                                    onChangeText={handleCpfChange}
-                                    editable={!loading}
-                                    keyboardType="numeric"
-                                    maxLength={14}
-                                    isDarkMode={isDarkMode}
-                                />
-                            </View>
+                        <View style={[styles.fieldGroup, styles.halfWidth]}>
+                            <Text style={[styles.label, { color: theme.text }]}>
+                                CPF <Text style={styles.required}>*</Text>
+                            </Text>
+                            <FormInput
+                                icon="card-outline"
+                                placeholder="000.000.000-00"
+                                value={cpf}
+                                onChangeText={handleCpfChange}
+                                editable={!loading}
+                                keyboardType="numeric"
+                                maxLength={14}
+                                isDarkMode={isDarkMode}
+                            />
+                        </View>
 
-                            <View style={[styles.fieldGroup, styles.halfWidth]}>
-                                <Text style={[styles.label, { color: theme.text }]}>
-                                    Celular <Text style={styles.required}>*</Text>
-                                </Text>
-                                <FormInput
-                                    icon="call-outline"
-                                    placeholder="(00) 00000-0000"
-                                    value={celular}
-                                    onChangeText={handleCelularChange}
-                                    editable={!loading}
-                                    keyboardType="phone-pad"
-                                    maxLength={15}
-                                    isDarkMode={isDarkMode}
-                                />
-                            </View>
+                        <View style={[styles.fieldGroup, styles.halfWidth]}>
+                            <Text style={[styles.label, { color: theme.text }]}>
+                                Celular <Text style={styles.required}>*</Text>
+                            </Text>
+                            <FormInput
+                                icon="call-outline"
+                                placeholder="(00) 00000-0000"
+                                value={celular}
+                                onChangeText={handleCelularChange}
+                                editable={!loading}
+                                keyboardType="phone-pad"
+                                maxLength={15}
+                                isDarkMode={isDarkMode}
+                            />
                         </View>
 
                         <View style={styles.fieldGroup}>
@@ -469,39 +467,37 @@ const CriarFuncionario: React.FC = () => {
                             />
                         </View>
 
-                        <View style={styles.row}>
-                            <View style={[styles.fieldGroup, styles.halfWidth]}>
-                                <Text style={[styles.label, { color: theme.text }]}>
-                                    Data Admissão <Text style={styles.required}>*</Text>
-                                </Text>
-                                <FormInput
-                                    icon="calendar-outline"
-                                    placeholder="DD/MM/AAAA"
-                                    value={dataAdmissao}
-                                    onChangeText={handleDataChange}
-                                    editable={!loading}
-                                    keyboardType="numeric"
-                                    maxLength={10}
-                                    helperText="Data de contratação"
-                                    isDarkMode={isDarkMode}
-                                />
-                            </View>
+                        <View style={[styles.fieldGroup, styles.halfWidth]}>
+                            <Text style={[styles.label, { color: theme.text }]}>
+                                Data Admissão <Text style={styles.required}>*</Text>
+                            </Text>
+                            <FormInput
+                                icon="calendar-outline"
+                                placeholder="DD/MM/AAAA"
+                                value={dataAdmissao}
+                                onChangeText={handleDataChange}
+                                editable={!loading}
+                                keyboardType="numeric"
+                                maxLength={10}
+                                helperText="Data de contratação"
+                                isDarkMode={isDarkMode}
+                            />
+                        </View>
 
-                            <View style={[styles.fieldGroup, styles.halfWidth]}>
-                                <Text style={[styles.label, { color: theme.text }]}>
-                                    Salário <Text style={styles.required}>*</Text>
-                                </Text>
-                                <FormInput
-                                    icon="cash-outline"
-                                    placeholder="0.000,00"
-                                    value={salario}
-                                    onChangeText={handleSalarioChange}
-                                    editable={!loading}
-                                    keyboardType="numeric"
-                                    helperText="Salário mensal (R$)"
-                                    isDarkMode={isDarkMode}
-                                />
-                            </View>
+                        <View style={[styles.fieldGroup, styles.halfWidth]}>
+                            <Text style={[styles.label, { color: theme.text }]}>
+                                Salário <Text style={styles.required}>*</Text>
+                            </Text>
+                            <FormInput
+                                icon="cash-outline"
+                                placeholder="0.000,00"
+                                value={salario}
+                                onChangeText={handleSalarioChange}
+                                editable={!loading}
+                                keyboardType="numeric"
+                                helperText="Salário mensal (R$)"
+                                isDarkMode={isDarkMode}
+                            />
                         </View>
 
                         {/* Status do Funcionário */}
@@ -653,3 +649,4 @@ const styles = StyleSheet.create({
 });
 
 export default CriarFuncionario;
+

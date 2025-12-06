@@ -365,40 +365,38 @@ const CriarAtividade: React.FC = () => {
                             />
                         </View>
 
-                        <View style={styles.row}>
-                            <View style={[styles.fieldGroup, styles.halfWidth]}>
-                                <Text style={[styles.label, { color: theme.text }]}>
-                                    Data <Text style={styles.required}>*</Text>
-                                </Text>
-                                <FormInput
-                                    icon="calendar-outline"
-                                    placeholder="DD/MM/AAAA"
-                                    value={data}
-                                    onChangeText={handleDateChange}
-                                    editable={!loading}
-                                    keyboardType="numeric"
-                                    maxLength={10}
-                                    helperText="Formato: dia/mês/ano"
-                                    isDarkMode={isDarkMode}
-                                />
-                            </View>
+                        <View style={[styles.fieldGroup, styles.halfWidth]}>
+                            <Text style={[styles.label, { color: theme.text }]}>
+                                Data <Text style={styles.required}>*</Text>
+                            </Text>
+                            <FormInput
+                                icon="calendar-outline"
+                                placeholder="DD/MM/AAAA"
+                                value={data}
+                                onChangeText={handleDateChange}
+                                editable={!loading}
+                                keyboardType="numeric"
+                                maxLength={10}
+                                helperText="Formato: dia/mês/ano"
+                                isDarkMode={isDarkMode}
+                            />
+                        </View>
 
-                            <View style={[styles.fieldGroup, styles.halfWidth]}>
-                                <Text style={[styles.label, { color: theme.text }]}>
-                                    Horário <Text style={styles.required}>*</Text>
-                                </Text>
-                                <FormInput
-                                    icon="time-outline"
-                                    placeholder="HH:MM"
-                                    value={hora}
-                                    onChangeText={handleTimeChange}
-                                    editable={!loading}
-                                    keyboardType="numeric"
-                                    maxLength={5}
-                                    helperText="Formato: hora:minuto"
-                                    isDarkMode={isDarkMode}
-                                />
-                            </View>
+                        <View style={[styles.fieldGroup, styles.halfWidth]}>
+                            <Text style={[styles.label, { color: theme.text }]}>
+                                Horário <Text style={styles.required}>*</Text>
+                            </Text>
+                            <FormInput
+                                icon="time-outline"
+                                placeholder="HH:MM"
+                                value={hora}
+                                onChangeText={handleTimeChange}
+                                editable={!loading}
+                                keyboardType="numeric"
+                                maxLength={5}
+                                helperText="Formato: hora:minuto"
+                                isDarkMode={isDarkMode}
+                            />
                         </View>
 
                         <View style={styles.fieldGroup}>
@@ -561,3 +559,4 @@ const styles = StyleSheet.create({
 });
 
 export default CriarAtividade;
+
