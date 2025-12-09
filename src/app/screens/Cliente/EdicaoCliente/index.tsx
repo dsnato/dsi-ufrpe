@@ -437,6 +437,7 @@ const EditarCliente: React.FC = () => {
                             onImageRemoved={handleImagemRemovida}
                             disabled={loading}
                             tone={isDarkMode ? 'dark' : 'light'}
+                            aspect={[1, 1]}
                         />
                     </View>
 
