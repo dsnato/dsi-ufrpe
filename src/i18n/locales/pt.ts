@@ -35,19 +35,6 @@ export default {
     active: "Ativo",
   },
 
-  // Seletor de Imagem
-  imagePicker: {
-    addImage: "Adicionar Imagem",
-    selectPhotoOrTake: "Clique aqui para selecionar ou tirar foto",
-    selectPhoto: "Selecionar Foto",
-    removePhoto: "Remover Foto",
-    confirmRemovePhoto:
-      "Deseja remover a foto de perfil e retornar ao ícone padrão?",
-    remove: "Remover",
-    uploadFeatureComingSoon:
-      "A funcionalidade de upload de fotos será implementada com integração ao Supabase.",
-  },
-
   // Navegação
   navigation: {
     home: "Início",

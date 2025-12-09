@@ -35,19 +35,6 @@ export default {
     active: "Active",
   },
 
-  // Image Picker
-  imagePicker: {
-    addImage: "Add Image",
-    selectPhotoOrTake: "Click here to select or take a photo",
-    selectPhoto: "Select Photo",
-    removePhoto: "Remove Photo",
-    confirmRemovePhoto:
-      "Do you want to remove the profile photo and return to the default icon?",
-    remove: "Remove",
-    uploadFeatureComingSoon:
-      "Photo upload functionality will be implemented with Supabase integration.",
-  },
-
   // Navigation
   navigation: {
     home: "Home",
@@ -82,6 +69,7 @@ export default {
     quickView: "Quick View",
     today: "Today",
     confirmed: "Confirmed",
+    confirmed2: "CONFIRMED",
     available: "Available",
     quickActions: "Quick Actions",
     newReservation: "New Reservation",
@@ -177,6 +165,7 @@ export default {
     title2: "Reservation",
     newReservation: "New Reservation",
     editReservation: "Edit Reservation",
+    fillDataNewReservation: "Fill in the data to create a new reservation",
     confirmed: "confirmed",
     confirmed2: "CONFIRMED",
     client: "Client",
@@ -193,7 +182,6 @@ export default {
     reservationTotal: "Reservation Total",
     calculatedAutomatically: "Calculated automatically based on daily rates",
     perDay: "day",
-    fillDataNewReservation: "Fill in the data to create a new reservation",
     selectAvailableRoom: "Select an available room",
     selectClient: "Select a client",
     availableRoomsCount: "{{count}} available room(s)",
@@ -300,10 +288,6 @@ export default {
     readyForReservations: "Ready to receive reservations",
     noNewReservations: "Does not accept new reservations",
     createRoom: "Create Room",
-    number: "Number",
-    type: "Type",
-    price: "Price",
-    status: "Status",
   },
 
   // Employees
@@ -321,9 +305,7 @@ export default {
     fullName: "Full Name",
     employeeName: "Employee name",
     cpf: "Tax ID",
-    phone: "Phone",
     employeeEmail: "employee@email.com",
-    selectPosition: "Select position",
     admissionDate: "Admission Date",
     hireDate: "Hire date",
     monthlySalary: "Monthly salary ($)",
@@ -543,9 +525,19 @@ export default {
     invalidPhoneFormat: "Invalid phone. Use the format (00) 00000-0000.",
     noAvailableRooms: "No rooms available at the moment.",
     noClientsRegistered: "No clients registered. Register a client first.",
+    selectClient: "Select a client for the reservation.",
     invalidCheckInDate: "Invalid check-in date. Use the format DD/MM/YYYY.",
+    checkInPastDate: "Check-in date cannot be in the past.",
+    checkInTooFarFuture:
+      "Check-in date cannot be more than 2 years in the future.",
     invalidCheckOutDate: "Invalid check-out date. Use the format DD/MM/YYYY.",
     checkOutBeforeCheckIn: "Check-out date must be after check-in date.",
+    reservationTooLong: "Reservation cannot be longer than 365 days.",
+    cannotCalculateTotal:
+      "Could not calculate total value. Check dates and selected room.",
+    totalExceedsLimit:
+      "Reservation total exceeds allowed limit. Reduce reservation period.",
+    roomNotFound: "Room not found. Check the number provided.",
     confirmPassword: "Please confirm your password.",
     selectPosition: "Please select the employee's position.",
     enterAdmissionDate: "Please enter the admission date.",
@@ -569,8 +561,12 @@ export default {
     deleteSuccess: "Deleted successfully!",
     deleteError: "Error deleting",
     loadError: "Error loading data",
+    loadRoomsError: "Could not load available rooms.",
+    loadClientsError: "Could not load clients.",
     roomNotFound: "Room not found",
     reservationNotFound: "Reservation not found",
+    createReservationError:
+      "An error occurred while creating the reservation. Please try again.",
     noData: "No data found",
     confirmDelete: "Do you really want to delete?",
     confirmDeleteReservation:

@@ -35,19 +35,6 @@ export default {
     active: "Activo",
   },
 
-  // Selector de Imagen
-  imagePicker: {
-    addImage: "Agregar Imagen",
-    selectPhotoOrTake: "Haga clic aquí para seleccionar o tomar una foto",
-    selectPhoto: "Seleccionar Foto",
-    removePhoto: "Eliminar Foto",
-    confirmRemovePhoto:
-      "¿Desea eliminar la foto de perfil y volver al icono predeterminado?",
-    remove: "Eliminar",
-    uploadFeatureComingSoon:
-      "La funcionalidad de carga de fotos se implementará con integración de Supabase.",
-  },
-
   // Navegación
   navigation: {
     home: "Inicio",
@@ -82,6 +69,7 @@ export default {
     quickView: "Vista Rápida",
     today: "Hoy",
     confirmed: "Confirmadas",
+    confirmed2: "CONFIRMADA",
     available: "Disponibles",
     quickActions: "Acciones Rápidas",
     newReservation: "Nueva Reserva",
@@ -198,9 +186,6 @@ export default {
     calculatedAutomatically:
       "Calculado automáticamente en base a las tarifas diarias",
     perDay: "día",
-    status: "Estado",
-    notes: "Notas",
-    noNotes: "Sin notas",
     additionalInfo: "Información adicional (opcional)",
     confirmedReservation: "Reserva Confirmada",
     pendingReservation: "Reserva Pendiente",
@@ -219,30 +204,10 @@ export default {
     statusActive: "Activa",
     statusCompleted: "Finalizada",
     statusPending: "Pendiente",
-    perDay: "día",
-    fillDataNewReservation: "Complete los datos para crear una nueva reserva",
     selectAvailableRoom: "Seleccione una habitación disponible",
     selectClient: "Seleccione un cliente",
     availableRoomsCount: "{{count}} habitación(es) disponible(s)",
     registeredClientsCount: "{{count}} cliente(s) registrado(s)",
-    additionalInfo: "Información adicional (opcional)",
-    confirmedReservation: "Reserva Confirmada",
-    pendingReservation: "Reserva Pendiente",
-    clientConfirmed: "El cliente confirmó la reserva",
-    awaitingConfirmation: "Esperando confirmación del cliente",
-    createReservation: "Crear Reserva",
-    numberOfGuests: "Número de Huéspedes",
-    person: "persona",
-    people: "personas",
-    checkInCompleted: "Check-in Realizado",
-    checkOutCompleted: "Check-out Realizado",
-    confirmCheckIn: "Confirmar Check-in",
-    confirmCheckOut: "Confirmar Check-out",
-    statusConfirmed: "Confirmada",
-    statusCanceled: "Cancelada",
-    statusActive: "Activa",
-    statusCompleted: "Finalizada",
-    statusPending: "Pendiente",
   },
 
   // Clientes
@@ -566,12 +531,22 @@ export default {
     noAvailableRooms: "No hay habitaciones disponibles en este momento.",
     noClientsRegistered:
       "No hay clientes registrados. Registre un cliente primero.",
+    selectClient: "Seleccione un cliente para la reserva.",
     invalidCheckInDate:
       "Fecha de check-in inválida. Use el formato DD/MM/AAAA.",
+    checkInPastDate: "La fecha de check-in no puede estar en el pasado.",
+    checkInTooFarFuture:
+      "La fecha de check-in no puede ser superior a 2 años en el futuro.",
     invalidCheckOutDate:
       "Fecha de check-out inválida. Use el formato DD/MM/AAAA.",
     checkOutBeforeCheckIn:
       "La fecha de check-out debe ser posterior a la fecha de check-in.",
+    reservationTooLong: "La reserva no puede tener una duración superior a 365 días.",
+    cannotCalculateTotal:
+      "No se pudo calcular el valor total. Verifique las fechas y la habitación seleccionada.",
+    totalExceedsLimit:
+      "El valor total de la reserva excede el límite permitido. Reduzca el período de la reserva.",
+    roomNotFound: "Habitación no encontrada. Verifique el número proporcionado.",
     clientCreationError: "No se pudo crear el cliente. Inténtalo de nuevo.",
     clientCreatedImageError:
       "Cliente creado, pero hubo un error al cargar la imagen.",
@@ -595,8 +570,12 @@ export default {
     deleteSuccess: "¡Eliminado con éxito!",
     deleteError: "Error al eliminar",
     loadError: "Error al cargar datos",
+    loadRoomsError: "No se pudieron cargar las habitaciones disponibles.",
+    loadClientsError: "No se pudieron cargar los clientes.",
     roomNotFound: "Habitación no encontrada",
     reservationNotFound: "Reserva no encontrada",
+    createReservationError:
+      "Ocurrió un error al crear la reserva. Inténtelo de nuevo.",
     noData: "No se encontraron datos",
     confirmDelete: "¿Realmente quieres eliminar?",
     confirmDeleteReservation:
