@@ -5,6 +5,7 @@ import { QuickActionButton } from "@/src/components/QuickActionButton";
 import { Separator } from "@/src/components/Separator";
 import { StatCard } from "@/src/components/StatCard";
 import { useToast } from "@/src/components/ToastContext";
+import "@/src/i18n";
 import { listarAtividades } from "@/src/services/atividadesService";
 import { listarClientes } from "@/src/services/clientesService";
 import { listarFuncionarios } from "@/src/services/funcionariosService";
@@ -14,6 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Session } from "@supabase/supabase-js";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Image,
   RefreshControl,
@@ -87,6 +89,7 @@ interface DashboardStats {
 export default function Home() {
   const router = useRouter();
   const { showError } = useToast();
+  const { t } = useTranslation();
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -377,7 +380,7 @@ export default function Home() {
               </TouchableOpacity>
               <View>
                 <Text style={[styles.greeting, { color: theme.headerText }]}>
-                  Bem-vindo! 👋
+                  {t("home.welcome")}
                 </Text>
                 <Text style={[styles.username, { color: theme.headerText }]}>
                   {username}
@@ -410,13 +413,13 @@ export default function Home() {
             {/* Quick Stats */}
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: theme.text }]}>
-                Visão Rápida
+                {t("home.quickView")}
               </Text>
               <View style={styles.statsRow}>
                 <StatCard
                   icon="calendar-outline"
                   value={stats.reservations.today}
-                  label="Hoje"
+                  label={t("home.today")}
                   backgroundColor={theme.statCardBg}
                   iconBackground={theme.statIconBg}
                   iconColor={theme.statIconColor}
@@ -426,7 +429,7 @@ export default function Home() {
                 <StatCard
                   icon="checkmark-circle-outline"
                   value={stats.reservations.confirmed}
-                  label="Confirmadas"
+                  label={t("home.confirmed")}
                   backgroundColor={theme.statCardBg}
                   iconBackground={theme.statIconBg}
                   iconColor={theme.statIconColor}
@@ -436,7 +439,7 @@ export default function Home() {
                 <StatCard
                   icon="bed-outline"
                   value={stats.rooms.available}
-                  label="Disponíveis"
+                  label={t("home.available")}
                   backgroundColor={theme.statCardBg}
                   iconBackground={theme.statIconBg}
                   iconColor={theme.statIconColor}
@@ -451,19 +454,19 @@ export default function Home() {
             {/* Quick Actions */}
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: theme.text }]}>
-                Ações Rápidas
+                {t("home.quickActions")}
               </Text>
               <View style={styles.actionsRow}>
                 <QuickActionButton
                   icon="add-circle-outline"
-                  label="Nova Reserva"
+                  label={t("home.newReservation")}
                   onPress={() => router.push("/screens/Reserva/CriacaoReserva")}
                   variant="primary"
                   surface={isDarkMode ? "dark" : "light"}
                 />
                 <QuickActionButton
                   icon="person-add-outline"
-                  label="Novo Cliente"
+                  label={t("home.newClient")}
                   onPress={() => router.push("/screens/Cliente/CriacaoCliente")}
                   variant="secondary"
                   surface={isDarkMode ? "dark" : "light"}
@@ -476,14 +479,16 @@ export default function Home() {
             {/* Main Cards */}
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: theme.text }]}>
-                Gerenciamento
+                {t("home.management")}
               </Text>
 
               <DashboardCard
                 icon="calendar"
-                title="Reservas"
+                title={t("dashboard.reservations")}
                 count={stats.reservations.total}
-                subtitle={`${stats.reservations.confirmed} confirmadas`}
+                subtitle={`${stats.reservations.confirmed} ${t(
+                  "home.confirmed"
+                ).toLowerCase()}`}
                 color={isDarkMode ? "#60A5FA" : "#0162B3"}
                 onPress={() => router.push("/screens/Reserva/ListagemReserva")}
                 backgroundColor={theme.dashCardBg}
@@ -495,9 +500,9 @@ export default function Home() {
 
               <DashboardCard
                 icon="people"
-                title="Clientes"
+                title={t("dashboard.clients")}
                 count={stats.clients.total}
-                subtitle="Cadastrados no sistema"
+                subtitle={t("home.registeredInSystem")}
                 color={isDarkMode ? "#34D399" : "#10B981"}
                 onPress={() => router.push("/screens/Cliente/ListagemCliente")}
                 backgroundColor={theme.dashCardBg}
@@ -509,9 +514,13 @@ export default function Home() {
 
               <DashboardCard
                 icon="bed"
-                title="Quartos"
+                title={t("dashboard.rooms")}
                 count={stats.rooms.total}
-                subtitle={`${stats.rooms.available} disponíveis • ${stats.rooms.occupied} ocupados`}
+                subtitle={`${stats.rooms.available} ${t(
+                  "home.available"
+                ).toLowerCase()} • ${stats.rooms.occupied} ${t(
+                  "home.occupied"
+                )}`}
                 color={isDarkMode ? "#FBBF24" : "#F59E0B"}
                 onPress={() => router.push("/screens/Quarto/ListagemQuarto")}
                 backgroundColor={theme.dashCardBg}
@@ -523,9 +532,9 @@ export default function Home() {
 
               <DashboardCard
                 icon="briefcase"
-                title="Funcionários"
+                title={t("dashboard.employees")}
                 count={stats.employees.total}
-                subtitle="Equipe registrada"
+                subtitle={t("home.registeredTeam")}
                 color={isDarkMode ? "#818CF8" : "#6366F1"}
                 onPress={() =>
                   router.push("/screens/Funcionario/ListagemFuncionario")
@@ -539,9 +548,11 @@ export default function Home() {
 
               <DashboardCard
                 icon="fitness"
-                title="Atividades"
+                title={t("dashboard.activities")}
                 count={stats.activities.total}
-                subtitle={`${stats.activities.scheduled} agendadas`}
+                subtitle={`${stats.activities.scheduled} ${t(
+                  "home.scheduled"
+                )}`}
                 color={isDarkMode ? "#F472B6" : "#EC4899"}
                 onPress={() =>
                   router.push("/screens/Atividade/ListagemAtividade")
@@ -555,8 +566,8 @@ export default function Home() {
 
               <DashboardCard
                 icon="analytics"
-                title="Predição de Cancelamento"
-                subtitle="Machine Learning - Análise de risco"
+                title={t("dashboard.prediction")}
+                subtitle={t("prediction.subtitle")}
                 color={isDarkMode ? "#A78BFA" : "#8B5CF6"}
                 onPress={() => router.push("/screens/Predicao")}
                 backgroundColor={theme.dashCardBg}
@@ -568,8 +579,8 @@ export default function Home() {
 
               <DashboardCard
                 icon="location"
-                title="Localização"
-                subtitle="Ver localização do hotel no mapa"
+                title={t("dashboard.location")}
+                subtitle={t("locationPage.subtitle")}
                 color={isDarkMode ? "#5EEAD4" : "#14B8A6"}
                 onPress={() => router.push("/screens/Localizacao" as any)}
                 backgroundColor={theme.dashCardBg}

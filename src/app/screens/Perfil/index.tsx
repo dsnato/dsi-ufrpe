@@ -2,11 +2,13 @@ import { supabase } from "@/lib/supabase";
 import { FormSelect, SelectOption } from "@/src/components/FormSelect";
 import { InfoHeader } from "@/src/components/InfoHeader";
 import { useToast } from "@/src/components/ToastContext";
+import "@/src/i18n";
 import { listarAtividades } from "@/src/services/atividadesService";
 import { listarReservas } from "@/src/services/reservasService";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Image,
   ScrollView,
@@ -16,11 +18,6 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-const themeOptions: SelectOption[] = [
-  { label: "Modo Claro", value: "light" },
-  { label: "Modo Escuro", value: "dark" },
-];
 
 const palettes = {
   light: {
@@ -54,6 +51,7 @@ const palettes = {
 export default function Perfil() {
   const router = useRouter();
   const { showSuccess, showError } = useToast();
+  const { t, i18n } = useTranslation();
 
   const [displayName, setDisplayName] = useState("Gerente do Hotel");
   const [email, setEmail] = useState("gerente@hotel.com");
@@ -62,8 +60,10 @@ export default function Perfil() {
   const [preferredTheme, setPreferredTheme] = useState<"light" | "dark">(
     "light"
   );
+  const [preferredLanguage, setPreferredLanguage] = useState<string>("pt");
   const [hotelName, setHotelName] = useState("Hotel Atlântico");
   const [updatingTheme, setUpdatingTheme] = useState(false);
+  const [updatingLanguage, setUpdatingLanguage] = useState(false);
   const [highlightLoading, setHighlightLoading] = useState(true);
   const [highlightMetrics, setHighlightMetrics] = useState({
     confirmedReservations: 0,
@@ -93,6 +93,7 @@ export default function Perfil() {
         "Usuário";
       const userRole = metadata.profile_role || metadata.role || "Colaborador";
       const savedTheme = metadata.preferred_theme === "dark" ? "dark" : "light";
+      const savedLanguage = metadata.preferred_language || "pt";
       const savedHotel =
         metadata.hotel_name ||
         metadata.nome_hotel ||
@@ -103,6 +104,8 @@ export default function Perfil() {
       setEmail(currentSession.user.email || "usuario@hotel.com");
       setRole(userRole);
       setPreferredTheme(savedTheme);
+      setPreferredLanguage(savedLanguage);
+      i18n.changeLanguage(savedLanguage);
       setHotelName(savedHotel);
       setAvatarUrl(metadata.avatar_url || null);
     };
@@ -122,6 +125,11 @@ export default function Perfil() {
             ? "dark"
             : "light"
         );
+      }
+      if (session?.user?.user_metadata?.preferred_language) {
+        const lang = session.user.user_metadata.preferred_language;
+        setPreferredLanguage(lang);
+        i18n.changeLanguage(lang);
       }
     });
 
@@ -193,39 +201,91 @@ export default function Perfil() {
       }
 
       setPreferredTheme(normalized);
-      showSuccess(
-        normalized === "dark"
-          ? "Modo escuro aplicado em todas as telas compatíveis."
-          : "Modo claro aplicado em todas as telas compatíveis."
-      );
+      showSuccess(t("profile.themeUpdated"));
     } catch (err) {
       console.error("Erro ao atualizar preferência de tema:", err);
-      showError(
-        "Não foi possível atualizar o tema. Tente novamente em instantes."
-      );
+      showError(t("profile.themeUpdateError"));
     } finally {
       setUpdatingTheme(false);
     }
   };
 
+  const handleLanguageChange = async (value: string) => {
+    if (value === preferredLanguage || updatingLanguage) return;
+
+    setUpdatingLanguage(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: { preferred_language: value },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      setPreferredLanguage(value);
+      await i18n.changeLanguage(value);
+      showSuccess(t("profile.languageUpdated"));
+    } catch (err) {
+      console.error("Erro ao atualizar preferência de idioma:", err);
+      showError(t("profile.languageUpdateError"));
+    } finally {
+      setUpdatingLanguage(false);
+    }
+  };
+
+  const themeOptions: SelectOption[] = useMemo(
+    () => [
+      { label: t("profile.themeLight"), value: "light" },
+      { label: t("profile.themeDark"), value: "dark" },
+    ],
+    [t]
+  );
+
+  const languageOptions: SelectOption[] = useMemo(
+    () => [
+      { label: t("languages.pt"), value: "pt" },
+      { label: t("languages.en"), value: "en" },
+      { label: t("languages.es"), value: "es" },
+      { label: t("languages.zh"), value: "zh" },
+    ],
+    [t]
+  );
+
   const highlightCards = useMemo(
     () => [
       {
         icon: "calendar-outline" as const,
-        label: "Reservas confirmadas",
+        label: t("profile.confirmedReservations"),
         value: highlightLoading
           ? "..."
-          : `${highlightMetrics.confirmedReservations.toLocaleString("pt-BR")}`,
+          : `${highlightMetrics.confirmedReservations.toLocaleString(
+              preferredLanguage === "pt"
+                ? "pt-BR"
+                : preferredLanguage === "es"
+                ? "es-ES"
+                : preferredLanguage === "zh"
+                ? "zh-CN"
+                : "en-US"
+            )}`,
       },
       {
         icon: "sparkles-outline" as const,
-        label: "Atividades futuras",
+        label: t("profile.upcomingActivities"),
         value: highlightLoading
           ? "..."
-          : `${highlightMetrics.upcomingActivities.toLocaleString("pt-BR")}`,
+          : `${highlightMetrics.upcomingActivities.toLocaleString(
+              preferredLanguage === "pt"
+                ? "pt-BR"
+                : preferredLanguage === "es"
+                ? "es-ES"
+                : preferredLanguage === "zh"
+                ? "zh-CN"
+                : "en-US"
+            )}`,
       },
     ],
-    [highlightLoading, highlightMetrics]
+    [highlightLoading, highlightMetrics, t, preferredLanguage]
   );
 
   return (
@@ -233,8 +293,8 @@ export default function Perfil() {
       style={[styles.safeArea, { backgroundColor: theme.background }]}
     >
       <InfoHeader
-        entity="Perfil"
-        action="Gerente"
+        entity={t("profile.title")}
+        action={t("profile.manager")}
         onBackPress={() => router.push("/screens/home")}
         colors={{ background: theme.background }}
       />
@@ -294,7 +354,7 @@ export default function Perfil() {
 
             <View style={styles.metricsContainer}>
               <Text style={[styles.metricsTitle, { color: theme.text }]}>
-                Destaques
+                {t("profile.highlights")}
               </Text>
               <View style={styles.metricsGrid}>
                 {highlightCards.map((item) => (
@@ -338,10 +398,10 @@ export default function Perfil() {
             ]}
           >
             <Text style={[styles.sectionTitle, { color: theme.text }]}>
-              Preferências do gerente
+              {t("profile.preferences")}
             </Text>
             <Text style={[styles.sectionSubtitle, { color: theme.muted }]}>
-              Ajustes essenciais para quem toma decisões rápidas.
+              {t("profile.preferencesDescription")}
             </Text>
 
             <View style={styles.preferenceCard}>
@@ -353,27 +413,61 @@ export default function Perfil() {
                 />
                 <View>
                   <Text style={[styles.preferenceLabel, { color: theme.text }]}>
-                    Tema do aplicativo
+                    {t("profile.theme")}
                   </Text>
                   <Text
                     style={[styles.preferenceHelper, { color: theme.muted }]}
                   >
-                    Defina a paleta ideal para liderar o hotel.
+                    {t("profile.themeDescription")}
                   </Text>
                 </View>
               </View>
               <FormSelect
                 icon="color-palette"
-                placeholder="Selecionar modo"
+                placeholder={t("profile.theme")}
                 value={preferredTheme}
                 options={themeOptions}
                 onSelect={handleThemeChange}
                 helperText={
                   updatingTheme
-                    ? "Aplicando tema em todo o painel..."
-                    : "Sua escolha será refletida em todo o painel."
+                    ? t("profile.themeUpdating")
+                    : t("profile.themeApplied")
                 }
                 disabled={updatingTheme}
+                isDarkMode={preferredTheme === "dark"}
+              />
+            </View>
+
+            <View style={styles.preferenceCard}>
+              <View style={styles.preferenceHeader}>
+                <Ionicons
+                  name="language-outline"
+                  size={20}
+                  color={theme.icon}
+                />
+                <View>
+                  <Text style={[styles.preferenceLabel, { color: theme.text }]}>
+                    {t("profile.language")}
+                  </Text>
+                  <Text
+                    style={[styles.preferenceHelper, { color: theme.muted }]}
+                  >
+                    {t("profile.languageDescription")}
+                  </Text>
+                </View>
+              </View>
+              <FormSelect
+                icon="globe-outline"
+                placeholder={t("profile.language")}
+                value={preferredLanguage}
+                options={languageOptions}
+                onSelect={handleLanguageChange}
+                helperText={
+                  updatingLanguage
+                    ? t("profile.languageUpdating")
+                    : t("profile.languageApplied")
+                }
+                disabled={updatingLanguage}
                 isDarkMode={preferredTheme === "dark"}
               />
             </View>
@@ -385,7 +479,7 @@ export default function Perfil() {
             >
               <Ionicons name="create-outline" size={18} color="#FFFFFF" />
               <Text style={styles.primaryButtonText}>
-                Editar informações básicas
+                {t("profile.editProfile")}
               </Text>
             </TouchableOpacity>
           </View>

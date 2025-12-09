@@ -1,5 +1,7 @@
+import "@/src/i18n";
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { useTranslation } from "react-i18next";
+import { StyleSheet, Text, View } from "react-native";
 
 // Tipagem das props do componente
 type BookingCardProps = {
@@ -23,6 +25,7 @@ const BookingCard: React.FC<BookingCardProps> = ({
   dataCheckout,
   numeroHospedes,
 }) => {
+  const { t } = useTranslation();
   return (
     // Container principal com borda, arredondamento e fundo transparente
     <View style={styles.card}>
@@ -33,10 +36,18 @@ const BookingCard: React.FC<BookingCardProps> = ({
       </View>
       {/* Segunda linha: informações detalhadas */}
       <View style={styles.infoCol}>
-        <Text style={styles.infoText}>Cliente: {cliente}</Text>
-        <Text style={styles.infoText}>Data check-in: {dataCheckin}</Text>
-        <Text style={styles.infoText}>Data check-out: {dataCheckout}</Text>
-        <Text style={styles.infoText}>Número de hóspedes: {numeroHospedes}</Text>
+        <Text style={styles.infoText}>
+          {t("reservations.client")}: {cliente}
+        </Text>
+        <Text style={styles.infoText}>
+          {t("reservations.checkInDate")}: {dataCheckin}
+        </Text>
+        <Text style={styles.infoText}>
+          {t("reservations.checkOutDate")}: {dataCheckout}
+        </Text>
+        <Text style={styles.infoText}>
+          {t("reservations.numberOfGuests")}: {numeroHospedes}
+        </Text>
       </View>
     </View>
   );

@@ -1,5 +1,7 @@
+import "@/src/i18n";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface ImagePickerModalProps {
@@ -17,6 +19,7 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
   onCamera,
   isDarkMode = false,
 }) => {
+  const { t } = useTranslation();
   const colors = isDarkMode
     ? {
         modalBg: "#1A2942",
@@ -67,10 +70,10 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
             <View style={styles.header}>
               <Ionicons name="images" size={32} color={colors.iconColor} />
               <Text style={[styles.title, { color: colors.title }]}>
-                Selecionar Imagem
+                {t("imagePicker.selectImage")}
               </Text>
               <Text style={[styles.subtitle, { color: colors.subtitle }]}>
-                Escolha de onde deseja adicionar a imagem
+                {t("imagePicker.selectImageDescription")}
               </Text>
             </View>
 
@@ -98,7 +101,7 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
                   <Text
                     style={[styles.optionTitle, { color: colors.optionTitle }]}
                   >
-                    Galeria
+                    {t("imagePicker.gallery")}
                   </Text>
                   <Text
                     style={[
@@ -106,7 +109,7 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
                       { color: colors.optionDescription },
                     ]}
                   >
-                    Escolher da galeria de fotos
+                    {t("imagePicker.galleryDescription")}
                   </Text>
                 </View>
                 <Ionicons
@@ -143,7 +146,7 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
                   <Text
                     style={[styles.optionTitle, { color: colors.optionTitle }]}
                   >
-                    Câmera
+                    {t("imagePicker.camera")}
                   </Text>
                   <Text
                     style={[
@@ -151,7 +154,7 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
                       { color: colors.optionDescription },
                     ]}
                   >
-                    Tirar uma nova foto
+                    {t("imagePicker.cameraDescription")}
                   </Text>
                 </View>
                 <Ionicons
@@ -175,7 +178,7 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
               <Text
                 style={[styles.cancelButtonText, { color: colors.cancelText }]}
               >
-                Cancelar
+                {t("common.cancel")}
               </Text>
             </TouchableOpacity>
           </TouchableOpacity>
@@ -198,6 +201,7 @@ export const RemoveImageModal: React.FC<RemoveImageModalProps> = ({
   onConfirm,
   isDarkMode = false,
 }) => {
+  const { t } = useTranslation();
   const colors = isDarkMode
     ? {
         modalBg: "#1A2942",
@@ -249,11 +253,10 @@ export const RemoveImageModal: React.FC<RemoveImageModalProps> = ({
                 <Ionicons name="warning" size={32} color={colors.iconColor} />
               </View>
               <Text style={[styles.title, { color: colors.title }]}>
-                Remover Imagem
+                {t("imagePicker.removeImage")}
               </Text>
               <Text style={[styles.subtitle, { color: colors.subtitle }]}>
-                Tem certeza que deseja remover esta imagem? Esta ação não pode
-                ser desfeita.
+                {t("imagePicker.removeImageDescription")}
               </Text>
             </View>
 
@@ -275,7 +278,7 @@ export const RemoveImageModal: React.FC<RemoveImageModalProps> = ({
                     { color: colors.secondaryText },
                   ]}
                 >
-                  Cancelar
+                  {t("common.cancel")}
                 </Text>
               </TouchableOpacity>
 
@@ -290,7 +293,9 @@ export const RemoveImageModal: React.FC<RemoveImageModalProps> = ({
                 }}
               >
                 <Ionicons name="trash-outline" size={18} color="#FFF" />
-                <Text style={styles.dangerButtonText}>Remover</Text>
+                <Text style={styles.dangerButtonText}>
+                  {t("imagePicker.remove")}
+                </Text>
               </TouchableOpacity>
             </View>
           </TouchableOpacity>
@@ -313,6 +318,7 @@ export const LogoutModal: React.FC<LogoutModalProps> = ({
   onConfirm,
   isDarkMode = false,
 }) => {
+  const { t } = useTranslation();
   const colors = isDarkMode
     ? {
         modalBg: "#1A2942",
@@ -368,11 +374,10 @@ export const LogoutModal: React.FC<LogoutModalProps> = ({
                 />
               </View>
               <Text style={[styles.title, { color: colors.title }]}>
-                Sair do Aplicativo
+                {t("auth.logout")}
               </Text>
               <Text style={[styles.subtitle, { color: colors.subtitle }]}>
-                Deseja realmente sair? Você precisará fazer login novamente para
-                acessar o sistema.
+                {t("messages.confirmLogout")}
               </Text>
             </View>
 
@@ -394,7 +399,7 @@ export const LogoutModal: React.FC<LogoutModalProps> = ({
                     { color: colors.secondaryText },
                   ]}
                 >
-                  Cancelar
+                  {t("common.cancel")}
                 </Text>
               </TouchableOpacity>
 
@@ -409,7 +414,7 @@ export const LogoutModal: React.FC<LogoutModalProps> = ({
                 }}
               >
                 <Ionicons name="log-out-outline" size={18} color="#FFF" />
-                <Text style={styles.dangerButtonText}>Sair</Text>
+                <Text style={styles.dangerButtonText}>{t("common.exit")}</Text>
               </TouchableOpacity>
             </View>
           </TouchableOpacity>
