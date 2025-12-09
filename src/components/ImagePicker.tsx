@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePickerExpo from "expo-image-picker";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Image,
@@ -67,6 +68,7 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
   tone = "light",
   aspect = [16, 9],
 }) => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [showPickerModal, setShowPickerModal] = useState(false);
   const [showRemoveModal, setShowRemoveModal] = useState(false);
@@ -85,7 +87,7 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
       const { status } =
         await ImagePickerExpo.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
-        showError("Precisamos de permissão para acessar suas fotos.");
+        showError(t("imagePicker.permissionRequired"));
         return false;
       }
     }
@@ -121,7 +123,7 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
       }
     } catch (error) {
       console.error("Erro ao selecionar imagem:", error);
-      showError("Não foi possível selecionar a imagem.");
+      showError(t("imagePicker.selectError"));
     } finally {
       setLoading(false);
     }
@@ -131,7 +133,7 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
     try {
       const { status } = await ImagePickerExpo.requestCameraPermissionsAsync();
       if (status !== "granted") {
-        showError("Precisamos de permissão para acessar sua câmera.");
+        showError(t("imagePicker.cameraPermissionRequired"));
         return;
       }
 
@@ -148,7 +150,7 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
       }
     } catch (error) {
       console.error("Erro ao tirar foto:", error);
-      showError("Não foi possível tirar a foto.");
+      showError(t("imagePicker.takePhotoError"));
     } finally {
       setLoading(false);
     }
@@ -165,7 +167,7 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
 
   const handleRemoveImage = () => {
     if (Platform.OS === "web") {
-      if (confirm("Tem certeza que deseja remover esta imagem?")) {
+      if (confirm(t("imagePicker.removeImageDescription"))) {
         onImageRemoved?.();
       }
       return;
@@ -201,7 +203,7 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
                 disabled={loading}
               >
                 <Ionicons name="camera" size={20} color="#FFF" />
-                <Text style={styles.actionButtonText}>Alterar</Text>
+                <Text style={styles.actionButtonText}>{t("common.edit")}</Text>
               </TouchableOpacity>
               {onImageRemoved && (
                 <TouchableOpacity
@@ -210,7 +212,9 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
                   disabled={loading}
                 >
                   <Ionicons name="trash" size={20} color="#FFF" />
-                  <Text style={styles.actionButtonText}>Remover</Text>
+                  <Text style={styles.actionButtonText}>
+                    {t("imagePicker.remove")}
+                  </Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -234,12 +238,12 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
             <>
               <Ionicons name="image-outline" size={48} color={palette.icon} />
               <Text style={[styles.placeholderText, { color: palette.text }]}>
-                Adicionar Imagem
+                {t("imagePicker.addImage")}
               </Text>
               <Text
                 style={[styles.placeholderSubtext, { color: palette.subtext }]}
               >
-                Toque para selecionar da galeria ou tirar uma foto
+                {t("imagePicker.addImageDescription")}
               </Text>
             </>
           )}

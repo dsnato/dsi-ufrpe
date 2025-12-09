@@ -4,8 +4,10 @@ import { FormInput } from "@/src/components/FormInput";
 import { ImagePicker } from "@/src/components/ImagePicker";
 import { InfoHeader } from "@/src/components/InfoHeader";
 import { useToast } from "@/src/components/ToastContext";
+import "@/src/i18n";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   ScrollView,
@@ -33,6 +35,7 @@ const palettes = {
 } as const;
 
 export default function EdicaoPerfil() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { theme: themeParam, hotelName: hotelParam } = useLocalSearchParams<{
     theme?: string;
@@ -144,9 +147,7 @@ export default function EdicaoPerfil() {
       } catch (error) {
         console.error("Erro ao carregar dados do usuário:", error);
         if (isActive) {
-          showError(
-            "Não foi possível carregar os dados. Tente novamente em instantes."
-          );
+          showError(t("profile.loadError"));
         }
       } finally {
         if (isActive) {
@@ -160,7 +161,7 @@ export default function EdicaoPerfil() {
     return () => {
       isActive = false;
     };
-  }, [router]);
+  }, [router, showError, t]);
 
   const handleSave = async () => {
     if (saving) {
@@ -200,16 +201,14 @@ export default function EdicaoPerfil() {
         }
       }
 
-      showSuccess("Perfil atualizado com sucesso!");
+      showSuccess(t("profile.profileUpdated"));
 
       setTimeout(() => {
         router.back();
       }, 1500);
     } catch (error) {
       console.error("Erro ao salvar perfil:", error);
-      showError(
-        "Não foi possível salvar. Verifique seus dados e tente novamente."
-      );
+      showError(t("profile.profileUpdateError"));
     } finally {
       setSaving(false);
     }
@@ -230,7 +229,7 @@ export default function EdicaoPerfil() {
           <View style={styles.loadingState}>
             <ActivityIndicator size="large" color={theme.text} />
             <Text style={[styles.loadingText, { color: theme.muted }]}>
-              Carregando perfil...
+              {t("common.loading")}
             </Text>
           </View>
         ) : (
@@ -246,10 +245,10 @@ export default function EdicaoPerfil() {
               ]}
             >
               <Text style={[styles.cardTitle, { color: theme.text }]}>
-                Foto do gerente
+                {t("profile.managerPhoto")}
               </Text>
               <Text style={[styles.cardSubtitle, { color: theme.muted }]}>
-                Adicione ou atualize a imagem que aparece no painel.
+                {t("profile.managerPhotoDescription")}
               </Text>
               <ImagePicker
                 imageUri={avatarUri}
@@ -260,25 +259,25 @@ export default function EdicaoPerfil() {
                 aspect={[1, 1]}
               />
               <Text style={[styles.avatarHelper, { color: theme.muted }]}>
-                Recomendado quadrado, mínimo de 512px.
+                {t("profile.recommendedSize")}
               </Text>
             </View>
 
             <Text style={[styles.sectionTitle, { color: theme.text }]}>
-              Dados principais
+              {t("profile.mainData")}
             </Text>
             <Text style={[styles.sectionSubtitle, { color: theme.muted }]}>
-              Atualize seu nome e informações de contato.
+              {t("profile.mainDataDescription")}
             </Text>
 
             <View style={[styles.card, { backgroundColor: theme.card }]}>
               <View style={styles.formGroup}>
                 <Text style={[styles.label, { color: theme.text }]}>
-                  Nome completo
+                  {t("profile.fullName")}
                 </Text>
                 <FormInput
                   icon="person-outline"
-                  placeholder="Seu nome"
+                  placeholder={t("profile.fullName")}
                   value={name}
                   onChangeText={setName}
                   maxLength={80}
@@ -289,7 +288,7 @@ export default function EdicaoPerfil() {
 
               <View style={styles.formGroup}>
                 <Text style={[styles.label, { color: theme.text }]}>
-                  Celular
+                  {t("profile.phone")}
                 </Text>
                 <FormInput
                   icon="call-outline"
@@ -304,7 +303,9 @@ export default function EdicaoPerfil() {
               </View>
 
               <View style={styles.formGroup}>
-                <Text style={[styles.label, { color: theme.text }]}>CNPJ</Text>
+                <Text style={[styles.label, { color: theme.text }]}>
+                  {t("profile.cnpj")}
+                </Text>
                 <FormInput
                   icon="document-text-outline"
                   placeholder="00.000.000/0000-00"
@@ -319,11 +320,11 @@ export default function EdicaoPerfil() {
 
               <View style={styles.formGroup}>
                 <Text style={[styles.label, { color: theme.text }]}>
-                  Nome do hotel
+                  {t("profile.hotelName")}
                 </Text>
                 <FormInput
                   icon="business-outline"
-                  placeholder="Como o hotel deve aparecer"
+                  placeholder={t("profile.hotelName")}
                   value={hotelName}
                   onChangeText={setHotelName}
                   maxLength={100}
@@ -341,7 +342,7 @@ export default function EdicaoPerfil() {
                 onPress={handleSave}
                 disabled={saving}
               >
-                {saving ? "Salvando..." : "Salvar alterações"}
+                {saving ? t("profile.saving") : t("profile.saveChanges")}
               </ActionButton>
               <ActionButton
                 variant="secondary"
@@ -350,7 +351,7 @@ export default function EdicaoPerfil() {
                 onPress={() => router.back()}
                 disabled={saving}
               >
-                Cancelar
+                {t("common.cancel")}
               </ActionButton>
             </View>
           </ScrollView>

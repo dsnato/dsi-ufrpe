@@ -1,5 +1,7 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import "@/src/i18n";
+import React from "react";
+import { useTranslation } from "react-i18next";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface Props {
   item: any;
@@ -8,13 +10,19 @@ interface Props {
 }
 
 export default function QuartoListItem({ item, onPress, onDelete }: Props) {
+  const { t } = useTranslation();
   return (
     <TouchableOpacity style={styles.card} onPress={() => onPress(item)}>
       <View style={styles.textContainer}>
         <Text style={styles.title}>{item.tipo}</Text>
-        <Text style={styles.subtitle}>Número: {item.numero_quarto}</Text>
+        <Text style={styles.subtitle}>
+          {t("rooms.number")}: {item.numero_quarto}
+        </Text>
       </View>
-      <TouchableOpacity onPress={() => onDelete(item.id)} style={styles.deleteButton}>
+      <TouchableOpacity
+        onPress={() => onDelete(item.id)}
+        style={styles.deleteButton}
+      >
         <Text style={styles.deleteText}>🗑️</Text>
       </TouchableOpacity>
     </TouchableOpacity>
@@ -22,10 +30,19 @@ export default function QuartoListItem({ item, onPress, onDelete }: Props) {
 }
 
 const styles = StyleSheet.create({
-  card: { flexDirection:'row', justifyContent:'space-between', alignItems:'center', padding:15, borderWidth:1, borderColor:'#718FE9', borderRadius:8, marginBottom:10 },
+  card: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 15,
+    borderWidth: 1,
+    borderColor: "#718FE9",
+    borderRadius: 8,
+    marginBottom: 10,
+  },
   textContainer: {},
-  title: { fontWeight:'bold', fontSize:16 },
-  subtitle: { color:'#555' },
-  deleteButton: { padding:5 },
-  deleteText: { fontSize:18, color:'#FF3333' },
+  title: { fontWeight: "bold", fontSize: 16 },
+  subtitle: { color: "#555" },
+  deleteButton: { padding: 5 },
+  deleteText: { fontSize: 18, color: "#FF3333" },
 });
