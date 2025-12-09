@@ -541,12 +541,14 @@ export default {
       "Fecha de check-out inválida. Use el formato DD/MM/AAAA.",
     checkOutBeforeCheckIn:
       "La fecha de check-out debe ser posterior a la fecha de check-in.",
-    reservationTooLong: "La reserva no puede tener una duración superior a 365 días.",
+    reservationTooLong:
+      "La reserva no puede tener una duración superior a 365 días.",
     cannotCalculateTotal:
       "No se pudo calcular el valor total. Verifique las fechas y la habitación seleccionada.",
     totalExceedsLimit:
       "El valor total de la reserva excede el límite permitido. Reduzca el período de la reserva.",
-    roomNotFound: "Habitación no encontrada. Verifique el número proporcionado.",
+    roomNotFound:
+      "Habitación no encontrada. Verifique el número proporcionado.",
     clientCreationError: "No se pudo crear el cliente. Inténtalo de nuevo.",
     clientCreatedImageError:
       "Cliente creado, pero hubo un error al cargar la imagen.",
