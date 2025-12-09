@@ -1,12 +1,13 @@
-import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
-import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from "@expo/vector-icons";
+import React from "react";
+import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface ImagePickerModalProps {
   visible: boolean;
   onClose: () => void;
   onGallery: () => void;
   onCamera: () => void;
+  isDarkMode?: boolean;
 }
 
 export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
@@ -14,7 +15,38 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
   onClose,
   onGallery,
   onCamera,
+  isDarkMode = false,
 }) => {
+  const colors = isDarkMode
+    ? {
+        modalBg: "#1A2942",
+        title: "#F1F5F9",
+        subtitle: "#94A3B8",
+        iconBg: "#1E3A8A",
+        iconColor: "#60A5FA",
+        optionTitle: "#E2E8F0",
+        optionDescription: "#94A3B8",
+        divider: "#334155",
+        chevron: "#64748B",
+        cancelBg: "#0F172A",
+        cancelBorder: "#334155",
+        cancelText: "#94A3B8",
+      }
+    : {
+        modalBg: "#FFFFFF",
+        title: "#132F3B",
+        subtitle: "#64748B",
+        iconBg: "#EFF6FF",
+        iconColor: "#0162B3",
+        optionTitle: "#132F3B",
+        optionDescription: "#64748B",
+        divider: "#E2E8F0",
+        chevron: "#94A3B8",
+        cancelBg: "#F8FAFC",
+        cancelBorder: "#E2E8F0",
+        cancelText: "#64748B",
+      };
+
   return (
     <Modal
       visible={visible}
@@ -28,11 +60,18 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
         onPress={onClose}
       >
         <View style={styles.modalContainer}>
-          <TouchableOpacity activeOpacity={1} style={styles.modalContent}>
+          <TouchableOpacity
+            activeOpacity={1}
+            style={[styles.modalContent, { backgroundColor: colors.modalBg }]}
+          >
             <View style={styles.header}>
-              <Ionicons name="images" size={32} color="#0162B3" />
-              <Text style={styles.title}>Selecionar Imagem</Text>
-              <Text style={styles.subtitle}>Escolha de onde deseja adicionar a imagem</Text>
+              <Ionicons name="images" size={32} color={colors.iconColor} />
+              <Text style={[styles.title, { color: colors.title }]}>
+                Selecionar Imagem
+              </Text>
+              <Text style={[styles.subtitle, { color: colors.subtitle }]}>
+                Escolha de onde deseja adicionar a imagem
+              </Text>
             </View>
 
             <View style={styles.optionsContainer}>
@@ -43,17 +82,43 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
                   onGallery();
                 }}
               >
-                <View style={[styles.iconContainer, { backgroundColor: '#EFF6FF' }]}>
-                  <Ionicons name="images-outline" size={28} color="#0162B3" />
+                <View
+                  style={[
+                    styles.iconContainer,
+                    { backgroundColor: colors.iconBg },
+                  ]}
+                >
+                  <Ionicons
+                    name="images-outline"
+                    size={28}
+                    color={colors.iconColor}
+                  />
                 </View>
                 <View style={styles.optionTextContainer}>
-                  <Text style={styles.optionTitle}>Galeria</Text>
-                  <Text style={styles.optionDescription}>Escolher da galeria de fotos</Text>
+                  <Text
+                    style={[styles.optionTitle, { color: colors.optionTitle }]}
+                  >
+                    Galeria
+                  </Text>
+                  <Text
+                    style={[
+                      styles.optionDescription,
+                      { color: colors.optionDescription },
+                    ]}
+                  >
+                    Escolher da galeria de fotos
+                  </Text>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={colors.chevron}
+                />
               </TouchableOpacity>
 
-              <View style={styles.divider} />
+              <View
+                style={[styles.divider, { backgroundColor: colors.divider }]}
+              />
 
               <TouchableOpacity
                 style={styles.optionButton}
@@ -62,19 +127,56 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
                   onCamera();
                 }}
               >
-                <View style={[styles.iconContainer, { backgroundColor: '#DBEAFE' }]}>
-                  <Ionicons name="camera-outline" size={28} color="#0162B3" />
+                <View
+                  style={[
+                    styles.iconContainer,
+                    { backgroundColor: colors.iconBg },
+                  ]}
+                >
+                  <Ionicons
+                    name="camera-outline"
+                    size={28}
+                    color={colors.iconColor}
+                  />
                 </View>
                 <View style={styles.optionTextContainer}>
-                  <Text style={styles.optionTitle}>Câmera</Text>
-                  <Text style={styles.optionDescription}>Tirar uma nova foto</Text>
+                  <Text
+                    style={[styles.optionTitle, { color: colors.optionTitle }]}
+                  >
+                    Câmera
+                  </Text>
+                  <Text
+                    style={[
+                      styles.optionDescription,
+                      { color: colors.optionDescription },
+                    ]}
+                  >
+                    Tirar uma nova foto
+                  </Text>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={colors.chevron}
+                />
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
-              <Text style={styles.cancelButtonText}>Cancelar</Text>
+            <TouchableOpacity
+              style={[
+                styles.cancelButton,
+                {
+                  backgroundColor: colors.cancelBg,
+                  borderColor: colors.cancelBorder,
+                },
+              ]}
+              onPress={onClose}
+            >
+              <Text
+                style={[styles.cancelButtonText, { color: colors.cancelText }]}
+              >
+                Cancelar
+              </Text>
             </TouchableOpacity>
           </TouchableOpacity>
         </View>
@@ -87,13 +189,39 @@ interface RemoveImageModalProps {
   visible: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  isDarkMode?: boolean;
 }
 
 export const RemoveImageModal: React.FC<RemoveImageModalProps> = ({
   visible,
   onClose,
   onConfirm,
+  isDarkMode = false,
 }) => {
+  const colors = isDarkMode
+    ? {
+        modalBg: "#1A2942",
+        title: "#F1F5F9",
+        subtitle: "#94A3B8",
+        iconBg: "#7F1D1D",
+        iconColor: "#FCA5A5",
+        secondaryBg: "#0F172A",
+        secondaryBorder: "#334155",
+        secondaryText: "#94A3B8",
+        dangerBg: "#DC2626",
+      }
+    : {
+        modalBg: "#FFFFFF",
+        title: "#132F3B",
+        subtitle: "#64748B",
+        iconBg: "#FEE2E2",
+        iconColor: "#DC2626",
+        secondaryBg: "#F8FAFC",
+        secondaryBorder: "#E2E8F0",
+        secondaryText: "#64748B",
+        dangerBg: "#DC2626",
+      };
+
   return (
     <Modal
       visible={visible}
@@ -107,27 +235,55 @@ export const RemoveImageModal: React.FC<RemoveImageModalProps> = ({
         onPress={onClose}
       >
         <View style={styles.modalContainer}>
-          <TouchableOpacity activeOpacity={1} style={styles.modalContent}>
+          <TouchableOpacity
+            activeOpacity={1}
+            style={[styles.modalContent, { backgroundColor: colors.modalBg }]}
+          >
             <View style={styles.header}>
-              <View style={styles.warningIconContainer}>
-                <Ionicons name="warning" size={32} color="#DC2626" />
+              <View
+                style={[
+                  styles.warningIconContainer,
+                  { backgroundColor: colors.iconBg },
+                ]}
+              >
+                <Ionicons name="warning" size={32} color={colors.iconColor} />
               </View>
-              <Text style={styles.title}>Remover Imagem</Text>
-              <Text style={styles.subtitle}>
-                Tem certeza que deseja remover esta imagem? Esta ação não pode ser desfeita.
+              <Text style={[styles.title, { color: colors.title }]}>
+                Remover Imagem
+              </Text>
+              <Text style={[styles.subtitle, { color: colors.subtitle }]}>
+                Tem certeza que deseja remover esta imagem? Esta ação não pode
+                ser desfeita.
               </Text>
             </View>
 
             <View style={styles.actionsRow}>
               <TouchableOpacity
-                style={[styles.actionButton, styles.secondaryButton]}
+                style={[
+                  styles.actionButton,
+                  styles.secondaryButton,
+                  {
+                    backgroundColor: colors.secondaryBg,
+                    borderColor: colors.secondaryBorder,
+                  },
+                ]}
                 onPress={onClose}
               >
-                <Text style={styles.secondaryButtonText}>Cancelar</Text>
+                <Text
+                  style={[
+                    styles.secondaryButtonText,
+                    { color: colors.secondaryText },
+                  ]}
+                >
+                  Cancelar
+                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.actionButton, styles.dangerButton]}
+                style={[
+                  styles.actionButton,
+                  { backgroundColor: colors.dangerBg },
+                ]}
                 onPress={() => {
                   onClose();
                   onConfirm();
@@ -157,27 +313,29 @@ export const LogoutModal: React.FC<LogoutModalProps> = ({
   onConfirm,
   isDarkMode = false,
 }) => {
-  const colors = isDarkMode ? {
-    modalBg: '#1A2942',
-    title: '#F1F5F9',
-    subtitle: '#94A3B8',
-    iconBg: '#422006',
-    iconColor: '#FBBF24',
-    secondaryBg: '#0F172A',
-    secondaryBorder: '#334155',
-    secondaryText: '#94A3B8',
-    confirmBg: '#B45309',
-  } : {
-    modalBg: '#FFFFFF',
-    title: '#132F3B',
-    subtitle: '#64748B',
-    iconBg: '#FEF3C7',
-    iconColor: '#F59E0B',
-    secondaryBg: '#F8FAFC',
-    secondaryBorder: '#E2E8F0',
-    secondaryText: '#64748B',
-    confirmBg: '#F59E0B',
-  };
+  const colors = isDarkMode
+    ? {
+        modalBg: "#1A2942",
+        title: "#F1F5F9",
+        subtitle: "#94A3B8",
+        iconBg: "#422006",
+        iconColor: "#FBBF24",
+        secondaryBg: "#0F172A",
+        secondaryBorder: "#334155",
+        secondaryText: "#94A3B8",
+        confirmBg: "#B45309",
+      }
+    : {
+        modalBg: "#FFFFFF",
+        title: "#132F3B",
+        subtitle: "#64748B",
+        iconBg: "#FEF3C7",
+        iconColor: "#F59E0B",
+        secondaryBg: "#F8FAFC",
+        secondaryBorder: "#E2E8F0",
+        secondaryText: "#64748B",
+        confirmBg: "#F59E0B",
+      };
 
   return (
     <Modal
@@ -192,30 +350,59 @@ export const LogoutModal: React.FC<LogoutModalProps> = ({
         onPress={onClose}
       >
         <View style={styles.modalContainer}>
-          <TouchableOpacity activeOpacity={1} style={[styles.modalContent, { backgroundColor: colors.modalBg }]}>
+          <TouchableOpacity
+            activeOpacity={1}
+            style={[styles.modalContent, { backgroundColor: colors.modalBg }]}
+          >
             <View style={styles.header}>
-              <View style={[styles.warningIconContainer, { backgroundColor: colors.iconBg }]}>
-                <Ionicons name="log-out-outline" size={32} color={colors.iconColor} />
+              <View
+                style={[
+                  styles.warningIconContainer,
+                  { backgroundColor: colors.iconBg },
+                ]}
+              >
+                <Ionicons
+                  name="log-out-outline"
+                  size={32}
+                  color={colors.iconColor}
+                />
               </View>
-              <Text style={[styles.title, { color: colors.title }]}>Sair do Aplicativo</Text>
+              <Text style={[styles.title, { color: colors.title }]}>
+                Sair do Aplicativo
+              </Text>
               <Text style={[styles.subtitle, { color: colors.subtitle }]}>
-                Deseja realmente sair? Você precisará fazer login novamente para acessar o sistema.
+                Deseja realmente sair? Você precisará fazer login novamente para
+                acessar o sistema.
               </Text>
             </View>
 
             <View style={styles.actionsRow}>
               <TouchableOpacity
-                style={[styles.actionButton, styles.secondaryButton, {
-                  backgroundColor: colors.secondaryBg,
-                  borderColor: colors.secondaryBorder
-                }]}
+                style={[
+                  styles.actionButton,
+                  styles.secondaryButton,
+                  {
+                    backgroundColor: colors.secondaryBg,
+                    borderColor: colors.secondaryBorder,
+                  },
+                ]}
                 onPress={onClose}
               >
-                <Text style={[styles.secondaryButtonText, { color: colors.secondaryText }]}>Cancelar</Text>
+                <Text
+                  style={[
+                    styles.secondaryButtonText,
+                    { color: colors.secondaryText },
+                  ]}
+                >
+                  Cancelar
+                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.actionButton, { backgroundColor: colors.confirmBg }]}
+                style={[
+                  styles.actionButton,
+                  { backgroundColor: colors.confirmBg },
+                ]}
                 onPress={() => {
                   onClose();
                   onConfirm();
@@ -235,57 +422,57 @@ export const LogoutModal: React.FC<LogoutModalProps> = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   modalContainer: {
-    width: '100%',
+    width: "100%",
     maxWidth: 400,
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 16,
     padding: 24,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 12,
     elevation: 8,
   },
   header: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 24,
   },
   warningIconContainer: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#FEE2E2',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#FEE2E2",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 16,
   },
   title: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#132F3B',
+    fontWeight: "bold",
+    color: "#132F3B",
     marginTop: 12,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 14,
-    color: '#64748B',
-    textAlign: 'center',
+    color: "#64748B",
+    textAlign: "center",
     lineHeight: 20,
   },
   optionsContainer: {
     marginBottom: 16,
   },
   optionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 16,
     paddingHorizontal: 12,
     gap: 12,
@@ -294,70 +481,69 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   optionTextContainer: {
     flex: 1,
   },
   optionTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#132F3B',
+    fontWeight: "600",
+    color: "#132F3B",
     marginBottom: 2,
   },
   optionDescription: {
     fontSize: 13,
-    color: '#64748B',
+    color: "#64748B",
   },
   divider: {
     height: 1,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: "#E2E8F0",
     marginHorizontal: 12,
   },
   cancelButton: {
     paddingVertical: 14,
-    alignItems: 'center',
+    alignItems: "center",
     borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#F8FAFC',
+    borderColor: "#E2E8F0",
+    backgroundColor: "#F8FAFC",
   },
   cancelButtonText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#64748B',
+    fontWeight: "600",
+    color: "#64748B",
   },
   actionsRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
   },
   actionButton: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 14,
     borderRadius: 12,
     gap: 6,
   },
   secondaryButton: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: "#F8FAFC",
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: "#E2E8F0",
   },
   secondaryButtonText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#64748B',
+    fontWeight: "600",
+    color: "#64748B",
   },
   dangerButton: {
-    backgroundColor: '#DC2626',
+    backgroundColor: "#DC2626",
   },
   dangerButtonText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#FFF',
+    fontWeight: "600",
+    color: "#FFF",
   },
 });
-

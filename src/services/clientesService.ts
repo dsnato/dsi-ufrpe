@@ -1,11 +1,24 @@
-import { supabase } from '../../lib/supabase';
+import { supabase } from "../../lib/supabase";
 import {
   validarEmail,
   validarFormatoCPF,
   validarStringObrigatoria,
   validarTelefone,
-  ValidationError
-} from '../utils/validators';
+  ValidationError,
+} from "../utils/validators";
+
+// Função auxiliar para formatar data de DD/MM/YYYY para YYYY-MM-DD
+const formatarDataParaBanco = (
+  data: string | undefined
+): string | undefined => {
+  if (!data) return data;
+  // Verifica se está no formato DD/MM/YYYY
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(data)) {
+    const [dia, mes, ano] = data.split("/");
+    return `${ano}-${mes}-${dia}`;
+  }
+  return data;
+};
 
 export interface Cliente {
   id?: string;
@@ -28,12 +41,12 @@ export interface Cliente {
  */
 export const listarClientes = async (): Promise<Cliente[]> => {
   const { data, error } = await supabase
-    .from('clientes')
-    .select('*')
-    .order('nome_completo', { ascending: true });
+    .from("clientes")
+    .select("*")
+    .order("nome_completo", { ascending: true });
 
   if (error) {
-    console.error('Erro ao listar clientes:', error);
+    console.error("Erro ao listar clientes:", error);
     throw new Error(error.message);
   }
 
@@ -43,141 +56,178 @@ export const listarClientes = async (): Promise<Cliente[]> => {
 /**
  * Buscar cliente por ID
  */
-export const buscarClientePorId = async (id: string): Promise<Cliente | null> => {
-  console.log('🔵 [clientesService] buscarClientePorId chamado para ID:', id);
-  
+export const buscarClientePorId = async (
+  id: string
+): Promise<Cliente | null> => {
+  console.log("🔵 [clientesService] buscarClientePorId chamado para ID:", id);
+
   const { data, error } = await supabase
-    .from('clientes')
-    .select('*')
-    .eq('id', id)
+    .from("clientes")
+    .select("*")
+    .eq("id", id)
     .single();
 
   if (error) {
-    console.error('❌ [clientesService] Erro ao buscar cliente:', error);
+    console.error("❌ [clientesService] Erro ao buscar cliente:", error);
     throw new Error(error.message);
   }
 
-  console.log('✅ [clientesService] Cliente encontrado:', JSON.stringify(data, null, 2));
-  console.log('🖼️ [clientesService] URL da imagem:', data?.imagem_url);
-  
+  console.log(
+    "✅ [clientesService] Cliente encontrado:",
+    JSON.stringify(data, null, 2)
+  );
+  console.log("🖼️ [clientesService] URL da imagem:", data?.imagem_url);
+
   return data;
 };
 
 /**
  * Criar novo cliente
  */
-export const criarCliente = async (cliente: Omit<Cliente, 'id' | 'created_at' | 'updated_at'>): Promise<Cliente> => {
-  console.log('🟢 [clientesService] criarCliente chamado');
-  console.log('🟢 [clientesService] Dados recebidos:', JSON.stringify(cliente, null, 2));
-  
+export const criarCliente = async (
+  cliente: Omit<Cliente, "id" | "created_at" | "updated_at">
+): Promise<Cliente> => {
+  console.log("🟢 [clientesService] criarCliente chamado");
+  console.log(
+    "🟢 [clientesService] Dados recebidos:",
+    JSON.stringify(cliente, null, 2)
+  );
+
   try {
     // Validações
-    console.log('🔍 [clientesService] Iniciando validações...');
-    
-    validarStringObrigatoria(cliente.nome_completo, 'Nome completo');
-    validarStringObrigatoria(cliente.cpf, 'CPF');
+    console.log("🔍 [clientesService] Iniciando validações...");
+
+    validarStringObrigatoria(cliente.nome_completo, "Nome completo");
+    validarStringObrigatoria(cliente.cpf, "CPF");
     validarFormatoCPF(cliente.cpf);
-    
+
     if (cliente.email) {
       validarEmail(cliente.email);
     }
-    
+
     if (cliente.telefone) {
       validarTelefone(cliente.telefone);
     }
-    
+
     // Data de nascimento aceita qualquer string
-    
-    console.log('✅ [clientesService] Validações concluídas com sucesso');
-    
+
+    console.log("✅ [clientesService] Validações concluídas com sucesso");
   } catch (error) {
     if (error instanceof ValidationError) {
-      console.error('🔴 [clientesService] Erro de validação:', error.message);
+      console.error("🔴 [clientesService] Erro de validação:", error.message);
       throw error;
     }
     throw error;
   }
-  
+
   const dadosParaInserir = {
     ...cliente,
-    pais: cliente.pais || 'Brasil'
+    data_nascimento: formatarDataParaBanco(cliente.data_nascimento),
+    pais: cliente.pais || "Brasil",
   };
-  
-  console.log('🟢 [clientesService] Dados para inserir:', JSON.stringify(dadosParaInserir, null, 2));
-  
+
+  console.log(
+    "🟢 [clientesService] Dados para inserir:",
+    JSON.stringify(dadosParaInserir, null, 2)
+  );
+
   const { data, error } = await supabase
-    .from('clientes')
+    .from("clientes")
     .insert([dadosParaInserir])
     .select()
     .single();
 
   if (error) {
-    console.error('🔴 [clientesService] Erro Supabase:', error);
-    console.error('🔴 [clientesService] Detalhes:', JSON.stringify(error, null, 2));
+    console.error("🔴 [clientesService] Erro Supabase:", error);
+    console.error(
+      "🔴 [clientesService] Detalhes:",
+      JSON.stringify(error, null, 2)
+    );
     throw new Error(error.message);
   }
 
-  console.log('✅ [clientesService] Cliente criado:', JSON.stringify(data, null, 2));
+  console.log(
+    "✅ [clientesService] Cliente criado:",
+    JSON.stringify(data, null, 2)
+  );
   return data;
 };
 
 /**
  * Atualizar cliente existente
  */
-export const atualizarCliente = async (id: string, cliente: Partial<Cliente>): Promise<Cliente> => {
-  console.log('🟢 [clientesService] atualizarCliente chamado');
-  console.log('🟢 [clientesService] ID:', id);
-  console.log('🟢 [clientesService] Dados recebidos:', JSON.stringify(cliente, null, 2));
-  
+export const atualizarCliente = async (
+  id: string,
+  cliente: Partial<Cliente>
+): Promise<Cliente> => {
+  console.log("🟢 [clientesService] atualizarCliente chamado");
+  console.log("🟢 [clientesService] ID:", id);
+  console.log(
+    "🟢 [clientesService] Dados recebidos:",
+    JSON.stringify(cliente, null, 2)
+  );
+
   try {
     // Validações (apenas para campos presentes)
-    console.log('🔍 [clientesService] Iniciando validações...');
-    
+    console.log("🔍 [clientesService] Iniciando validações...");
+
     if (cliente.nome_completo !== undefined) {
-      validarStringObrigatoria(cliente.nome_completo, 'Nome completo');
+      validarStringObrigatoria(cliente.nome_completo, "Nome completo");
     }
-    
+
     if (cliente.cpf !== undefined) {
-      validarStringObrigatoria(cliente.cpf, 'CPF');
+      validarStringObrigatoria(cliente.cpf, "CPF");
       validarFormatoCPF(cliente.cpf);
     }
-    
+
     if (cliente.email) {
       validarEmail(cliente.email);
     }
-    
+
     if (cliente.telefone) {
       validarTelefone(cliente.telefone);
     }
-    
+
     // Data de nascimento aceita qualquer string (atualizarCliente)
-    
-    console.log('✅ [clientesService] Validações concluídas com sucesso');
-    
+
+    console.log("✅ [clientesService] Validações concluídas com sucesso");
   } catch (error) {
     if (error instanceof ValidationError) {
-      console.error('🔴 [clientesService] Erro de validação:', error.message);
+      console.error("🔴 [clientesService] Erro de validação:", error.message);
       throw error;
     }
     throw error;
   }
-  
+
+  const dadosParaAtualizar = {
+    ...cliente,
+    ...(cliente.data_nascimento
+      ? { data_nascimento: formatarDataParaBanco(cliente.data_nascimento) }
+      : {}),
+  };
+
   const { data, error } = await supabase
-    .from('clientes')
-    .update(cliente)
-    .eq('id', id)
+    .from("clientes")
+    .update(dadosParaAtualizar)
+    .eq("id", id)
     .select()
     .single();
 
   if (error) {
-    console.error('🔴 [clientesService] Erro ao atualizar cliente:', error);
-    console.error('🔴 [clientesService] Erro código:', error.code);
-    console.error('🔴 [clientesService] Erro detalhes:', error.details);
-    console.error('🔴 [clientesService] Dados enviados:', JSON.stringify(cliente, null, 2));
+    console.error("🔴 [clientesService] Erro ao atualizar cliente:", error);
+    console.error("🔴 [clientesService] Erro código:", error.code);
+    console.error("🔴 [clientesService] Erro detalhes:", error.details);
+    console.error(
+      "🔴 [clientesService] Dados enviados:",
+      JSON.stringify(cliente, null, 2)
+    );
     throw new Error(error.message);
   }
 
-  console.log('✅ [clientesService] Cliente atualizado:', JSON.stringify(data, null, 2));
+  console.log(
+    "✅ [clientesService] Cliente atualizado:",
+    JSON.stringify(data, null, 2)
+  );
   return data;
 };
 
@@ -185,35 +235,38 @@ export const atualizarCliente = async (id: string, cliente: Partial<Cliente>): P
  * Excluir cliente
  */
 export const excluirCliente = async (id: string): Promise<void> => {
-  console.log('🔴 [clientesService] excluirCliente chamado');
-  console.log('🔴 [clientesService] ID:', id);
-  
-  const { error } = await supabase
-    .from('clientes')
-    .delete()
-    .eq('id', id);
+  console.log("🔴 [clientesService] excluirCliente chamado");
+  console.log("🔴 [clientesService] ID:", id);
+
+  const { error } = await supabase.from("clientes").delete().eq("id", id);
 
   if (error) {
-    console.error('🔴 [clientesService] Erro ao excluir cliente:', error);
-    console.error('🔴 [clientesService] Erro detalhes:', JSON.stringify(error, null, 2));
+    console.error("🔴 [clientesService] Erro ao excluir cliente:", error);
+    console.error(
+      "🔴 [clientesService] Erro detalhes:",
+      JSON.stringify(error, null, 2)
+    );
     throw new Error(error.message);
   }
-  
-  console.log('✅ [clientesService] Cliente excluído com sucesso');
+
+  console.log("✅ [clientesService] Cliente excluído com sucesso");
 };
 
 /**
  * Buscar cliente por CPF
  */
-export const buscarClientePorCPF = async (cpf: string): Promise<Cliente | null> => {
+export const buscarClientePorCPF = async (
+  cpf: string
+): Promise<Cliente | null> => {
   const { data, error } = await supabase
-    .from('clientes')
-    .select('*')
-    .eq('cpf', cpf)
+    .from("clientes")
+    .select("*")
+    .eq("cpf", cpf)
     .single();
 
-  if (error && error.code !== 'PGRST116') { // PGRST116 = not found
-    console.error('Erro ao buscar cliente por CPF:', error);
+  if (error && error.code !== "PGRST116") {
+    // PGRST116 = not found
+    console.error("Erro ao buscar cliente por CPF:", error);
     throw new Error(error.message);
   }
 
@@ -223,15 +276,17 @@ export const buscarClientePorCPF = async (cpf: string): Promise<Cliente | null> 
 /**
  * Buscar clientes por nome (pesquisa parcial)
  */
-export const buscarClientesPorNome = async (nome: string): Promise<Cliente[]> => {
+export const buscarClientesPorNome = async (
+  nome: string
+): Promise<Cliente[]> => {
   const { data, error } = await supabase
-    .from('clientes')
-    .select('*')
-    .ilike('nome_completo', `%${nome}%`)
-    .order('nome_completo', { ascending: true });
+    .from("clientes")
+    .select("*")
+    .ilike("nome_completo", `%${nome}%`)
+    .order("nome_completo", { ascending: true });
 
   if (error) {
-    console.error('Erro ao buscar clientes por nome:', error);
+    console.error("Erro ao buscar clientes por nome:", error);
     throw new Error(error.message);
   }
 
@@ -251,27 +306,30 @@ export const uploadImagemCliente = async (
   fileName?: string
 ): Promise<string> => {
   try {
-    console.log('🔵 [clientesService] Upload de imagem iniciado');
-    console.log('🔵 [clientesService] Cliente ID:', clienteId);
-    console.log('🔵 [clientesService] URI recebida:', uri.substring(0, 100) + '...');
+    console.log("🔵 [clientesService] Upload de imagem iniciado");
+    console.log("🔵 [clientesService] Cliente ID:", clienteId);
+    console.log(
+      "🔵 [clientesService] URI recebida:",
+      uri.substring(0, 100) + "..."
+    );
 
     // Determina a extensão do arquivo
-    let fileExt = 'jpg'; // Default
-    
-    if (uri.startsWith('data:')) {
+    let fileExt = "jpg"; // Default
+
+    if (uri.startsWith("data:")) {
       // Extrai o tipo MIME do data URI
       const mimeMatch = uri.match(/data:([^;]+);/);
       if (mimeMatch) {
         const mimeType = mimeMatch[1]; // ex: image/jpeg, image/png
-        fileExt = mimeType.split('/')[1]; // jpeg, png, etc
-        console.log('🔵 [clientesService] Tipo MIME detectado:', mimeType);
+        fileExt = mimeType.split("/")[1]; // jpeg, png, etc
+        console.log("🔵 [clientesService] Tipo MIME detectado:", mimeType);
       }
     } else if (fileName) {
-      fileExt = fileName.split('.').pop() || 'jpg';
+      fileExt = fileName.split(".").pop() || "jpg";
     } else {
       // Tenta extrair da URI (file://)
-      const uriWithoutQuery = uri.split('?')[0];
-      const lastDot = uriWithoutQuery.lastIndexOf('.');
+      const uriWithoutQuery = uri.split("?")[0];
+      const lastDot = uriWithoutQuery.lastIndexOf(".");
       if (lastDot > -1) {
         fileExt = uriWithoutQuery.substring(lastDot + 1);
       }
@@ -281,96 +339,109 @@ export const uploadImagemCliente = async (
     const timestamp = new Date().getTime();
     const filePath = `clientes/${clienteId}/${timestamp}.${fileExt}`;
 
-    console.log('🔵 [clientesService] Extensão do arquivo:', fileExt);
-    console.log('🔵 [clientesService] Caminho do arquivo:', filePath);
+    console.log("🔵 [clientesService] Extensão do arquivo:", fileExt);
+    console.log("🔵 [clientesService] Caminho do arquivo:", filePath);
 
     // Converte a URI para ArrayBuffer compatível com React Native
     let arrayBuffer: ArrayBuffer;
     let contentType = `image/${fileExt}`;
-    
-    if (uri.startsWith('data:')) {
+
+    if (uri.startsWith("data:")) {
       // Base64
-      console.log('🔵 [clientesService] Processando imagem Base64...');
+      console.log("🔵 [clientesService] Processando imagem Base64...");
       const mimeMatch = uri.match(/data:([^;]+);/);
       if (mimeMatch) {
         contentType = mimeMatch[1];
       }
-      
-      const base64Data = uri.split(',')[1];
+
+      const base64Data = uri.split(",")[1];
       const binaryString = atob(base64Data);
       const bytes = new Uint8Array(binaryString.length);
       for (let i = 0; i < binaryString.length; i++) {
         bytes[i] = binaryString.charCodeAt(i);
       }
       arrayBuffer = bytes.buffer;
-      console.log('🔵 [clientesService] Base64 convertido, tamanho:', arrayBuffer.byteLength);
+      console.log(
+        "🔵 [clientesService] Base64 convertido, tamanho:",
+        arrayBuffer.byteLength
+      );
     } else {
       // Fetch da URI local (file://)
-      console.log('🔵 [clientesService] Fazendo fetch da URI local...');
+      console.log("🔵 [clientesService] Fazendo fetch da URI local...");
       try {
         const response = await fetch(uri);
-        console.log('🔵 [clientesService] Fetch status:', response.status);
-        
+        console.log("🔵 [clientesService] Fetch status:", response.status);
+
         if (!response.ok) {
           throw new Error(`Fetch failed with status ${response.status}`);
         }
-        
+
         arrayBuffer = await response.arrayBuffer();
-        console.log('🔵 [clientesService] ArrayBuffer size:', arrayBuffer.byteLength);
+        console.log(
+          "🔵 [clientesService] ArrayBuffer size:",
+          arrayBuffer.byteLength
+        );
       } catch (fetchError: any) {
-        console.error('🔴 [clientesService] Erro no fetch:', fetchError);
+        console.error("🔴 [clientesService] Erro no fetch:", fetchError);
         throw new Error(`Erro ao ler arquivo: ${fetchError.message}`);
       }
     }
 
     if (!arrayBuffer || arrayBuffer.byteLength === 0) {
-      throw new Error('Arquivo vazio ou inválido');
+      throw new Error("Arquivo vazio ou inválido");
     }
 
-    console.log('🔵 [clientesService] Enviando arquivo para storage...');
-    console.log('🔵 [clientesService] Tamanho do arquivo:', arrayBuffer.byteLength, 'bytes');
-    console.log('🔵 [clientesService] Content-Type:', contentType);
+    console.log("🔵 [clientesService] Enviando arquivo para storage...");
+    console.log(
+      "🔵 [clientesService] Tamanho do arquivo:",
+      arrayBuffer.byteLength,
+      "bytes"
+    );
+    console.log("🔵 [clientesService] Content-Type:", contentType);
 
     // Upload para o Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('clientes-images')
+      .from("clientes-images")
       .upload(filePath, arrayBuffer, {
         contentType: contentType,
         upsert: true,
       });
 
     if (uploadError) {
-      console.error('🔴 [clientesService] Erro no upload:', uploadError);
-      throw new Error(uploadError.message || 'Erro desconhecido no upload');
+      console.error("🔴 [clientesService] Erro no upload:", uploadError);
+      throw new Error(uploadError.message || "Erro desconhecido no upload");
     }
 
-    console.log('✅ [clientesService] Upload concluído:', uploadData?.path);
+    console.log("✅ [clientesService] Upload concluído:", uploadData?.path);
 
     // Obtém a URL pública da imagem
     const { data: publicUrlData } = supabase.storage
-      .from('clientes-images')
+      .from("clientes-images")
       .getPublicUrl(filePath);
 
     const imageUrl = publicUrlData.publicUrl;
-    console.log('🔵 [clientesService] URL pública:', imageUrl);
+    console.log("🔵 [clientesService] URL pública:", imageUrl);
 
     // Atualiza o cliente com a URL da imagem
-    console.log('🔵 [clientesService] Atualizando registro no banco...');
+    console.log("🔵 [clientesService] Atualizando registro no banco...");
 
     const { error: updateError } = await supabase
-      .from('clientes')
+      .from("clientes")
       .update({ imagem_url: imageUrl })
-      .eq('id', clienteId);
+      .eq("id", clienteId);
 
     if (updateError) {
-      console.error('🔴 [clientesService] Erro ao atualizar cliente:', updateError);
+      console.error(
+        "🔴 [clientesService] Erro ao atualizar cliente:",
+        updateError
+      );
       throw new Error(updateError.message);
     }
 
-    console.log('✅ [clientesService] Cliente atualizado com URL da imagem');
+    console.log("✅ [clientesService] Cliente atualizado com URL da imagem");
     return imageUrl;
   } catch (error: any) {
-    console.error('🔴 [clientesService] Erro geral no upload:', error);
+    console.error("🔴 [clientesService] Erro geral no upload:", error);
     throw new Error(`Erro ao fazer upload da imagem: ${error.message}`);
   }
 };
@@ -379,48 +450,56 @@ export const uploadImagemCliente = async (
  * Remove a imagem de um cliente
  * @param clienteId - ID do cliente
  */
-export const removerImagemCliente = async (clienteId: string): Promise<void> => {
+export const removerImagemCliente = async (
+  clienteId: string
+): Promise<void> => {
   try {
-    console.log('🔴 [clientesService] Removendo imagem do cliente:', clienteId);
+    console.log("🔴 [clientesService] Removendo imagem do cliente:", clienteId);
 
     // Busca o cliente para obter a URL da imagem
     const cliente = await buscarClientePorId(clienteId);
-    
+
     if (!cliente?.imagem_url) {
-      console.log('⚠️ [clientesService] Cliente não possui imagem');
+      console.log("⚠️ [clientesService] Cliente não possui imagem");
       return;
     }
 
     // Extrai o caminho do arquivo da URL
     const url = new URL(cliente.imagem_url);
-    const filePath = url.pathname.split('/').slice(-3).join('/'); // clientes/{id}/{timestamp}.jpg
+    const filePath = url.pathname.split("/").slice(-3).join("/"); // clientes/{id}/{timestamp}.jpg
 
-    console.log('🔴 [clientesService] Removendo arquivo:', filePath);
+    console.log("🔴 [clientesService] Removendo arquivo:", filePath);
 
     // Remove do storage
     const { error: deleteError } = await supabase.storage
-      .from('clientes-images')
+      .from("clientes-images")
       .remove([filePath]);
 
     if (deleteError) {
-      console.error('🔴 [clientesService] Erro ao remover arquivo:', deleteError);
+      console.error(
+        "🔴 [clientesService] Erro ao remover arquivo:",
+        deleteError
+      );
       // Continua mesmo com erro, pois o importante é limpar o banco
     }
 
     // Atualiza o cliente removendo a URL
     const { error: updateError } = await supabase
-      .from('clientes')
+      .from("clientes")
       .update({ imagem_url: null })
-      .eq('id', clienteId);
+      .eq("id", clienteId);
 
     if (updateError) {
-      console.error('🔴 [clientesService] Erro ao atualizar cliente:', updateError);
+      console.error(
+        "🔴 [clientesService] Erro ao atualizar cliente:",
+        updateError
+      );
       throw new Error(updateError.message);
     }
 
-    console.log('✅ [clientesService] Imagem removida com sucesso');
+    console.log("✅ [clientesService] Imagem removida com sucesso");
   } catch (error: any) {
-    console.error('🔴 [clientesService] Erro ao remover imagem:', error);
+    console.error("🔴 [clientesService] Erro ao remover imagem:", error);
     throw new Error(`Erro ao remover imagem: ${error.message}`);
   }
 };
