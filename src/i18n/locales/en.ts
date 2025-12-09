@@ -391,6 +391,7 @@ export default {
   // Prediction
   prediction: {
     title: "Cancellation Prediction",
+    subtitle: "Predict the risk of reservation cancellations",
     analysis: "Analysis",
     result: "Result",
     riskAnalysis: "Risk Analysis",

@@ -375,6 +375,7 @@ export default {
   // 预测
   prediction: {
     title: "取消预测",
+    subtitle: "预测预订取消的风险",
     analysis: "分析",
     result: "结果",
     riskAnalysis: "风险分析",
